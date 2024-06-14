@@ -10,6 +10,7 @@ function Index() {
     <div className="p-2">
       <h3>Welcome Home!</h3>
       <Button>Click me!</Button>
+      <h1 className="text-4xl font-black">Geist</h1>
     </div>
   )
 }
