@@ -71,7 +71,7 @@ function Index() {
                 <h1 className="text-2xl font-bold">BTC/USD</h1>
                 <p className="text-sm text-gray-500">Bitcoin to US Dollar</p>
               </div>
-              <div className="ml-auto">
+              <div className="ml-auto mt-auto">
                 <ChartTypeToggle
                   defaultChartType={chartType}
                   onToggle={setChartType}
