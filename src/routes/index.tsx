@@ -1,8 +1,8 @@
 import { ChartComponent } from "@/components/chart";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import dayjs from "dayjs";
 import { useEffect } from "react";
+import type { UTCTimestamp } from "lightweight-charts";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -17,7 +17,7 @@ function Index() {
         throw new Error("Network response was not ok");
       }
       const data = await response.json();
-      const timestamp = data?.chart?.result?.[0]?.timestamp as number[];
+      const timestamp = data?.chart?.result?.[0]?.timestamp as UTCTimestamp[];
       const quote = data?.chart?.result?.[0]?.indicators?.quote[0] as {
         close: number[];
         high: number[];

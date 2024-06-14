@@ -3,14 +3,14 @@ import {
   createChart,
   ColorType,
   type CandlestickData,
-  type Time,
+  type UTCTimestamp,
 } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import colors from "tailwindcss/colors";
 import { useTheme } from "./theme-provider";
 
 export const ChartComponent = (props: {
-  data: CandlestickData<Time>[];
+  data: CandlestickData<UTCTimestamp>[];
   height?: number;
 }) => {
   const { data, height = 350 } = props;
