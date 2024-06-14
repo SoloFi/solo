@@ -1,11 +1,16 @@
-import { hexTransp } from "@/lib/utils";
-import { createChart, ColorType } from "lightweight-charts";
+// import { hexTransp } from "@/lib/utils";
+import {
+  createChart,
+  ColorType,
+  type CandlestickData,
+  type Time,
+} from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import colors from "tailwindcss/colors";
 import { useTheme } from "./theme-provider";
 
 export const ChartComponent = (props: {
-  data: { time: string; value: number }[];
+  data: CandlestickData<Time>[];
   height?: number;
 }) => {
   const { data, height = 350 } = props;
@@ -24,6 +29,7 @@ export const ChartComponent = (props: {
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
         textColor: theme === "dark" ? colors.zinc[300] : colors.zinc[700],
+        fontFamily: "Geist",
       },
       width: chartContainerRef.current.clientWidth,
       grid: {
@@ -38,10 +44,10 @@ export const ChartComponent = (props: {
     });
     chart.timeScale().fitContent();
 
-    const newSeries = chart.addAreaSeries({
-      lineColor: colors.blue[500],
-      topColor: colors.blue[500],
-      bottomColor: hexTransp(colors.blue[500], 0.4),
+    const newSeries = chart.addCandlestickSeries({
+      // lineColor: colors.blue[500],
+      // topColor: colors.blue[500],
+      // bottomColor: hexTransp(colors.blue[500], 0.4),
     });
     newSeries.setData(data);
 
@@ -52,7 +58,7 @@ export const ChartComponent = (props: {
 
       chart.remove();
     };
-  }, [data, theme]);
+  }, [data, height, theme]);
 
   return <div ref={chartContainerRef} />;
 };
