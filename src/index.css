@@ -4,8 +4,8 @@
 
 @layer base {
   @font-face {
-    font-family: 'Geist';
-    src: local('GeistVF'), url('./assets/fonts/GeistVF.ttf');
+    font-family: "Geist";
+    src: local("GeistVF"), url("./assets/fonts/GeistVF.ttf");
   }
 
   :root {

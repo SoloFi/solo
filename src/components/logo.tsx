@@ -1,5 +1,5 @@
-import { Link } from '@tanstack/react-router'
-import { Sparkle } from 'lucide-react'
+import { Link } from "@tanstack/react-router";
+import { Sparkle } from "lucide-react";
 
 export function Logo() {
   return (
@@ -7,7 +7,7 @@ export function Logo() {
       <Sparkle className="w-[24px] h-[24px]" />
       <span>Solo</span>
     </div>
-  )
+  );
 }
 
 export function LogoLink(props: { href: string }) {
@@ -15,5 +15,5 @@ export function LogoLink(props: { href: string }) {
     <Link href={props.href}>
       <Logo />
     </Link>
-  )
+  );
 }

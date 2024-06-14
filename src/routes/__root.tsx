@@ -1,6 +1,7 @@
-import LinkButton from '@/components/link-button'
-import { LogoLink } from '@/components/logo'
-import { Button } from '@/components/ui/button'
+import LinkButton from "@/components/link-button";
+import { LogoLink } from "@/components/logo";
+import { ModeToggle } from "@/components/mode-toggle";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,11 +9,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { SheetTrigger, SheetContent, Sheet } from '@/components/ui/sheet'
-import { createRootRoute, Outlet } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/router-devtools'
-import { Bell, CircleUser, LineChart, Menu } from 'lucide-react'
+} from "@/components/ui/dropdown-menu";
+import { SheetTrigger, SheetContent, Sheet } from "@/components/ui/sheet";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { TanStackRouterDevtools } from "@tanstack/router-devtools";
+import { Bell, CircleUser, LineChart, Menu } from "lucide-react";
 
 export const Route = createRootRoute({
   component: () => (
@@ -61,6 +62,7 @@ export const Route = createRootRoute({
               </SheetContent>
             </Sheet>
             <div className="flex-1 w-full" />
+            <ModeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -90,4 +92,4 @@ export const Route = createRootRoute({
       <TanStackRouterDevtools position="bottom-right" />
     </>
   ),
-})
+});
