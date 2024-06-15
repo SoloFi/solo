@@ -1,0 +1,64 @@
+{
+  "name": "Stocks",
+  "holdings": [
+    {
+      "symbol": "AAPL",
+      "buys": [
+        {
+          "time": 1704171600,
+          "price": 185,
+          "quantity": 10
+        },
+        {
+          "time": 1710993600,
+          "price": 171.37,
+          "quantity": 10
+        }
+      ],
+      "sells": [
+        {
+          "time": 1718078400,
+          "price": 207,
+          "quantity": 10
+        }
+      ]
+    },
+    {
+      "symbol": "GOOGL",
+      "buys": [
+        {
+          "time": 1704171600,
+          "price": 138,
+          "quantity": 10
+        },
+        {
+          "time": 1710993600,
+          "price": 147,
+          "quantity": 5
+        }
+      ],
+      "sells": [
+        {
+          "time": 1718078400,
+          "price": 176,
+          "quantity": 5
+        }
+      ]
+    },
+    {
+      "symbol": "AMZN",
+      "buys": [
+        {
+          "time": 1614747600,
+          "price": 150,
+          "quantity": 20
+        },
+        {
+          "time": 1669093200,
+          "price": 89,
+          "quantity": 25
+        }
+      ]
+    }
+  ]
+}
