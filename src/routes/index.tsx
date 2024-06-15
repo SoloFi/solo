@@ -1,15 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ChartTypeToggle } from "@/components/charts/chart-type-toggle";
 import { getSymbolChart, type CandlestickData } from "@/api/symbol";
 import { getPortfolio } from "@/api/portfolio";
-import { dayjs, usd } from "@/lib/utils";
+import { dayjs } from "@/lib/utils";
 import { usePortfolioChartData } from "@/components/portfolio/usePortfolioChartData";
 import { PortfolioChart } from "@/components/charts/portfolio-chart";
-import ChartTooltip from "@/components/charts/chart-tooltip";
-import type { UTCTimestamp } from "lightweight-charts";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -17,9 +15,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const [chartType, setChartType] = useState<"area" | "candlestick">("area");
-  const [tooltip, setTooltip] = useState<{ time: UTCTimestamp; value: number } | null>(
-    null,
-  );
+
   const {
     data: portfolio,
     error,
@@ -52,8 +48,14 @@ function Index() {
       : [],
   });
 
-  const doneFetching = symbolQueries.every((query) => query.isSuccess) && !isPending;
-  const hasError = symbolQueries.some((query) => query.isError) || isError;
+  const doneFetching = useMemo(
+    () => symbolQueries.every((query) => query.isSuccess) && !isPending,
+    [symbolQueries, isPending],
+  );
+  const hasError = useMemo(
+    () => symbolQueries.some((query) => query.isError) || isError,
+    [symbolQueries, isError],
+  );
 
   const { candlestickData, costBasisData } = usePortfolioChartData({
     holdings: doneFetching ? portfolio?.holdings : undefined,
@@ -83,31 +85,19 @@ function Index() {
         <Card>
           <CardHeader>
             <div className="flex items-center">
-              <h1 className="text-3xl font-bold">{portfolio.name}</h1>
+              <h1 className="text-3xl font-bold">{portfolio?.name ?? ""}</h1>
               <div className="ml-auto mt-auto">
                 <ChartTypeToggle defaultChartType={chartType} onToggle={setChartType} />
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="w-full relative">
-              <PortfolioChart
-                data={candlestickData}
-                costBasisData={costBasisData}
-                type={chartType}
-                onTooltipChange={setTooltip}
-              />
-              <ChartTooltip
-                time={
-                  tooltip?.time
-                    ? dayjs(tooltip?.time * 1000)
-                        .utc()
-                        .format("MMMM D, YYYY")
-                    : ""
-                }
-                value={usd(tooltip?.value || 0)}
-              />
-            </div>
+            <PortfolioChart
+              data={candlestickData}
+              costBasisData={costBasisData}
+              type={chartType}
+              height={400}
+            />
           </CardContent>
         </Card>
       </div>
