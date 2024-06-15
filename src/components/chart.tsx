@@ -4,6 +4,7 @@ import {
   ColorType,
   type CandlestickData,
   type UTCTimestamp,
+  PriceScaleMode,
 } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import colors from "tailwindcss/colors";
@@ -41,6 +42,9 @@ export const ChartComponent = (props: {
         },
       },
       height,
+      rightPriceScale: {
+        mode: PriceScaleMode.Logarithmic,
+      },
     });
     chart.timeScale().fitContent();
 
