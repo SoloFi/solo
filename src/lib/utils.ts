@@ -1,5 +1,11 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
+
+export { dayjs };
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -22,4 +28,12 @@ export function hexTransp(hexColor: string, alpha: number) {
   let hexValue = byteValue.toString(16);
   if (hexValue.length === 1) hexValue = `0${hexValue}`;
   return `${hexColor}${hexValue}`;
+}
+
+export function usd(value: number, decimals = 2) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: decimals,
+  }).format(value);
 }
