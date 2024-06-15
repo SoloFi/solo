@@ -1,14 +1,18 @@
-import { ChartComponent } from "@/components/chart";
+import { CandlestickChart } from "@/components/charts/candlestick-chart";
+import { AreaChart } from "@/components/charts/area-chart";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { UTCTimestamp } from "lightweight-charts";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ChartTypeToggle } from "@/components/charts/chart-type-toggle";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
+  const [chartType, setChartType] = useState<"area" | "candlestick">("area");
   const { isPending, isError, data, error } = useQuery({
     queryKey: ["total-assets"],
     queryFn: async () => {
@@ -25,7 +29,7 @@ function Index() {
         open: number[];
       };
       if (!timestamp || !quote) throw new Error("Invalid data");
-      return timestamp
+      const candlestickData = timestamp
         .map((time, index) => ({
           time: time,
           open: quote.open[index],
@@ -37,6 +41,11 @@ function Index() {
           // remove any data with a null value
           return Object.values(data).every((value) => value !== null);
         });
+      const areaData = candlestickData.map((data) => ({
+        time: data.time,
+        value: data.close,
+      }));
+      return { candlestickData, areaData };
     },
   });
 
@@ -54,9 +63,32 @@ function Index() {
 
   return (
     <div className="w-full h-full">
-      <h1 className="text-3xl font-bold">My Assets</h1>
-      <div className="w-full h-[350px]">
-        <ChartComponent data={data} />
+      <div>
+        <Card>
+          <CardHeader>
+            <div className="flex">
+              <div>
+                <h1 className="text-2xl font-bold">BTC/USD</h1>
+                <p className="text-sm text-gray-500">Bitcoin to US Dollar</p>
+              </div>
+              <div className="ml-auto mt-auto">
+                <ChartTypeToggle
+                  defaultChartType={chartType}
+                  onToggle={setChartType}
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full h-[350px]">
+              {chartType === "candlestick" ? (
+                <CandlestickChart data={data.candlestickData} />
+              ) : (
+                <AreaChart data={data.areaData} />
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
