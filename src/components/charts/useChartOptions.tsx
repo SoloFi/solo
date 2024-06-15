@@ -9,9 +9,7 @@ import { useTheme } from "../theme-provider";
 import colors from "tailwindcss/colors";
 import merge from "lodash/merge";
 
-export default function useChartOptions(
-  options = {} as DeepPartial<TimeChartOptions>,
-) {
+export default function useChartOptions(options = {} as DeepPartial<TimeChartOptions>) {
   const { theme } = useTheme();
   const _options = useMemo(() => {
     return merge(
@@ -30,9 +28,11 @@ export default function useChartOptions(
           },
         },
         rightPriceScale: {
-          mode: PriceScaleMode.Logarithmic,
+          mode: PriceScaleMode.Normal,
         },
-      },
+        autoSize: true,
+        height: 400,
+      } satisfies DeepPartial<TimeChartOptions>,
       options,
     );
   }, [options, theme]);
