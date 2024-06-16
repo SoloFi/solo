@@ -1,6 +1,6 @@
 import type { Portfolio } from "@/api/portfolio";
 import type { CandlestickData } from "@/api/symbol";
-import type { UTCTimestamp } from "lightweight-charts";
+import type { AreaData, LineData, UTCTimestamp } from "lightweight-charts";
 import { useMemo } from "react";
 
 // Hook to transform portfolio holdings and symbol chart data into a format that can be used by the chart component
@@ -8,17 +8,18 @@ export const usePortfolioChartData = (props: {
   holdings?: Portfolio["holdings"];
   data?: Record<string, CandlestickData[] | undefined>;
 }): {
-  candlestickData: CandlestickData[];
-  costBasisData: { time: UTCTimestamp; value: number }[];
+  portfolioData: AreaData<UTCTimestamp>[];
+  costBasisData: LineData<UTCTimestamp>[];
 } => {
   const { holdings, data } = props;
 
-  const { candlestickData, costBasisData } = useMemo(() => {
-    if (!holdings || !data) return { candlestickData: [], costBasisData: [] };
+  const { portfolioData, costBasisData } = useMemo(() => {
+    if (!holdings || !data) return { portfolioData: [], costBasisData: [] };
+
     const holdingsData = holdings.map(({ symbol, buys, sells }) => {
       const symbolData = data[symbol];
       if (!symbolData) {
-        return { holdingOHLC: [], costBasisOverTime: [] };
+        return [];
       }
       const timeline = symbolData.map((entry) => entry.time);
       const sharesOverTime = timeline.map((time) => {
@@ -40,44 +41,60 @@ export const usePortfolioChartData = (props: {
         return buyCost - sellCost;
       });
       const holdingOHLC = timeline.map((_, index) => {
-        const { open, high, low, close } = symbolData[index];
+        const { close } = symbolData[index];
         return {
           time: timeline[index],
-          open: open * sharesOverTime[index],
-          high: high * sharesOverTime[index],
-          low: low * sharesOverTime[index],
           close: close * sharesOverTime[index],
           cost: costBasisOverTime[index],
         };
       });
-      return { holdingOHLC, costBasisOverTime };
+      return holdingOHLC;
     });
 
     // Combine the OHLC data of all holdings using the timeline with the highest resolution
     const combinedTimeline = Array.from(
       new Set(
-        holdingsData.flatMap(({ holdingOHLC }) => holdingOHLC.map((entry) => entry.time)),
+        holdingsData.flatMap((holdingOHLC) => holdingOHLC.map((entry) => entry.time)),
       ),
     ).sort();
 
-    const combinedData = combinedTimeline.map((time) => {
-      const combinedEntry = holdingsData
-        .map(({ holdingOHLC }) => holdingOHLC.find((entry) => entry.time === time))
-        .filter((entry) => entry);
-      const open = combinedEntry.reduce((acc, entry) => acc + (entry?.open ?? 0), 0);
-      const high = combinedEntry.reduce((acc, entry) => acc + (entry?.high ?? 0), 0);
-      const low = combinedEntry.reduce((acc, entry) => acc + (entry?.low ?? 0), 0);
+    // Resize the OHLC data to match the combined timeline by adding padding for missing entries
+    const resizedData = holdingsData.map((holdingOHLC) => {
+      const resizedOHLC = combinedTimeline.map((time) =>
+        holdingOHLC.find((entry) => entry.time === time),
+      );
+      // set the first entry to the first non-null entry to 0 if the first entry is null
+      if (!resizedOHLC[0]) {
+        resizedOHLC[0] = {
+          time: combinedTimeline[0],
+          close: 0,
+          cost: 0,
+        };
+      }
+      // Fill in missing entries with the previous entry
+      for (let i = 1; i < resizedOHLC.length; i++) {
+        if (!resizedOHLC[i]) {
+          const previousEntry = resizedOHLC[i - 1] as {
+            time: UTCTimestamp;
+            close: number;
+            cost: number;
+          };
+          resizedOHLC[i] = { ...previousEntry, time: combinedTimeline[i] };
+        }
+      }
+      return resizedOHLC;
+    });
+
+    const combinedData = combinedTimeline.map((time, index) => {
+      const combinedEntry = resizedData.map((holdingOHLC) => holdingOHLC[index]);
       const close = combinedEntry.reduce((acc, entry) => acc + (entry?.close ?? 0), 0);
       const cost = combinedEntry.reduce((acc, entry) => acc + (entry?.cost ?? 0), 0);
-      return { time, open, high, low, close, cost };
+      return { time, close, cost };
     });
 
     return {
-      candlestickData: combinedData.map(({ open, high, low, close, time }) => ({
-        open,
-        high,
-        low,
-        close,
+      portfolioData: combinedData.map(({ close, time }) => ({
+        value: close,
         time,
       })),
       costBasisData: combinedData.map(({ cost, time }) => ({
@@ -87,5 +104,5 @@ export const usePortfolioChartData = (props: {
     };
   }, [data, holdings]);
 
-  return { candlestickData, costBasisData };
+  return { portfolioData, costBasisData };
 };

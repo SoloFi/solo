@@ -1,5 +1,6 @@
 // import { hexTransp } from "@/lib/utils";
 import {
+  AreaData,
   createChart,
   LastPriceAnimationMode,
   LineStyle,
@@ -21,12 +22,11 @@ import { cn, dayjs, hexTransp, usd } from "@/lib/utils";
 import { Badge } from "../ui/badge";
 
 export const PortfolioChart = (props: {
-  data: CandlestickData<UTCTimestamp>[];
+  data: AreaData<UTCTimestamp>[];
   costBasisData: CostBasisData[];
-  type: "area" | "candlestick";
   height?: number;
 }) => {
-  const { data, costBasisData, type, height } = props;
+  const { data, costBasisData, height } = props;
   const { theme } = useTheme();
   const [tooltip, setTooltip] = useState<{
     time: UTCTimestamp;
@@ -36,9 +36,7 @@ export const PortfolioChart = (props: {
   const parentContainerRef = useRef<HTMLDivElement | null>(null);
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<ReturnType<typeof createChart>>();
-  const portfolioSeriesRef = useRef<
-    ISeriesApi<"Area", Time> | ISeriesApi<"Candlestick">
-  >();
+  const portfolioSeriesRef = useRef<ISeriesApi<"Area", Time>>();
   const costBasisSeriesRef = useRef<ISeriesApi<"Line", Time>>();
 
   const { options } = useChartOptions();
@@ -86,30 +84,21 @@ export const PortfolioChart = (props: {
     (params: {
       data: CandlestickData<UTCTimestamp>[];
       costBasisData: CostBasisData[];
-      type: "area" | "candlestick";
       options: DeepPartial<TimeChartOptions>;
       theme: Theme;
     }) => {
-      const { data, costBasisData, options, type } = params;
+      const { data, costBasisData, options } = params;
       if (chartRef.current || !chartContainerRef.current) return;
       const chart = createChart(chartContainerRef.current, options);
       chartRef.current = chart;
 
-      let portfolioSeries;
-      if (type === "area") {
-        portfolioSeries = chart.addAreaSeries({
-          lastPriceAnimation: LastPriceAnimationMode.Continuous,
-          lineColor: colors.blue[500],
-          topColor: hexTransp(colors.blue[500], 50),
-          bottomColor: hexTransp(colors.blue[500], 5),
-        });
-        portfolioSeries.setData(
-          data.map((entry) => ({ time: entry.time, value: entry.close })),
-        );
-      } else {
-        portfolioSeries = chart.addCandlestickSeries();
-        portfolioSeries.setData(data);
-      }
+      const portfolioSeries = chart.addAreaSeries({
+        lastPriceAnimation: LastPriceAnimationMode.Continuous,
+        lineColor: colors.blue[500],
+        topColor: hexTransp(colors.blue[500], 50),
+        bottomColor: hexTransp(colors.blue[500], 5),
+      });
+      portfolioSeries.setData(data);
       portfolioSeriesRef.current = portfolioSeries;
       const costBasisSeries = chart.addLineSeries({
         color: colors.gray[500],
@@ -128,9 +117,9 @@ export const PortfolioChart = (props: {
     (node: HTMLDivElement) => {
       if (!node) return;
       chartContainerRef.current = node;
-      handleCreateChart({ data, costBasisData, options, theme, type });
+      handleCreateChart({ data, costBasisData, options, theme });
     },
-    [costBasisData, data, handleCreateChart, options, theme, type],
+    [costBasisData, data, handleCreateChart, options, theme],
   );
 
   const addChartEventListeners = useCallback(() => {
@@ -152,11 +141,11 @@ export const PortfolioChart = (props: {
       null;
     }
     chartRef.current = undefined;
-    handleCreateChart({ data, costBasisData, options, theme, type });
+    handleCreateChart({ data, costBasisData, options, theme });
     addChartEventListeners();
     return removeChartEventListeners;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme, type]);
+  }, [theme]);
 
   return (
     <div
@@ -166,7 +155,7 @@ export const PortfolioChart = (props: {
     >
       <div className="absolute w-full h-full">
         <div ref={initContainerRef} />
-        {tooltip && tooltip.time && tooltip.value ? (
+        {tooltip?.time && tooltip?.value ? (
           <ChartTooltip
             time={dayjs(tooltip.time * 1000)
               .utc()

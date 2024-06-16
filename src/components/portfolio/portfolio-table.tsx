@@ -136,7 +136,6 @@ export const PortfolioTable = (props: {
 
   return (
     <Table>
-      {/* <TableCaption>A list of your recent invoices.</TableCaption> */}
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id}>
@@ -170,7 +169,7 @@ export const PortfolioTable = (props: {
         {table.getRowModel().rows.map((row) => (
           <TableRow key={row.id} className="h-[64px]">
             {row.getVisibleCells().map((cell) => (
-              <TableCell key={cell.id} className="text-lg">
+              <TableCell key={cell.id}>
                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
               </TableCell>
             ))}

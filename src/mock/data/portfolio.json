@@ -59,6 +59,16 @@
           "quantity": 25
         }
       ]
+    },
+    {
+      "symbol": "BTC-USD",
+      "buys": [
+        {
+          "time": 1653192000,
+          "price": 30000,
+          "quantity": 0.1
+        }
+      ]
     }
   ]
 }

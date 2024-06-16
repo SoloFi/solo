@@ -67,7 +67,7 @@ function Index() {
       {} as Record<string, CandlestickData[]>,
     );
 
-  const { candlestickData, costBasisData } = usePortfolioChartData({
+  const { portfolioData, costBasisData } = usePortfolioChartData({
     holdings: doneFetching ? portfolio?.holdings : undefined,
     data: doneFetching ? portfolioSymbolsData : undefined,
   });
@@ -89,16 +89,12 @@ function Index() {
               <h1 className="text-3xl font-bold min-w-[150px]">
                 {portfolio?.name ?? ""}
               </h1>
-              <div className="ml-auto mt-auto">
-                <ChartTypeToggle defaultChartType={chartType} onToggle={setChartType} />
-              </div>
             </div>
           </CardHeader>
           <CardContent>
             <PortfolioChart
-              data={candlestickData}
+              data={portfolioData}
               costBasisData={costBasisData}
-              type={chartType}
               height={400}
             />
             <div className="mt-4">
