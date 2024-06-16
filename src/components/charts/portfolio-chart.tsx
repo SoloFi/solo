@@ -3,6 +3,7 @@ import {
   AreaData,
   createChart,
   LastPriceAnimationMode,
+  LineData,
   LineStyle,
   type CandlestickData,
   type DeepPartial,
@@ -46,8 +47,8 @@ export const PortfolioChart = (props: {
     const costBasis = costBasisData[costBasisData.length - 1];
     return {
       time: lastData.time,
-      value: lastData.close,
-      percentChange: lastData.close / costBasis.value - 1,
+      value: lastData.value,
+      percentChange: lastData.value / costBasis.value - 1,
     };
   }, [costBasisData, data]);
 
@@ -59,15 +60,19 @@ export const PortfolioChart = (props: {
       if (param.point && (param.point.x < 0 || param.point.y < 0))
         validCrosshairPoint = false;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const bar: any = validCrosshairPoint
-        ? param.seriesData.get(portfolioSeriesRef.current)
+      const bar = validCrosshairPoint
+        ? (param.seriesData.get(portfolioSeriesRef.current) as AreaData<UTCTimestamp> & {
+            percentChange: number;
+          })
         : getLastBar();
 
       if (!bar) return;
       const time = bar.time;
-      const price = bar.value !== undefined ? bar.value : bar.close;
+      const price = bar.value;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const costBasis: any = param.seriesData.get(costBasisSeriesRef.current);
+      const costBasis = param.seriesData.get(
+        costBasisSeriesRef.current,
+      ) as LineData<UTCTimestamp>;
       if (!costBasis) return;
       const percentChange =
         bar.percentChange !== undefined
