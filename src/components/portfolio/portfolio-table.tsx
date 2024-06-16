@@ -104,6 +104,7 @@ export const PortfolioTable = (props: {
         header: "Value",
         cell: (row) => usd(row.getValue()),
         enableSorting: true,
+        enableMultiSort: false,
       }),
       columnHelper.accessor("change", {
         header: "Change",
@@ -114,6 +115,7 @@ export const PortfolioTable = (props: {
           />
         ),
         enableSorting: true,
+        enableMultiSort: false,
       }),
     ];
   }, []);
@@ -127,6 +129,9 @@ export const PortfolioTable = (props: {
       sorting,
     },
     onSortingChange: setSorting,
+    enableMultiRemove: true,
+    sortDescFirst: true,
+    enableSortingRemoval: false,
   });
 
   return (
@@ -140,25 +145,18 @@ export const PortfolioTable = (props: {
                 <div className="flex items-center">
                   <p>{flexRender(header.column.columnDef.header, header.getContext())}</p>
                   {header.column.getCanSort() ? (
-                    header.column.getIsSorted() === "asc" ? (
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        onClick={() => header.column.toggleSorting(true)}
-                        className="w-6 h-6 ml-2"
-                      >
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => header.column.toggleSorting()}
+                      className="w-6 h-6 ml-2"
+                    >
+                      {header.column.getIsSorted() === "asc" ? (
                         <ArrowDown className="w-4 h-4" />
-                      </Button>
-                    ) : (
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        onClick={() => header.column.toggleSorting(false)}
-                        className="w-6 h-6 ml-2"
-                      >
+                      ) : (
                         <ArrowUp className="w-4 h-4" />
-                      </Button>
-                    )
+                      )}
+                    </Button>
                   ) : (
                     ""
                   )}
