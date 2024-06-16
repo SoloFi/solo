@@ -83,9 +83,9 @@ export const PortfolioChart = (props: {
       if (type === "area") {
         portfolioSeries = chart.addAreaSeries({
           lastPriceAnimation: LastPriceAnimationMode.Continuous,
-          lineColor: colors.sky[500],
-          topColor: hexTransp(colors.sky[500], 50),
-          bottomColor: hexTransp(colors.sky[500], 5),
+          lineColor: colors.blue[500],
+          topColor: hexTransp(colors.blue[500], 50),
+          bottomColor: hexTransp(colors.blue[500], 5),
         });
         portfolioSeries.setData(
           data.map((entry) => ({ time: entry.time, value: entry.close })),

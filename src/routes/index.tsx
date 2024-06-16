@@ -8,6 +8,7 @@ import { getPortfolio } from "@/api/portfolio";
 import { dayjs } from "@/lib/utils";
 import { usePortfolioChartData } from "@/components/portfolio/usePortfolioChartData";
 import { PortfolioChart } from "@/components/charts/portfolio-chart";
+import { PortfolioTable } from "@/components/portfolio/portfolio-table";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -57,18 +58,18 @@ function Index() {
     [symbolQueries, isError],
   );
 
+  const portfolioSymbolsData = portfolio?.holdings
+    .map(({ symbol }, index) => ({
+      [symbol]: symbolQueries[index].data,
+    }))
+    .reduce(
+      (acc, curr) => ({ ...acc, ...curr }),
+      {} as Record<string, CandlestickData[]>,
+    );
+
   const { candlestickData, costBasisData } = usePortfolioChartData({
     holdings: doneFetching ? portfolio?.holdings : undefined,
-    data: doneFetching
-      ? portfolio?.holdings
-          .map(({ symbol }, index) => ({
-            [symbol]: symbolQueries[index].data,
-          }))
-          .reduce(
-            (acc, curr) => ({ ...acc, ...curr }),
-            {} as Record<string, CandlestickData[]>,
-          )
-      : undefined,
+    data: doneFetching ? portfolioSymbolsData : undefined,
   });
 
   if (!doneFetching) {
@@ -98,6 +99,12 @@ function Index() {
               type={chartType}
               height={400}
             />
+            <div className="mt-4">
+              <PortfolioTable
+                holdings={portfolio?.holdings ?? []}
+                symbolsData={portfolioSymbolsData ?? {}}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
