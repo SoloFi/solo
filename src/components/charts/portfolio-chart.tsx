@@ -17,7 +17,8 @@ import type { CostBasisData } from "@/api/portfolio";
 import colors from "tailwindcss/colors";
 import { useTheme, type Theme } from "@/components/theme-provider";
 import ChartTooltip from "./chart-tooltip";
-import { dayjs, hexTransp, usd } from "@/lib/utils";
+import { cn, dayjs, hexTransp, usd } from "@/lib/utils";
+import { Badge } from "../ui/badge";
 
 export const PortfolioChart = (props: {
   data: CandlestickData<UTCTimestamp>[];
@@ -27,29 +28,34 @@ export const PortfolioChart = (props: {
 }) => {
   const { data, costBasisData, type, height } = props;
   const { theme } = useTheme();
-  const [tooltip, setTooltip] = useState<{ time: UTCTimestamp; value: number } | null>(
-    null,
-  );
+  const [tooltip, setTooltip] = useState<{
+    time: UTCTimestamp;
+    value: number;
+    percentChange: number;
+  } | null>(null);
   const parentContainerRef = useRef<HTMLDivElement | null>(null);
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<ReturnType<typeof createChart>>();
   const portfolioSeriesRef = useRef<
     ISeriesApi<"Area", Time> | ISeriesApi<"Candlestick">
   >();
+  const costBasisSeriesRef = useRef<ISeriesApi<"Line", Time>>();
 
   const { options } = useChartOptions();
 
   const getLastBar = useCallback(() => {
     const lastData = data[data.length - 1];
+    const costBasis = costBasisData[costBasisData.length - 1];
     return {
       time: lastData.time,
       value: lastData.close,
+      percentChange: lastData.close / costBasis.value - 1,
     };
-  }, [data]);
+  }, [costBasisData, data]);
 
   const handleUpdateTooltip = useCallback(
     (param: MouseEventParams<Time>) => {
-      if (!portfolioSeriesRef.current) return;
+      if (!portfolioSeriesRef.current || !costBasisSeriesRef.current) return;
       let validCrosshairPoint = true;
       if (!param || !param.point) validCrosshairPoint = false;
       if (param.point && (param.point.x < 0 || param.point.y < 0))
@@ -58,10 +64,20 @@ export const PortfolioChart = (props: {
       const bar: any = validCrosshairPoint
         ? param.seriesData.get(portfolioSeriesRef.current)
         : getLastBar();
+
       if (!bar) return;
       const time = bar.time;
       const price = bar.value !== undefined ? bar.value : bar.close;
-      setTooltip({ time, value: price });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const costBasis: any = param.seriesData.get(costBasisSeriesRef.current);
+      if (!costBasis) return;
+      const percentChange =
+        bar.percentChange !== undefined
+          ? bar.percentChange
+          : costBasis.value
+            ? (price / costBasis.value - 1) * 100
+            : 0;
+      setTooltip({ time, value: price, percentChange });
     },
     [getLastBar],
   );
@@ -74,7 +90,7 @@ export const PortfolioChart = (props: {
       options: DeepPartial<TimeChartOptions>;
       theme: Theme;
     }) => {
-      const { data, costBasisData, options, theme, type } = params;
+      const { data, costBasisData, options, type } = params;
       if (chartRef.current || !chartContainerRef.current) return;
       const chart = createChart(chartContainerRef.current, options);
       chartRef.current = chart;
@@ -96,11 +112,12 @@ export const PortfolioChart = (props: {
       }
       portfolioSeriesRef.current = portfolioSeries;
       const costBasisSeries = chart.addLineSeries({
-        color: colors.zinc[theme === "dark" ? 400 : 500],
+        color: colors.gray[500],
         lineWidth: 2,
         lineStyle: LineStyle.LargeDashed,
       });
       costBasisSeries.setData(costBasisData);
+      costBasisSeriesRef.current = costBasisSeries;
       chart.timeScale().fitContent();
       setTooltip(getLastBar());
     },
@@ -154,7 +171,19 @@ export const PortfolioChart = (props: {
             time={dayjs(tooltip.time * 1000)
               .utc()
               .format("MMMM D, YYYY")}
-            value={usd(tooltip.value)}
+            value={
+              <div className="flex items-center space-x-3">
+                <p>{usd(tooltip.value)}</p>
+                <Badge
+                  className={cn(
+                    "h-7 px-2 text-lg",
+                    tooltip.percentChange <= 0 ? "bg-red-500" : "bg-green-500",
+                  )}
+                >
+                  {tooltip.percentChange.toFixed(2)}%
+                </Badge>
+              </div>
+            }
           />
         ) : null}
       </div>

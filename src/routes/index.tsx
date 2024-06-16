@@ -85,8 +85,10 @@ function Index() {
       <div>
         <Card>
           <CardHeader>
-            <div className="flex items-center">
-              <h1 className="text-3xl font-bold">{portfolio?.name ?? ""}</h1>
+            <div className="flex">
+              <h1 className="text-3xl font-bold min-w-[150px]">
+                {portfolio?.name ?? ""}
+              </h1>
               <div className="ml-auto mt-auto">
                 <ChartTypeToggle defaultChartType={chartType} onToggle={setChartType} />
               </div>
