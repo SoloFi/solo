@@ -8,21 +8,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { usd } from "@/lib/utils";
+import PriceChange from "../price-change";
+import { ArrowDown, ArrowUp } from "lucide-react";
+import { Button } from "../ui/button";
 
 type PortfolioTableData = {
   symbol: string;
   price: number;
   quantity: number;
   value: number;
-  change: number;
+  costBasis: number;
+  change: {
+    value: number;
+    percentChange: number;
+  };
 };
 
 const columnHelper = createColumnHelper<PortfolioTableData>();
@@ -32,6 +40,16 @@ export const PortfolioTable = (props: {
   symbolsData: Record<string, CandlestickData[] | undefined>;
 }) => {
   const { holdings, symbolsData } = props;
+  const [sorting, setSorting] = useState([
+    {
+      id: "value",
+      desc: true,
+    },
+    {
+      id: "change",
+      desc: true,
+    },
+  ]);
 
   const data = useMemo(() => {
     return holdings.map((entry) => {
@@ -44,12 +62,18 @@ export const PortfolioTable = (props: {
       const quantity = buys.reduce((acc, buy) => acc + buy.quantity, 0);
       const value = price * quantity;
       const change = ((lastData?.close ?? 0) - lastBuy.price) * quantity;
+      const costBasis = buys.reduce((acc, buy) => acc + buy.price * buy.quantity, 0);
+      const percentChange = change / costBasis;
       return {
         symbol,
         price,
         quantity,
         value,
-        change,
+        costBasis,
+        change: {
+          value: change,
+          percentChange,
+        },
       };
     });
   }, [holdings, symbolsData]);
@@ -57,29 +81,53 @@ export const PortfolioTable = (props: {
   const columns = useMemo(() => {
     return [
       columnHelper.accessor("symbol", {
-        header: "Symbol",
-        cell: (row) => row.getValue(),
+        header: "Asset",
+        cell: (row) => <p className="font-semibold">{row.getValue()}</p>,
+        enableSorting: false,
       }),
       columnHelper.accessor("price", {
         header: "Price",
         cell: (row) => usd(row.getValue()),
+        enableSorting: false,
       }),
       columnHelper.accessor("quantity", {
         header: "Quantity",
         cell: (row) => row.getValue(),
+        enableSorting: false,
+      }),
+      columnHelper.accessor("costBasis", {
+        header: "Cost Basis",
+        cell: (row) => usd(row.getValue()),
+        enableSorting: false,
       }),
       columnHelper.accessor("value", {
         header: "Value",
         cell: (row) => usd(row.getValue()),
+        enableSorting: true,
       }),
       columnHelper.accessor("change", {
         header: "Change",
-        cell: (row) => usd(row.getValue()),
+        cell: (row) => (
+          <PriceChange
+            value={row.getValue().value}
+            percentChange={row.getValue().percentChange}
+          />
+        ),
+        enableSorting: true,
       }),
     ];
   }, []);
 
-  const table = useReactTable({ columns, data, getCoreRowModel: getCoreRowModel() });
+  const table = useReactTable({
+    columns,
+    data,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
+  });
 
   return (
     <Table>
@@ -89,7 +137,32 @@ export const PortfolioTable = (props: {
           <TableRow key={headerGroup.id}>
             {headerGroup.headers.map((header) => (
               <TableHead key={header.id} colSpan={header.colSpan}>
-                {flexRender(header.column.columnDef.header, header.getContext())}
+                <div className="flex items-center">
+                  <p>{flexRender(header.column.columnDef.header, header.getContext())}</p>
+                  {header.column.getCanSort() ? (
+                    header.column.getIsSorted() === "asc" ? (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => header.column.toggleSorting(true)}
+                        className="w-6 h-6 ml-2"
+                      >
+                        <ArrowDown className="w-4 h-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => header.column.toggleSorting(false)}
+                        className="w-6 h-6 ml-2"
+                      >
+                        <ArrowUp className="w-4 h-4" />
+                      </Button>
+                    )
+                  ) : (
+                    ""
+                  )}
+                </div>
               </TableHead>
             ))}
           </TableRow>
