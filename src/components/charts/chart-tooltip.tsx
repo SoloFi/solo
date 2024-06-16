@@ -1,4 +1,6 @@
-export default function ChartTooltip(props: { time?: string; value?: string }) {
+import type { ReactNode } from "react";
+
+export default function ChartTooltip(props: { time?: ReactNode; value?: ReactNode }) {
   const { time, value } = props;
   return (
     <div className="absolute top-0 left-0">
