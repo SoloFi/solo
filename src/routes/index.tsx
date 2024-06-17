@@ -82,30 +82,26 @@ function Index() {
 
   return (
     <div className="w-full h-full">
-      <div>
-        <Card>
-          <CardHeader>
-            <div className="flex">
-              <h1 className="text-3xl font-bold min-w-[150px]">
-                {portfolio?.name ?? ""}
-              </h1>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <PortfolioChart
-              data={portfolioData}
-              costBasisData={costBasisData}
-              height={400}
+      <Card>
+        <CardHeader>
+          <div className="flex">
+            <h1 className="text-3xl font-bold min-w-[150px]">{portfolio?.name ?? ""}</h1>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <PortfolioChart
+            data={portfolioData}
+            costBasisData={costBasisData}
+            height={400}
+          />
+          <div className="mt-4">
+            <PortfolioTable
+              holdings={portfolio?.holdings ?? []}
+              symbolsData={portfolioSymbolsData ?? {}}
             />
-            <div className="mt-4">
-              <PortfolioTable
-                holdings={portfolio?.holdings ?? []}
-                symbolsData={portfolioSymbolsData ?? {}}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

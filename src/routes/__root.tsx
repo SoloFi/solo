@@ -42,11 +42,7 @@ export const Route = createRootRoute({
           <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
             <Sheet>
               <SheetTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0 md:hidden"
-                >
+                <Button variant="outline" size="icon" className="shrink-0 md:hidden">
                   <Menu className="w-5 h-5" />
                   <span className="sr-only">Toggle navigation menu</span>
                 </Button>
@@ -65,11 +61,7 @@ export const Route = createRootRoute({
             <ModeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="rounded-full"
-                >
+                <Button variant="secondary" size="icon" className="rounded-full">
                   <CircleUser className="w-5 h-5" />
                   <span className="sr-only">Toggle user menu</span>
                 </Button>
