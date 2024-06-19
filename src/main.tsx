@@ -18,14 +18,10 @@ declare module "@tanstack/react-router" {
 
 createServer({
   routes() {
-    this.urlPrefix = "http://localhost:3000";
-    this.get("/api/btcusd", () =>
-      import("@/mock/data/btcusd.json").then((res) => res.default),
-    );
     this.get("/api/portfolio", () =>
       import("@/mock/data/portfolio.json").then((res) => res.default),
     );
-    this.passthrough("http://localhost:8080/**");
+    this.passthrough();
   },
 });
 
