@@ -5,7 +5,7 @@ export type Portfolio = {
   name: string;
   holdings: {
     symbol: string;
-    buys: {
+    buys?: {
       time: number;
       quantity: number;
       price: number;

@@ -1,38 +1,46 @@
 import type { UTCTimestamp } from "lightweight-charts";
 
-export type CandlestickData = {
+export interface CandlestickData {
   time: UTCTimestamp;
   open: number;
   high: number;
   low: number;
   close: number;
-};
+}
+
+export interface Quote {
+  open: number[];
+  high: number[];
+  low: number[];
+  close: number[];
+}
+
+export type QuoteRange =
+  | "1d"
+  | "5d"
+  | "1mo"
+  | "3mo"
+  | "6mo"
+  | "1y"
+  | "2y"
+  | "5y"
+  | "10y"
+  | "ytd"
+  | "max";
 
 export const getSymbolChart = async (params: {
   symbol: string;
-  from: number;
-  to: number;
+  from?: number;
+  to?: number;
+  range?: QuoteRange;
 }) => {
-  const { symbol, from, to } = params;
-  const res = await fetch(
-    `http://localhost:8080/chart/${symbol}?from=${from}&to=${to}`,
-  );
+  const { symbol, from, to, range } = params;
+  const url: URL = new URL(`http://localhost:8080/chart/${symbol}`);
+  if (range) url.searchParams.append("range", range);
+  if (from) url.searchParams.append("from", from.toString());
+  if (to) url.searchParams.append("to", to.toString());
+  const res = await fetch(url.toString());
   if (!res.ok) throw new Error("Failed to fetch symbol chart");
-  const data = await res.json();
-  const timestamp = data?.chart?.result?.[0]?.timestamp as UTCTimestamp[];
-  const quote = data?.chart?.result?.[0]?.indicators?.quote[0] as {
-    open: number[];
-    high: number[];
-    low: number[];
-    close: number[];
-  };
-  if (!timestamp || !quote) throw new Error("Invalid data");
-  const candlestickData = timestamp.map((time, index) => ({
-    time: time,
-    open: quote.open[index],
-    high: quote.high[index],
-    low: quote.low[index],
-    close: quote.close[index],
-  }));
+  const candlestickData: CandlestickData[] = await res.json();
   return candlestickData;
 };

@@ -21,7 +21,7 @@ createServer({
     this.get("/api/portfolio", () =>
       import("@/mock/data/portfolio.json").then((res) => res.default),
     );
-    this.passthrough();
+    this.passthrough("http://localhost:8080/**");
   },
 });
 
