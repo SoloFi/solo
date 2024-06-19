@@ -1,7 +1,6 @@
 import type { Portfolio } from "@/api/portfolio";
-import { RangeConstruction, type CandlestickData, type QuoteRange } from "@/api/symbol";
+import { type CandlestickData } from "@/api/symbol";
 import { dayjs } from "@/lib/utils";
-import { ManipulateType } from "dayjs";
 import type { LineData, UTCTimestamp } from "lightweight-charts";
 import { useMemo } from "react";
 
@@ -9,13 +8,11 @@ import { useMemo } from "react";
 export const usePortfolioChartData = (props: {
   holdings: Portfolio["holdings"] | null;
   data: Record<string, CandlestickData[] | undefined> | null;
-  range: QuoteRange;
 }): {
   portfolioData: CandlestickData[];
   costBasisData: LineData<UTCTimestamp>[];
 } => {
-  const { holdings, data, range } = props;
-  const rangeUnit = RangeConstruction[range].unit;
+  const { holdings, data } = props;
 
   const { portfolioData, costBasisData } = useMemo(() => {
     if (!holdings || !data) return { portfolioData: [], costBasisData: [] };
@@ -33,8 +30,8 @@ export const usePortfolioChartData = (props: {
           ?.filter((sell) => sell.time <= time)
           .reduce((acc, sell) => acc + sell.quantity, 0);
         const shares = (buyShares ?? 0) - (sellShares ?? 0);
-        holdingChart[startOfRange(time, rangeUnit)] = {
-          time,
+        holdingChart[startOfDay(time)] = {
+          time: startOfDay(time),
           open: open * shares,
           high: high * shares,
           low: low * shares,
@@ -47,14 +44,14 @@ export const usePortfolioChartData = (props: {
     const totalChart: Record<UTCTimestamp, CandlestickData> = {};
     chartMaps.forEach((holdingChart) => {
       if (!holdingChart) return;
-      Object.entries(holdingChart).forEach(([time, { open, close }]) => {
+      Object.entries(holdingChart).forEach(([time, { open, high, low, close }]) => {
         const _time = parseInt(time) as UTCTimestamp;
         totalChart[_time] = {
           time: _time,
           open: (totalChart[_time]?.open ?? 0) + open,
           close: (totalChart[_time]?.close ?? 0) + close,
-          high: (totalChart[_time]?.high ?? 0) + Math.max(open, close),
-          low: (totalChart[_time]?.low ?? 0) + Math.min(open, close),
+          high: (totalChart[_time]?.high ?? 0) + high,
+          low: (totalChart[_time]?.low ?? 0) + low,
         };
       });
     });
@@ -64,13 +61,13 @@ export const usePortfolioChartData = (props: {
       .map(([, value]) => value);
 
     return { portfolioData, costBasisData: [] };
-  }, [data, holdings, rangeUnit]);
+  }, [data, holdings]);
 
   return { portfolioData, costBasisData };
 };
 
-const startOfRange = (time: number, rangeUnit: ManipulateType) =>
+const startOfDay = (time: number) =>
   (dayjs(time * 1000)
     .utc()
-    .startOf(rangeUnit)
+    .startOf("day")
     .valueOf() / 1000) as UTCTimestamp;

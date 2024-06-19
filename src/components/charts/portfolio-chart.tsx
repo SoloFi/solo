@@ -48,7 +48,7 @@ export const PortfolioChart = (props: {
     return {
       time: lastData.time,
       value: lastData.close,
-      percentChange: lastData.close / costBasis.value - 1,
+      percentChange: lastData && costBasis ? lastData.close / costBasis.value - 1 : 0,
     };
   }, [costBasisData, data]);
 
@@ -103,7 +103,7 @@ export const PortfolioChart = (props: {
         topColor: hexTransp(colors.blue[500], 50),
         bottomColor: hexTransp(colors.blue[500], 5),
       });
-      portfolioSeries.setData(data);
+      portfolioSeries.setData(data.map((d) => ({ value: d.close, ...d })));
       portfolioSeriesRef.current = portfolioSeries;
       const costBasisSeries = chart.addLineSeries({
         color: colors.gray[500],
