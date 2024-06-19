@@ -5,7 +5,6 @@ import {
   LastPriceAnimationMode,
   LineData,
   LineStyle,
-  type CandlestickData,
   type DeepPartial,
   type ISeriesApi,
   type MouseEventParams,
@@ -21,9 +20,10 @@ import { useTheme, type Theme } from "@/components/theme-provider";
 import ChartTooltip from "./chart-tooltip";
 import { cn, dayjs, hexTransp, usd } from "@/lib/utils";
 import { Badge } from "../ui/badge";
+import { CandlestickData } from "@/api/symbol";
 
 export const PortfolioChart = (props: {
-  data: AreaData<UTCTimestamp>[];
+  data: CandlestickData[];
   costBasisData: CostBasisData[];
   height?: number;
 }) => {
@@ -47,8 +47,8 @@ export const PortfolioChart = (props: {
     const costBasis = costBasisData[costBasisData.length - 1];
     return {
       time: lastData.time,
-      value: lastData.value,
-      percentChange: lastData.value / costBasis.value - 1,
+      value: lastData.close,
+      percentChange: lastData.close / costBasis.value - 1,
     };
   }, [costBasisData, data]);
 
@@ -67,7 +67,7 @@ export const PortfolioChart = (props: {
         : getLastBar();
 
       if (!bar) return;
-      const time = bar.time;
+      const time = bar.time as UTCTimestamp;
       const price = bar.value;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const costBasis = param.seriesData.get(
@@ -87,7 +87,7 @@ export const PortfolioChart = (props: {
 
   const handleCreateChart = useCallback(
     (params: {
-      data: CandlestickData<UTCTimestamp>[];
+      data: CandlestickData[];
       costBasisData: CostBasisData[];
       options: DeepPartial<TimeChartOptions>;
       theme: Theme;

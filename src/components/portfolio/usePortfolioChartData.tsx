@@ -1,108 +1,76 @@
 import type { Portfolio } from "@/api/portfolio";
-import type { CandlestickData } from "@/api/symbol";
-import type { AreaData, LineData, UTCTimestamp } from "lightweight-charts";
+import { RangeConstruction, type CandlestickData, type QuoteRange } from "@/api/symbol";
+import { dayjs } from "@/lib/utils";
+import { ManipulateType } from "dayjs";
+import type { LineData, UTCTimestamp } from "lightweight-charts";
 import { useMemo } from "react";
 
 // Hook to transform portfolio holdings and symbol chart data into a format that can be used by the chart component
 export const usePortfolioChartData = (props: {
-  holdings?: Portfolio["holdings"];
-  data?: Record<string, CandlestickData[] | undefined>;
+  holdings: Portfolio["holdings"] | null;
+  data: Record<string, CandlestickData[] | undefined> | null;
+  range: QuoteRange;
 }): {
-  portfolioData: AreaData<UTCTimestamp>[];
+  portfolioData: CandlestickData[];
   costBasisData: LineData<UTCTimestamp>[];
 } => {
-  const { holdings, data } = props;
+  const { holdings, data, range } = props;
+  const rangeUnit = RangeConstruction[range].unit;
 
   const { portfolioData, costBasisData } = useMemo(() => {
     if (!holdings || !data) return { portfolioData: [], costBasisData: [] };
 
-    const holdingsData = holdings.map(({ symbol, buys, sells }) => {
+    const chartMaps = holdings.map(({ symbol, buys, sales }) => {
       const symbolData = data[symbol];
-      if (!symbolData) {
-        return [];
-      }
-      const timeline = symbolData.map((entry) => entry.time);
-      const sharesOverTime = timeline.map((time) => {
+      if (!symbolData) return null;
+      // compute the holding's chart over time based on the current price and shares held
+      const holdingChart: Record<UTCTimestamp, CandlestickData> = {};
+      symbolData.forEach(({ time, open, high, low, close }) => {
         const buyShares = buys
-          .filter((buy) => buy.time <= time)
+          ?.filter((buy) => buy.time <= time)
           .reduce((acc, buy) => acc + buy.quantity, 0);
-        const sellShares = (sells || [])
-          .filter((sell) => sell.time <= time)
+        const sellShares = sales
+          ?.filter((sell) => sell.time <= time)
           .reduce((acc, sell) => acc + sell.quantity, 0);
-        return buyShares - sellShares;
-      });
-      const costBasisOverTime = timeline.map((time) => {
-        const buyCost = buys
-          .filter((buy) => buy.time <= time)
-          .reduce((acc, buy) => acc + buy.price * buy.quantity, 0);
-        const sellCost = (sells || [])
-          .filter((sell) => sell.time <= time)
-          .reduce((acc, sell) => acc + sell.price * sell.quantity, 0);
-        return buyCost - sellCost;
-      });
-      const holdingOHLC = timeline.map((_, index) => {
-        const { close } = symbolData[index];
-        return {
-          time: timeline[index],
-          close: close * sharesOverTime[index],
-          cost: costBasisOverTime[index],
+        const shares = (buyShares ?? 0) - (sellShares ?? 0);
+        holdingChart[startOfRange(time, rangeUnit)] = {
+          time,
+          open: open * shares,
+          high: high * shares,
+          low: low * shares,
+          close: close * shares,
         };
       });
-      return holdingOHLC;
+      return holdingChart;
     });
 
-    // Combine the OHLC data of all holdings using the timeline with the highest resolution
-    const combinedTimeline = Array.from(
-      new Set(
-        holdingsData.flatMap((holdingOHLC) => holdingOHLC.map((entry) => entry.time)),
-      ),
-    ).sort();
-
-    // Resize the OHLC data to match the combined timeline by adding padding for missing entries
-    const resizedData = holdingsData.map((holdingOHLC) => {
-      const resizedOHLC = combinedTimeline.map((time) =>
-        holdingOHLC.find((entry) => entry.time === time),
-      );
-      // set the first entry to the first non-null entry to 0 if the first entry is null
-      if (!resizedOHLC[0]) {
-        resizedOHLC[0] = {
-          time: combinedTimeline[0],
-          close: 0,
-          cost: 0,
+    const totalChart: Record<UTCTimestamp, CandlestickData> = {};
+    chartMaps.forEach((holdingChart) => {
+      if (!holdingChart) return;
+      Object.entries(holdingChart).forEach(([time, { open, close }]) => {
+        const _time = parseInt(time) as UTCTimestamp;
+        totalChart[_time] = {
+          time: _time,
+          open: (totalChart[_time]?.open ?? 0) + open,
+          close: (totalChart[_time]?.close ?? 0) + close,
+          high: (totalChart[_time]?.high ?? 0) + Math.max(open, close),
+          low: (totalChart[_time]?.low ?? 0) + Math.min(open, close),
         };
-      }
-      // Fill in missing entries with the previous entry
-      for (let i = 1; i < resizedOHLC.length; i++) {
-        if (!resizedOHLC[i]) {
-          const previousEntry = resizedOHLC[i - 1] as {
-            time: UTCTimestamp;
-            close: number;
-            cost: number;
-          };
-          resizedOHLC[i] = { ...previousEntry, time: combinedTimeline[i] };
-        }
-      }
-      return resizedOHLC;
+      });
     });
 
-    const combinedData = combinedTimeline.map((time, index) => {
-      const combinedEntry = resizedData.map((holdingOHLC) => holdingOHLC[index]);
-      const close = combinedEntry.reduce((acc, entry) => acc + (entry?.close ?? 0), 0);
-      const cost = combinedEntry.reduce((acc, entry) => acc + (entry?.cost ?? 0), 0);
-      return { time, close, cost };
-    });
+    const portfolioData = Object.entries(totalChart)
+      .sort(([a], [b]) => parseInt(a) - parseInt(b))
+      .map(([, value]) => value);
 
-    return {
-      portfolioData: combinedData.map(({ close, time }) => ({
-        value: close,
-        time,
-      })),
-      costBasisData: combinedData.map(({ cost, time }) => ({
-        value: cost,
-        time,
-      })),
-    };
-  }, [data, holdings]);
+    return { portfolioData, costBasisData: [] };
+  }, [data, holdings, rangeUnit]);
 
   return { portfolioData, costBasisData };
 };
+
+const startOfRange = (time: number, rangeUnit: ManipulateType) =>
+  (dayjs(time * 1000)
+    .utc()
+    .startOf(rangeUnit)
+    .valueOf() / 1000) as UTCTimestamp;

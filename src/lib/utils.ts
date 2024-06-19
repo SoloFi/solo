@@ -1,7 +1,8 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import dayjs from "dayjs";
+import dayjs, { type Dayjs, type ManipulateType } from "dayjs";
 import utc from "dayjs/plugin/utc";
+import { QuoteRange } from "@/api/symbol";
 
 dayjs.extend(utc);
 
@@ -12,11 +13,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function hexTransp(hexColor: string, alpha: number) {
-  const map = (
-    value: number,
-    oldRange: [number, number],
-    newRange: [number, number],
-  ) => {
+  const map = (value: number, oldRange: [number, number], newRange: [number, number]) => {
     const newValue =
       ((value - oldRange[0]) * (newRange[1] - newRange[0])) /
         (oldRange[1] - oldRange[0]) +
@@ -36,4 +33,20 @@ export function usd(value: number, decimals = 2) {
     currency: "USD",
     maximumFractionDigits: decimals,
   }).format(value);
+}
+
+export function dayjsRange(params: {
+  start: Dayjs;
+  end: Dayjs;
+  value: number;
+  unit: ManipulateType;
+}) {
+  const { start, end, value, unit } = params;
+  const range = [];
+  let current = start;
+  while (!current.isAfter(end)) {
+    range.push(current);
+    current = current.add(value, unit);
+  }
+  return range;
 }

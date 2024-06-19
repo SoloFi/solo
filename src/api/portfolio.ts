@@ -10,7 +10,7 @@ export type Portfolio = {
       quantity: number;
       price: number;
     }[];
-    sells?: {
+    sales?: {
       time: number;
       quantity: number;
       price: number;
