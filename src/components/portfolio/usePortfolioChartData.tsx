@@ -41,6 +41,9 @@ export const usePortfolioChartData = (props: {
       return holdingChart;
     });
 
+    // before computing totalChart, we need to fill the gaps in the data with the corresponding last known value
+    // TODO
+
     const totalChart: Record<UTCTimestamp, CandlestickData> = {};
     chartMaps.forEach((holdingChart) => {
       if (!holdingChart) return;

@@ -68,7 +68,6 @@ function Index() {
   const { portfolioData, costBasisData } = usePortfolioChartData({
     holdings: doneFetching && portfolio?.holdings ? portfolio.holdings : null,
     data: doneFetching && portfolioSymbolsData ? portfolioSymbolsData : null,
-    range: "1y",
   });
 
   useEffect(() => {
