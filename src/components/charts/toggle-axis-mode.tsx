@@ -5,15 +5,12 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 export default function ToggleAxisMode(props: {
+  defaultMode?: PriceScaleMode;
   chartRef?: React.MutableRefObject<IChartApi | undefined>;
   side?: "left" | "right";
 }) {
-  const { chartRef, side = "right" } = props;
-  const [mode, setMode] = useState(
-    chartRef?.current?.options().rightPriceScale.mode === PriceScaleMode.Logarithmic
-      ? PriceScaleMode.Logarithmic
-      : PriceScaleMode.Normal,
-  );
+  const { defaultMode = PriceScaleMode.Logarithmic, chartRef, side = "right" } = props;
+  const [mode, setMode] = useState(defaultMode);
 
   return (
     <TooltipProvider>

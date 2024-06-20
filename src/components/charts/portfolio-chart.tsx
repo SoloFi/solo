@@ -41,8 +41,9 @@ export const PortfolioChart = (props: {
   const areaSeriesRef = useRef<ISeriesApi<"Area", Time>>();
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick", Time>>();
   const costBasisSeriesRef = useRef<ISeriesApi<"Line", Time>>();
+  const [axisMode] = useState<PriceScaleMode>(PriceScaleMode.Logarithmic);
 
-  const { options } = useChartOptions();
+  const { options } = useChartOptions({ rightPriceScale: { mode: axisMode } });
 
   const getLastTooltipValue = useCallback(() => {
     const lastData = data[data.length - 1];
@@ -180,7 +181,7 @@ export const PortfolioChart = (props: {
           percentChange={tooltip.percentChange}
         />
       )}
-      <ToggleAxisMode chartRef={chartRef} />
+      <ToggleAxisMode defaultMode={axisMode} chartRef={chartRef} />
     </ChartWrapper>
   );
 };
