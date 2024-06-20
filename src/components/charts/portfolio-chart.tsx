@@ -1,9 +1,7 @@
-// import { hexTransp } from "@/lib/utils";
 import {
   AreaData,
   createChart,
   LastPriceAnimationMode,
-  LineData,
   LineStyle,
   type DeepPartial,
   type ISeriesApi,
@@ -26,8 +24,9 @@ export const PortfolioChart = (props: {
   data: CandlestickData[];
   costBasisData: CostBasisData[];
   height?: number;
+  type?: "area" | "candlestick";
 }) => {
-  const { data, costBasisData, height } = props;
+  const { data, costBasisData, height, type = "area" } = props;
   const { theme } = useTheme();
   const [tooltip, setTooltip] = useState<{
     time: UTCTimestamp;
@@ -37,7 +36,8 @@ export const PortfolioChart = (props: {
   const parentContainerRef = useRef<HTMLDivElement | null>(null);
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<ReturnType<typeof createChart>>();
-  const portfolioSeriesRef = useRef<ISeriesApi<"Area", Time>>();
+  const areaSeriesRef = useRef<ISeriesApi<"Area", Time>>();
+  const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick", Time>>();
   const costBasisSeriesRef = useRef<ISeriesApi<"Line", Time>>();
 
   const { options } = useChartOptions();
@@ -54,35 +54,37 @@ export const PortfolioChart = (props: {
 
   const handleUpdateTooltip = useCallback(
     (param: MouseEventParams<Time>) => {
-      if (!portfolioSeriesRef.current || !costBasisSeriesRef.current) return;
       let validCrosshairPoint = true;
       if (!param || !param.point) validCrosshairPoint = false;
       if (param.point && (param.point.x < 0 || param.point.y < 0))
         validCrosshairPoint = false;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const bar = validCrosshairPoint
-        ? (param.seriesData.get(portfolioSeriesRef.current) as AreaData<UTCTimestamp> & {
-            percentChange: number;
-          })
-        : getLastBar();
 
+      if (!validCrosshairPoint) {
+        setTooltip(getLastBar());
+        return;
+      }
+      let bar: CandlestickData & AreaData<UTCTimestamp>;
+      if (type === "area") {
+        if (!areaSeriesRef.current) return;
+        bar = param.seriesData.get(areaSeriesRef.current) as typeof bar;
+      } else {
+        if (!candlestickSeriesRef.current) return;
+        bar = param.seriesData.get(candlestickSeriesRef.current) as typeof bar;
+      }
       if (!bar) return;
-      const time = bar.time as UTCTimestamp;
-      const price = bar.value;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const costBasis = param.seriesData.get(
-        costBasisSeriesRef.current,
-      ) as LineData<UTCTimestamp>;
-      if (!costBasis) return;
-      const percentChange =
-        bar.percentChange !== undefined
-          ? bar.percentChange
-          : costBasis.value
-            ? (price / costBasis.value - 1) * 100
-            : 0;
-      setTooltip({ time, value: price, percentChange });
+      // const costBasis = param.seriesData.get(
+      //   costBasisSeriesRef.current,
+      // ) as LineData<UTCTimestamp>;
+      // if (!costBasis) return;
+      // const percentChange =
+      //   bar.percentChange !== undefined
+      //     ? bar.percentChange
+      //     : costBasis.value
+      //       ? (price / costBasis.value - 1) * 100
+      //       : 0;
+      setTooltip({ time: bar.time, value: bar.value ?? bar.close, percentChange: 0 });
     },
-    [getLastBar],
+    [getLastBar, type],
   );
 
   const handleCreateChart = useCallback(
@@ -91,20 +93,27 @@ export const PortfolioChart = (props: {
       costBasisData: CostBasisData[];
       options: DeepPartial<TimeChartOptions>;
       theme: Theme;
+      type: "area" | "candlestick";
     }) => {
-      const { data, costBasisData, options } = params;
+      const { data, costBasisData, options, type } = params;
       if (chartRef.current || !chartContainerRef.current) return;
       const chart = createChart(chartContainerRef.current, options);
       chartRef.current = chart;
 
-      const portfolioSeries = chart.addAreaSeries({
-        lastPriceAnimation: LastPriceAnimationMode.Continuous,
-        lineColor: colors.blue[500],
-        topColor: hexTransp(colors.blue[500], 50),
-        bottomColor: hexTransp(colors.blue[500], 5),
-      });
-      portfolioSeries.setData(data.map((d) => ({ value: d.close, ...d })));
-      portfolioSeriesRef.current = portfolioSeries;
+      if (type === "area") {
+        const areaSeries = chart.addAreaSeries({
+          lastPriceAnimation: LastPriceAnimationMode.Continuous,
+          lineColor: colors.blue[500],
+          topColor: hexTransp(colors.blue[500], 50),
+          bottomColor: hexTransp(colors.blue[500], 5),
+        });
+        areaSeries.setData(data.map((d) => ({ value: d.close, ...d })));
+        areaSeriesRef.current = areaSeries;
+      } else {
+        const candlestickSeries = chart.addCandlestickSeries();
+        candlestickSeries.setData(data);
+        candlestickSeriesRef.current = candlestickSeries;
+      }
       const costBasisSeries = chart.addLineSeries({
         color: colors.gray[500],
         lineWidth: 2,
@@ -122,9 +131,9 @@ export const PortfolioChart = (props: {
     (node: HTMLDivElement) => {
       if (!node) return;
       chartContainerRef.current = node;
-      handleCreateChart({ data, costBasisData, options, theme });
+      handleCreateChart({ data, costBasisData, options, theme, type });
     },
-    [costBasisData, data, handleCreateChart, options, theme],
+    [costBasisData, data, handleCreateChart, options, theme, type],
   );
 
   const addChartEventListeners = useCallback(() => {
@@ -146,11 +155,11 @@ export const PortfolioChart = (props: {
       null;
     }
     chartRef.current = undefined;
-    handleCreateChart({ data, costBasisData, options, theme });
+    handleCreateChart({ data, costBasisData, options, theme, type });
     addChartEventListeners();
     return removeChartEventListeners;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme]);
+  }, [theme, type]);
 
   return (
     <div

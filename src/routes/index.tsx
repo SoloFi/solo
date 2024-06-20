@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-// import { ChartTypeToggle } from "@/components/charts/chart-type-toggle";
+import { ChartTypeToggle } from "@/components/charts/chart-type-toggle";
 import { getSymbolChart, type CandlestickData } from "@/api/symbol";
 import { getPortfolio } from "@/api/portfolio";
 import { usePortfolioChartData } from "@/components/portfolio/usePortfolioChartData";
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  // const [chartType, setChartType] = useState<"area" | "candlestick">("area");
+  const [chartType, setChartType] = useState<"area" | "candlestick">("area");
 
   const {
     data: portfolio,
@@ -90,6 +90,9 @@ function Index() {
         <CardHeader>
           <div className="flex">
             <h1 className="text-3xl font-bold min-w-[150px]">{portfolio?.name ?? ""}</h1>
+            <div className="ml-auto">
+              <ChartTypeToggle defaultChartType="area" onToggle={setChartType} />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -97,6 +100,7 @@ function Index() {
             data={portfolioData}
             costBasisData={costBasisData}
             height={400}
+            type={chartType}
           />
           <div className="mt-4">
             <PortfolioTable

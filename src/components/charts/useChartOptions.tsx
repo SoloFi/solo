@@ -28,7 +28,7 @@ export default function useChartOptions(options = {} as DeepPartial<TimeChartOpt
           },
         },
         rightPriceScale: {
-          mode: PriceScaleMode.Normal,
+          mode: PriceScaleMode.Logarithmic,
         },
         autoSize: true,
         height: 400,
