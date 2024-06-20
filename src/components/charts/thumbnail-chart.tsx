@@ -18,7 +18,7 @@ export const ThumbnailChart = (props: {
   const { data, color = colors.blue[500], height = 150 } = props;
 
   const chartContainerRef = useRef<HTMLDivElement>(null);
-  const { options } = useChartOptions({
+  const options = useChartOptions({
     height,
     rightPriceScale: { visible: false },
     timeScale: { visible: false },

@@ -12,7 +12,7 @@ import {
   type TimeChartOptions,
   type UTCTimestamp,
 } from "lightweight-charts";
-import { useRef, useCallback, useEffect, useState } from "react";
+import { useRef, useCallback, useEffect, useState, useMemo } from "react";
 import useChartOptions from "./useChartOptions";
 import colors from "tailwindcss/colors";
 import { useTheme, type Theme } from "@/components/theme-provider";
@@ -20,7 +20,6 @@ import ChartTooltip from "./chart-tooltip";
 import { dayjs, hexTransp, percentChange, usd } from "@/lib/utils";
 import { CandlestickData } from "@/api/symbol";
 import ChartWrapper from "./chart-wrapper";
-import { Toggle } from "../ui/toggle";
 import ToggleAxisMode from "./toggle-axis-mode";
 
 export const PortfolioChart = (props: {
@@ -43,7 +42,7 @@ export const PortfolioChart = (props: {
   const costBasisSeriesRef = useRef<ISeriesApi<"Line", Time>>();
   const [axisMode] = useState<PriceScaleMode>(PriceScaleMode.Logarithmic);
 
-  const { options } = useChartOptions({ rightPriceScale: { mode: axisMode } });
+  const options = useChartOptions({ rightPriceScale: { mode: axisMode } });
 
   const getLastTooltipValue = useCallback(() => {
     const lastData = data[data.length - 1];
@@ -130,9 +129,8 @@ export const PortfolioChart = (props: {
       costBasisSeries.setData(costBasisData);
       costBasisSeriesRef.current = costBasisSeries;
       chart.timeScale().fitContent();
-      setTooltip(getLastTooltipValue());
     },
-    [getLastTooltipValue],
+    [],
   );
 
   const initContainerRef = useCallback(
@@ -165,9 +163,19 @@ export const PortfolioChart = (props: {
     chartRef.current = undefined;
     handleCreateChart({ data, costBasisData, options, theme, type });
     addChartEventListeners();
+    setTooltip(getLastTooltipValue());
     return removeChartEventListeners;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme, type]);
+  }, [
+    addChartEventListeners,
+    costBasisData,
+    data,
+    getLastTooltipValue,
+    handleCreateChart,
+    options,
+    removeChartEventListeners,
+    theme,
+    type,
+  ]);
 
   return (
     <ChartWrapper height={height ?? 400}>

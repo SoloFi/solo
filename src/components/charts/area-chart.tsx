@@ -1,21 +1,14 @@
 import { hexTransp } from "@/lib/utils";
-import {
-  createChart,
-  type AreaData,
-  type UTCTimestamp,
-} from "lightweight-charts";
+import { createChart, type AreaData, type UTCTimestamp } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import colors from "tailwindcss/colors";
 import useChartOptions from "./useChartOptions";
 
-export const AreaChart = (props: {
-  data: AreaData<UTCTimestamp>[];
-  height?: number;
-}) => {
+export const AreaChart = (props: { data: AreaData<UTCTimestamp>[]; height?: number }) => {
   const { data, height = 350 } = props;
 
   const chartContainerRef = useRef<HTMLDivElement>(null);
-  const { options } = useChartOptions({
+  const options = useChartOptions({
     width: chartContainerRef.current?.clientWidth,
     height,
   });

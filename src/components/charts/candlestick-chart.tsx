@@ -1,9 +1,5 @@
 // import { hexTransp } from "@/lib/utils";
-import {
-  createChart,
-  type CandlestickData,
-  type UTCTimestamp,
-} from "lightweight-charts";
+import { createChart, type CandlestickData, type UTCTimestamp } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import useChartOptions from "./useChartOptions";
 
@@ -14,7 +10,7 @@ export const CandlestickChart = (props: {
   const { data, height = 350 } = props;
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
-  const { options } = useChartOptions({
+  const options = useChartOptions({
     width: chartContainerRef.current?.clientWidth,
     height,
   });
