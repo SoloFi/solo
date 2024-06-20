@@ -9,7 +9,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "format": "prettier --write .",
-    "api": "bun --watch src/api.ts"
+    "mock": "bun --watch src/mock/api.ts"
   },
   "dependencies": {
     "@bogeychan/elysia-logger": "^0.0.22",

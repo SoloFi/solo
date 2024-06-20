@@ -26,7 +26,7 @@ new Elysia()
     }
     const response = await fetch(url.toString());
     if (!response.ok) {
-      throw new Error("Network response was not ok");
+      return response;
     }
     const data = await response.json();
     const timestamp = data?.chart?.result?.[0]?.timestamp as UTCTimestamp[];

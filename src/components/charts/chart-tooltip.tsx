@@ -11,7 +11,7 @@ export default function ChartTooltip(props: {
   return (
     <div className="absolute top-0 left-0">
       <div className="flex items-center space-x-3">
-        <p className="text-3xl font-semibold">{value}</p>
+        <h1 className="text-3xl font-semibold">{value}</h1>
         <Badge
           className={cn(
             "h-7 px-2 text-lg",
@@ -21,7 +21,7 @@ export default function ChartTooltip(props: {
           {percentChange.toFixed(2)}%
         </Badge>
       </div>
-      <div className="text-lg">{time}</div>
+      <p className="text-lg">{time}</p>
     </div>
   );
 }
