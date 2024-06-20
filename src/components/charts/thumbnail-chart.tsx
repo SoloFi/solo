@@ -1,11 +1,12 @@
 import { hexTransp } from "@/lib/utils";
 import {
   CrosshairMode,
+  IChartApi,
   createChart,
   type AreaData,
   type UTCTimestamp,
 } from "lightweight-charts";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import colors from "tailwindcss/colors";
 import useChartOptions from "./useChartOptions";
 import ChartWrapper from "./chart-wrapper";
@@ -18,6 +19,7 @@ export const ThumbnailChart = (props: {
   const { data, color = colors.blue[500], height = 150 } = props;
 
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
   const options = useChartOptions({
     height,
     rightPriceScale: { visible: false },
@@ -27,9 +29,15 @@ export const ThumbnailChart = (props: {
     },
   });
 
+  const fitContent = useCallback(() => {
+    if (!chartRef.current) return;
+    chartRef.current.timeScale().fitContent();
+  }, []);
+
   useEffect(() => {
     if (!chartContainerRef.current) return;
     const chart = createChart(chartContainerRef.current, options);
+    chartRef.current = chart;
     const areaSeries = chart.addAreaSeries({
       lineColor: color,
       lineWidth: 2,
@@ -38,11 +46,13 @@ export const ThumbnailChart = (props: {
       priceLineVisible: false,
     });
     areaSeries.setData(data);
-    chart.timeScale().fitContent();
+    fitContent();
+    window.addEventListener("resize", fitContent);
     return () => {
       chart.remove();
+      window.removeEventListener("resize", fitContent);
     };
-  }, [color, data, height, options]);
+  }, [color, data, fitContent, height, options]);
 
   return (
     <ChartWrapper height={height}>
