@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 // import { ChartTypeToggle } from "@/components/charts/chart-type-toggle";
 import { getSymbolChart, type CandlestickData } from "@/api/symbol";
 import { getPortfolio } from "@/api/portfolio";
-import { dayjs } from "@/lib/utils";
 import { usePortfolioChartData } from "@/components/portfolio/usePortfolioChartData";
 import { PortfolioChart } from "@/components/charts/portfolio-chart";
 import { PortfolioTable } from "@/components/portfolio/portfolio-table";

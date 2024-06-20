@@ -7,19 +7,19 @@
         {
           "time": 1704171600,
           "price": 185,
-          "quantity": 10
+          "quantity": 25
         },
         {
           "time": 1710993600,
           "price": 171.37,
-          "quantity": 10
+          "quantity": 30
         }
       ],
       "sales": [
         {
           "time": 1718078400,
           "price": 207,
-          "quantity": 10
+          "quantity": 30
         }
       ]
     },
@@ -29,19 +29,19 @@
         {
           "time": 1704171600,
           "price": 138,
-          "quantity": 10
+          "quantity": 50
         },
         {
           "time": 1710993600,
           "price": 147,
-          "quantity": 5
+          "quantity": 25
         }
       ],
       "sales": [
         {
           "time": 1718078400,
           "price": 176,
-          "quantity": 5
+          "quantity": 30
         }
       ]
     },
@@ -51,12 +51,12 @@
         {
           "time": 1614747600,
           "price": 150,
-          "quantity": 20
+          "quantity": 45
         },
         {
           "time": 1669093200,
           "price": 89,
-          "quantity": 25
+          "quantity": 35
         }
       ]
     },
@@ -66,7 +66,7 @@
         {
           "time": 1653192000,
           "price": 30000,
-          "quantity": 0.1
+          "quantity": 1
         }
       ]
     }

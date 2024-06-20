@@ -1,5 +1,5 @@
 import type { Portfolio } from "@/api/portfolio";
-import { type CandlestickData } from "@/api/symbol";
+import type { CandlestickData } from "@/api/symbol";
 import { dayjs } from "@/lib/utils";
 import type { LineData, UTCTimestamp } from "lightweight-charts";
 import { useMemo } from "react";
@@ -22,7 +22,7 @@ export const usePortfolioChartData = (props: {
       if (!symbolData) return null;
       // compute the holding's chart over time based on the current price and shares held
       const holdingChart: Record<UTCTimestamp, CandlestickData> = {};
-      symbolData.forEach(({ time, open, high, low, close }) => {
+      for (const { time, open, high, low, close } of symbolData) {
         const buyShares = buys
           ?.filter((buy) => buy.time <= time)
           .reduce((acc, buy) => acc + buy.quantity, 0);
@@ -37,18 +37,33 @@ export const usePortfolioChartData = (props: {
           low: low * shares,
           close: close * shares,
         };
-      });
+      }
       return holdingChart;
     });
 
-    // before computing totalChart, we need to fill the gaps in the data with the corresponding last known value
-    // TODO
+    const mergedTimeline = Array.from(
+      new Set(chartMaps.flatMap((chart) => Object.keys(chart ?? {})).map(Number)),
+    ).sort((a, b) => a - b) as UTCTimestamp[];
+    // before computing totalChart, we need to fill the gaps and null candle data (open high low close) values
+    // in the data with the corresponding last known non-null/non-zero candle data
+    for (const holdingChart of chartMaps) {
+      if (!holdingChart) continue;
+      let lastCandle: CandlestickData | null = null;
+      for (const time of mergedTimeline) {
+        const candle = holdingChart[time];
+        if (candle?.open && candle?.high && candle?.low && candle?.close) {
+          lastCandle = candle;
+        } else if (lastCandle) {
+          holdingChart[time] = lastCandle;
+        }
+      }
+    }
 
     const totalChart: Record<UTCTimestamp, CandlestickData> = {};
-    chartMaps.forEach((holdingChart) => {
-      if (!holdingChart) return;
-      Object.entries(holdingChart).forEach(([time, { open, high, low, close }]) => {
-        const _time = parseInt(time) as UTCTimestamp;
+    for (const holdingChart of chartMaps) {
+      if (!holdingChart) continue;
+      for (const [time, { open, high, low, close }] of Object.entries(holdingChart)) {
+        const _time = Number.parseInt(time) as UTCTimestamp;
         totalChart[_time] = {
           time: _time,
           open: (totalChart[_time]?.open ?? 0) + open,
@@ -56,11 +71,10 @@ export const usePortfolioChartData = (props: {
           high: (totalChart[_time]?.high ?? 0) + high,
           low: (totalChart[_time]?.low ?? 0) + low,
         };
-      });
-    });
-
+      }
+    }
     const portfolioData = Object.entries(totalChart)
-      .sort(([a], [b]) => parseInt(a) - parseInt(b))
+      .sort(([a], [b]) => Number.parseInt(a) - Number.parseInt(b))
       .map(([, value]) => value);
 
     return { portfolioData, costBasisData: [] };
