@@ -12,7 +12,7 @@ import {
   type TimeChartOptions,
   type UTCTimestamp,
 } from "lightweight-charts";
-import { useRef, useCallback, useEffect, useState, useMemo } from "react";
+import { useRef, useCallback, useEffect, useState } from "react";
 import useChartOptions from "./useChartOptions";
 import colors from "tailwindcss/colors";
 import { useTheme, type Theme } from "@/components/theme-provider";

@@ -2,7 +2,7 @@ import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { logger } from "@bogeychan/elysia-logger";
 import { UTCTimestamp } from "lightweight-charts";
-import { CandlestickData, Quote } from "./api/symbol";
+import { CandlestickData, Quote } from "../api/symbol";
 
 new Elysia()
   .use(logger())
