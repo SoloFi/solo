@@ -16,11 +16,13 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { cn, dayjs, percentChange, usd } from "@/lib/utils";
-import PriceChange from "../price-change";
+import { dayjs, percentChange, usd } from "@/lib/utils";
+import ValueChange from "../value-change";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { Button } from "../ui/button";
 import { getCostBasisAtTime } from "./utils";
+import { ThumbnailChart } from "../charts/thumbnail-chart";
+import colors from "tailwindcss/colors";
 
 type PortfolioTableData = {
   symbol: string;
@@ -32,6 +34,10 @@ type PortfolioTableData = {
     value: number;
     percentChange: number;
   };
+  last30Days: {
+    time: UTCTimestamp;
+    value: number;
+  }[];
 };
 
 const columnHelper = createColumnHelper<PortfolioTableData>();
@@ -67,6 +73,7 @@ export const PortfolioTable = (props: {
             value: 0,
             percentChange: 0,
           },
+          last30Days: [],
         };
       }
       const lastBuy = buys[buys.length - 1];
@@ -86,6 +93,11 @@ export const PortfolioTable = (props: {
           value: value - costBasis,
           percentChange: percentChange(costBasis, value),
         },
+        last30Days:
+          chartData?.slice(-30).map((data) => ({
+            time: data.time as UTCTimestamp,
+            value: data.close,
+          })) ?? [],
       };
     });
   }, [holdings, symbolsData]);
@@ -121,20 +133,33 @@ export const PortfolioTable = (props: {
       columnHelper.accessor("change", {
         header: "Change",
         cell: (row) => (
-          <div className="flex flex-col items-end">
-            <PriceChange percentChange={row.getValue().percentChange}>
+          <div>
+            <ValueChange change={row.getValue().percentChange}>
               {usd(row.getValue().value)}
-            </PriceChange>
-            <PriceChange percentChange={row.getValue().percentChange}>
-              {row.getValue().percentChange.toFixed(2)}%
-            </PriceChange>
+            </ValueChange>
+            <ValueChange change={row.getValue().percentChange}>
+              ({row.getValue().percentChange >= 0 ? "+" : ""}
+              {row.getValue().percentChange.toFixed(2)}%)
+            </ValueChange>
           </div>
         ),
         enableSorting: true,
         enableMultiSort: false,
-        meta: {
-          align: "right",
-        },
+      }),
+      columnHelper.accessor("last30Days", {
+        header: "Last 30 Days",
+        cell: (row) => (
+          <ThumbnailChart
+            data={row.getValue()}
+            height={50}
+            color={
+              row.getValue()[0].value < row.getValue()[row.getValue().length - 1].value
+                ? colors.green[500]
+                : colors.red[500]
+            }
+          />
+        ),
+        enableSorting: false,
       }),
     ];
   }, []);
@@ -161,15 +186,8 @@ export const PortfolioTable = (props: {
             {headerGroup.headers.map((header) => (
               <TableHead key={header.id} colSpan={header.colSpan}>
                 <div className="flex items-center">
-                  <p
-                    className={cn(
-                      "flex-1",
-                      header.column.columnDef.meta?.align === "right" ? "text-right" : "",
-                    )}
-                  >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </p>
-                  {header.column.getCanSort() ? (
+                  <p>{flexRender(header.column.columnDef.header, header.getContext())}</p>
+                  {header.column.getCanSort() && (
                     <Button
                       size="icon"
                       variant="ghost"
@@ -182,8 +200,6 @@ export const PortfolioTable = (props: {
                         <ArrowUp className="w-4 h-4" />
                       )}
                     </Button>
-                  ) : (
-                    ""
                   )}
                 </div>
               </TableHead>

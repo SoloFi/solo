@@ -1,18 +1,19 @@
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
 
-export default function PriceChange(props: {
-  percentChange: number;
+export default function ValueChange(props: {
+  change: number;
+  threshold?: number;
   children?: ReactNode;
   className?: string;
 }) {
-  const { children, percentChange, className } = props;
+  const { children, change, threshold = 0, className } = props;
 
   return (
     <div
       className={cn(
         "flex items-center font-semibold",
-        percentChange > 0 ? "text-green-500" : "text-red-500",
+        change >= threshold ? "text-green-500" : "text-red-500",
         className,
       )}
     >

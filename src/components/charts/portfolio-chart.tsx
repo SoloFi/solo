@@ -16,9 +16,9 @@ import useChartOptions from "./useChartOptions";
 import colors from "tailwindcss/colors";
 import { useTheme, type Theme } from "@/components/theme-provider";
 import ChartTooltip from "./chart-tooltip";
-import { cn, dayjs, hexTransp, percentChange, usd } from "@/lib/utils";
-import { Badge } from "../ui/badge";
+import { dayjs, hexTransp, percentChange, usd } from "@/lib/utils";
 import { CandlestickData } from "@/api/symbol";
+import ChartWrapper from "./chart-wrapper";
 
 export const PortfolioChart = (props: {
   data: CandlestickData[];
@@ -33,7 +33,6 @@ export const PortfolioChart = (props: {
     value: number;
     percentChange: number;
   } | null>(null);
-  const parentContainerRef = useRef<HTMLDivElement | null>(null);
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<ReturnType<typeof createChart>>();
   const areaSeriesRef = useRef<ISeriesApi<"Area", Time>>();
@@ -167,34 +166,17 @@ export const PortfolioChart = (props: {
   }, [theme, type]);
 
   return (
-    <div
-      ref={parentContainerRef}
-      className="flex w-full overflow-hidden relative"
-      style={{ height: height ?? 400 }}
-    >
-      <div className="absolute w-full h-full">
-        <div ref={initContainerRef} />
-        {tooltip?.time && tooltip?.value ? (
-          <ChartTooltip
-            time={dayjs(tooltip.time * 1000)
-              .utc()
-              .format("MMMM D, YYYY")}
-            value={
-              <div className="flex items-center space-x-3">
-                <p>{usd(tooltip.value)}</p>
-                <Badge
-                  className={cn(
-                    "h-7 px-2 text-lg",
-                    tooltip.percentChange <= 0 ? "bg-red-500" : "bg-green-500",
-                  )}
-                >
-                  {tooltip.percentChange.toFixed(2)}%
-                </Badge>
-              </div>
-            }
-          />
-        ) : null}
-      </div>
-    </div>
+    <ChartWrapper height={height ?? 400}>
+      <div ref={initContainerRef} />
+      {!!tooltip && (
+        <ChartTooltip
+          time={dayjs(tooltip.time * 1000)
+            .utc()
+            .format("MMMM D, YYYY")}
+          value={usd(tooltip.value)}
+          percentChange={tooltip.percentChange}
+        />
+      )}
+    </ChartWrapper>
   );
 };
