@@ -1,11 +1,12 @@
-import { cn, usd } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
 
 export default function PriceChange(props: {
-  value: number;
   percentChange: number;
+  children?: ReactNode;
   className?: string;
 }) {
-  const { value, percentChange, className } = props;
+  const { children, percentChange, className } = props;
 
   return (
     <div
@@ -15,18 +16,7 @@ export default function PriceChange(props: {
         className,
       )}
     >
-      <span>
-        {percentChange > 0 ? "+" : ""}
-        {usd(value)}
-      </span>
-      <span className="ml-2">
-        ({percentChange > 0 ? "+" : ""}
-        {percent(percentChange)})
-      </span>
+      {children}
     </div>
   );
-}
-
-function percent(value: number) {
-  return `${(value * 100).toFixed(2)}%`;
 }

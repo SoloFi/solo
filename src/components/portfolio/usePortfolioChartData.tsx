@@ -59,25 +59,47 @@ export const usePortfolioChartData = (props: {
       }
     }
 
-    const totalChart: Record<UTCTimestamp, CandlestickData> = {};
+    const portfolioChart: Record<UTCTimestamp, CandlestickData> = {};
     for (const holdingChart of chartMaps) {
       if (!holdingChart) continue;
       for (const [time, { open, high, low, close }] of Object.entries(holdingChart)) {
         const _time = Number.parseInt(time) as UTCTimestamp;
-        totalChart[_time] = {
+        portfolioChart[_time] = {
           time: _time,
-          open: (totalChart[_time]?.open ?? 0) + open,
-          close: (totalChart[_time]?.close ?? 0) + close,
-          high: (totalChart[_time]?.high ?? 0) + high,
-          low: (totalChart[_time]?.low ?? 0) + low,
+          open: (portfolioChart[_time]?.open ?? 0) + open,
+          close: (portfolioChart[_time]?.close ?? 0) + close,
+          high: (portfolioChart[_time]?.high ?? 0) + high,
+          low: (portfolioChart[_time]?.low ?? 0) + low,
         };
       }
     }
-    const portfolioData = Object.entries(totalChart)
+    const portfolioData = Object.entries(portfolioChart)
       .sort(([a], [b]) => Number.parseInt(a) - Number.parseInt(b))
       .map(([, value]) => value);
 
-    return { portfolioData, costBasisData: [] };
+    // compute the cost basis of each holding over the merged timeline
+    // based on the total cost of buys minus sales for a given holding
+    const costBasisChart: Record<UTCTimestamp, number> = {};
+    for (let i = 0; i < chartMaps.length; i++) {
+      const holdingChart = chartMaps[i];
+      if (!holdingChart) continue;
+      for (const [time] of Object.entries(holdingChart)) {
+        const _time = Number.parseInt(time) as UTCTimestamp;
+        const buyCost = holdings[i].buys
+          ?.filter((buy) => buy.time <= _time)
+          .reduce((acc, buy) => acc + buy.quantity * buy.price, 0);
+        const sellCost = holdings[i].sales
+          ?.filter((sell) => sell.time <= _time)
+          .reduce((acc, sell) => acc + sell.quantity * sell.price, 0);
+        costBasisChart[_time] =
+          (costBasisChart[_time] ?? 0) + (buyCost ?? 0) - (sellCost ?? 0);
+      }
+    }
+    const costBasisData = Object.entries(costBasisChart)
+      .sort(([a], [b]) => Number.parseInt(a) - Number.parseInt(b))
+      .map(([time, value]) => ({ time: Number.parseInt(time) as UTCTimestamp, value }));
+
+    return { portfolioData, costBasisData };
   }, [data, holdings]);
 
   return { portfolioData, costBasisData };

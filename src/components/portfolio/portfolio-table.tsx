@@ -16,7 +16,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { usd } from "@/lib/utils";
+import { cn, usd } from "@/lib/utils";
 import PriceChange from "../price-change";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { Button } from "../ui/button";
@@ -55,6 +55,19 @@ export const PortfolioTable = (props: {
     return holdings.map((entry) => {
       const symbol = entry.symbol;
       const buys = entry.buys;
+      if (!buys) {
+        return {
+          symbol,
+          price: 0,
+          quantity: 0,
+          value: 0,
+          costBasis: 0,
+          change: {
+            value: 0,
+            percentChange: 0,
+          },
+        };
+      }
       const lastBuy = buys[buys.length - 1];
       const chartData = symbolsData[symbol];
       const lastData = chartData ? chartData[chartData.length - 1] : undefined;
@@ -109,13 +122,20 @@ export const PortfolioTable = (props: {
       columnHelper.accessor("change", {
         header: "Change",
         cell: (row) => (
-          <PriceChange
-            value={row.getValue().value}
-            percentChange={row.getValue().percentChange}
-          />
+          <div className="flex flex-col items-end">
+            <PriceChange percentChange={row.getValue().percentChange}>
+              {usd(row.getValue().value)}
+            </PriceChange>
+            <PriceChange percentChange={row.getValue().percentChange}>
+              {(row.getValue().percentChange * 100).toFixed(2)}%
+            </PriceChange>
+          </div>
         ),
         enableSorting: true,
         enableMultiSort: false,
+        meta: {
+          align: "right",
+        },
       }),
     ];
   }, []);
@@ -142,7 +162,14 @@ export const PortfolioTable = (props: {
             {headerGroup.headers.map((header) => (
               <TableHead key={header.id} colSpan={header.colSpan}>
                 <div className="flex items-center">
-                  <p>{flexRender(header.column.columnDef.header, header.getContext())}</p>
+                  <p
+                    className={cn(
+                      "flex-1",
+                      header.column.columnDef.meta?.align === "right" ? "text-right" : "",
+                    )}
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                  </p>
                   {header.column.getCanSort() ? (
                     <Button
                       size="icon"

@@ -1,5 +1,3 @@
-import type { UTCTimestamp } from "lightweight-charts";
-
 export type Portfolio = {
   id: string;
   name: string;
@@ -16,11 +14,6 @@ export type Portfolio = {
       price: number;
     }[];
   }[];
-};
-
-export type CostBasisData = {
-  time: UTCTimestamp;
-  value: number;
 };
 
 export const getPortfolio = async () => {

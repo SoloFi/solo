@@ -2,6 +2,7 @@ import {
   AreaData,
   createChart,
   LastPriceAnimationMode,
+  LineData,
   LineStyle,
   type DeepPartial,
   type ISeriesApi,
@@ -12,7 +13,6 @@ import {
 } from "lightweight-charts";
 import { useRef, useCallback, useEffect, useState } from "react";
 import useChartOptions from "./useChartOptions";
-import type { CostBasisData } from "@/api/portfolio";
 import colors from "tailwindcss/colors";
 import { useTheme, type Theme } from "@/components/theme-provider";
 import ChartTooltip from "./chart-tooltip";
@@ -22,7 +22,7 @@ import { CandlestickData } from "@/api/symbol";
 
 export const PortfolioChart = (props: {
   data: CandlestickData[];
-  costBasisData: CostBasisData[];
+  costBasisData: LineData<UTCTimestamp>[];
   height?: number;
   type?: "area" | "candlestick";
 }) => {
@@ -71,18 +71,14 @@ export const PortfolioChart = (props: {
         if (!candlestickSeriesRef.current) return;
         bar = param.seriesData.get(candlestickSeriesRef.current) as typeof bar;
       }
-      if (!bar) return;
-      // const costBasis = param.seriesData.get(
-      //   costBasisSeriesRef.current,
-      // ) as LineData<UTCTimestamp>;
-      // if (!costBasis) return;
-      // const percentChange =
-      //   bar.percentChange !== undefined
-      //     ? bar.percentChange
-      //     : costBasis.value
-      //       ? (price / costBasis.value - 1) * 100
-      //       : 0;
-      setTooltip({ time: bar.time, value: bar.value ?? bar.close, percentChange: 0 });
+      if (!bar || !costBasisSeriesRef.current) return;
+      const costBasis = param.seriesData.get(
+        costBasisSeriesRef.current,
+      ) as LineData<UTCTimestamp>;
+      const percentChange = costBasis.value
+        ? ((bar.value ?? bar.close) / costBasis.value - 1) * 100
+        : 0;
+      setTooltip({ time: bar.time, value: bar.value ?? bar.close, percentChange });
     },
     [getLastBar, type],
   );
@@ -90,7 +86,7 @@ export const PortfolioChart = (props: {
   const handleCreateChart = useCallback(
     (params: {
       data: CandlestickData[];
-      costBasisData: CostBasisData[];
+      costBasisData: LineData<UTCTimestamp>[];
       options: DeepPartial<TimeChartOptions>;
       theme: Theme;
       type: "area" | "candlestick";
@@ -117,7 +113,7 @@ export const PortfolioChart = (props: {
       const costBasisSeries = chart.addLineSeries({
         color: colors.gray[500],
         lineWidth: 2,
-        lineStyle: LineStyle.LargeDashed,
+        lineStyle: LineStyle.Dashed,
       });
       costBasisSeries.setData(costBasisData);
       costBasisSeriesRef.current = costBasisSeries;
