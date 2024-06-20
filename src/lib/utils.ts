@@ -2,7 +2,6 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import dayjs, { type Dayjs, type ManipulateType } from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { QuoteRange } from "@/api/symbol";
 
 dayjs.extend(utc);
 
@@ -49,4 +48,11 @@ export function dayjsRange(params: {
     current = current.add(value, unit);
   }
   return range;
+}
+
+export function percentChange(oldValue: number, newValue: number) {
+  if (oldValue === 0) {
+    return newValue === 0 ? 0 : Infinity;
+  }
+  return ((newValue - oldValue) / oldValue) * 100;
 }

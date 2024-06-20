@@ -3,6 +3,7 @@ import type { CandlestickData } from "@/api/symbol";
 import { dayjs } from "@/lib/utils";
 import type { LineData, UTCTimestamp } from "lightweight-charts";
 import { useMemo } from "react";
+import { getCostBasisAtTime } from "./utils";
 
 // Hook to transform portfolio holdings and symbol chart data into a format that can be used by the chart component
 export const usePortfolioChartData = (props: {
@@ -84,27 +85,15 @@ export const usePortfolioChartData = (props: {
     for (let i = 0; i < holdings.length; i++) {
       const holding = holdings[i];
       if (!holding?.buys && !holding?.sales) continue;
+      // set buys and sales time to start of day
+      holding.buys = holding.buys?.map((buy) => ({ ...buy, time: startOfDay(buy.time) }));
+      holding.sales = holding.sales?.map((sell) => ({
+        ...sell,
+        time: startOfDay(sell.time),
+      }));
       // compute average buy price over time
       for (const time of mergedTimeline) {
-        let totalCostBasis = 0;
-        let totalQuantity = 0;
-        const buys =
-          holding.buys
-            ?.filter((buy) => startOfDay(buy.time) <= time)
-            .sort((a, b) => a.time - b.time) ?? [];
-        const sales =
-          holding.sales
-            ?.filter((sale) => startOfDay(sale.time) <= time)
-            .sort((a, b) => a.time - b.time) ?? [];
-        buys.forEach((buy) => {
-          totalCostBasis += buy.price * buy.quantity;
-          totalQuantity += buy.quantity;
-        });
-        sales.forEach((sale) => {
-          const costBasis = (totalCostBasis * sale.quantity) / totalQuantity;
-          totalCostBasis -= costBasis;
-          totalQuantity -= sale.quantity;
-        });
+        const totalCostBasis = getCostBasisAtTime(holding, time);
         costBasisChart[time] = {
           time,
           value: totalCostBasis + (costBasisChart[time]?.value ?? 0),

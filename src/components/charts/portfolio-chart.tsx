@@ -16,7 +16,7 @@ import useChartOptions from "./useChartOptions";
 import colors from "tailwindcss/colors";
 import { useTheme, type Theme } from "@/components/theme-provider";
 import ChartTooltip from "./chart-tooltip";
-import { cn, dayjs, hexTransp, usd } from "@/lib/utils";
+import { cn, dayjs, hexTransp, percentChange, usd } from "@/lib/utils";
 import { Badge } from "../ui/badge";
 import { CandlestickData } from "@/api/symbol";
 
@@ -42,13 +42,14 @@ export const PortfolioChart = (props: {
 
   const { options } = useChartOptions();
 
-  const getLastBar = useCallback(() => {
+  const getLastTooltipValue = useCallback(() => {
     const lastData = data[data.length - 1];
     const costBasis = costBasisData[costBasisData.length - 1];
     return {
       time: lastData.time,
       value: lastData.close,
-      percentChange: lastData && costBasis ? lastData.close / costBasis.value - 1 : 0,
+      percentChange:
+        lastData && costBasis ? percentChange(costBasis.value, lastData.close) : 0,
     };
   }, [costBasisData, data]);
 
@@ -60,7 +61,7 @@ export const PortfolioChart = (props: {
         validCrosshairPoint = false;
 
       if (!validCrosshairPoint) {
-        setTooltip(getLastBar());
+        setTooltip(getLastTooltipValue());
         return;
       }
       let bar: CandlestickData & AreaData<UTCTimestamp>;
@@ -75,12 +76,16 @@ export const PortfolioChart = (props: {
       const costBasis = param.seriesData.get(
         costBasisSeriesRef.current,
       ) as LineData<UTCTimestamp>;
-      const percentChange = costBasis.value
-        ? ((bar.value ?? bar.close) / costBasis.value - 1) * 100
+      const change = costBasis.value
+        ? percentChange(costBasis.value, bar.value ?? bar.close)
         : 0;
-      setTooltip({ time: bar.time, value: bar.value ?? bar.close, percentChange });
+      setTooltip({
+        time: bar.time,
+        value: bar.value ?? bar.close,
+        percentChange: change,
+      });
     },
-    [getLastBar, type],
+    [getLastTooltipValue, type],
   );
 
   const handleCreateChart = useCallback(
@@ -122,9 +127,9 @@ export const PortfolioChart = (props: {
       costBasisSeries.setData(costBasisData);
       costBasisSeriesRef.current = costBasisSeries;
       chart.timeScale().fitContent();
-      setTooltip(getLastBar());
+      setTooltip(getLastTooltipValue());
     },
-    [getLastBar],
+    [getLastTooltipValue],
   );
 
   const initContainerRef = useCallback(

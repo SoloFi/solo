@@ -1,19 +1,19 @@
 export type Portfolio = {
   id: string;
   name: string;
-  holdings: {
-    symbol: string;
-    buys?: {
-      time: number;
-      quantity: number;
-      price: number;
-    }[];
-    sales?: {
-      time: number;
-      quantity: number;
-      price: number;
-    }[];
-  }[];
+  holdings: PortfolioHolding[];
+};
+
+export type PortfolioHolding = {
+  symbol: string;
+  buys?: PortfolioAction[];
+  sales?: PortfolioAction[];
+};
+
+export type PortfolioAction = {
+  time: number;
+  quantity: number;
+  price: number;
 };
 
 export const getPortfolio = async () => {
