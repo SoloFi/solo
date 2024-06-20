@@ -1,5 +1,5 @@
 import type { Portfolio } from "@/api/portfolio";
-import type { CandlestickData } from "lightweight-charts";
+import type { CandlestickData, UTCTimestamp } from "lightweight-charts";
 import {
   Table,
   TableBody,
@@ -16,10 +16,11 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { cn, usd } from "@/lib/utils";
+import { cn, dayjs, percentChange, usd } from "@/lib/utils";
 import PriceChange from "../price-change";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { Button } from "../ui/button";
+import { getCostBasisAtTime } from "./utils";
 
 type PortfolioTableData = {
   symbol: string;
@@ -74,9 +75,7 @@ export const PortfolioTable = (props: {
       const price = lastData?.close ?? lastBuy.price;
       const quantity = buys.reduce((acc, buy) => acc + buy.quantity, 0);
       const value = price * quantity;
-      const change = ((lastData?.close ?? 0) - lastBuy.price) * quantity;
-      const costBasis = buys.reduce((acc, buy) => acc + buy.price * buy.quantity, 0);
-      const percentChange = change / costBasis;
+      const costBasis = getCostBasisAtTime(entry, dayjs().utc().unix() as UTCTimestamp);
       return {
         symbol,
         price,
@@ -84,8 +83,8 @@ export const PortfolioTable = (props: {
         value,
         costBasis,
         change: {
-          value: change,
-          percentChange,
+          value: value - costBasis,
+          percentChange: percentChange(costBasis, value),
         },
       };
     });
@@ -127,7 +126,7 @@ export const PortfolioTable = (props: {
               {usd(row.getValue().value)}
             </PriceChange>
             <PriceChange percentChange={row.getValue().percentChange}>
-              {(row.getValue().percentChange * 100).toFixed(2)}%
+              {row.getValue().percentChange.toFixed(2)}%
             </PriceChange>
           </div>
         ),
