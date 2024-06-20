@@ -8,6 +8,7 @@ import { getPortfolio } from "@/api/portfolio";
 import { usePortfolioChartData } from "@/components/portfolio/usePortfolioChartData";
 import { PortfolioChart } from "@/components/charts/portfolio-chart";
 import { PortfolioTable } from "@/components/portfolio/portfolio-table";
+import dayjs from "dayjs";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -33,12 +34,15 @@ function Index() {
           .filter(({ buys }) => buys && buys?.length > 0)
           .map((entry) => {
             const symbol = entry.symbol;
+            const from = entry.buys?.sort((a, b) => a.time - b.time)[0].time;
+            const to = dayjs().utc().unix();
             return {
               queryKey: [symbol],
               queryFn: async () =>
                 getSymbolChart({
                   symbol,
-                  range: "1y",
+                  from,
+                  to,
                 }),
               refetchOnWindowFocus: false,
             };

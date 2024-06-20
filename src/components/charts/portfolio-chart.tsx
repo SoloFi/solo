@@ -114,6 +114,10 @@ export const PortfolioChart = (props: {
         color: colors.gray[500],
         lineWidth: 2,
         lineStyle: LineStyle.Dashed,
+        autoscaleInfoProvider() {
+          // prevent autoscale from including cost basis line
+          return null;
+        },
       });
       costBasisSeries.setData(costBasisData);
       costBasisSeriesRef.current = costBasisSeries;
