@@ -4,6 +4,7 @@ import {
   LastPriceAnimationMode,
   LineData,
   LineStyle,
+  PriceScaleMode,
   type DeepPartial,
   type ISeriesApi,
   type MouseEventParams,
@@ -19,6 +20,8 @@ import ChartTooltip from "./chart-tooltip";
 import { dayjs, hexTransp, percentChange, usd } from "@/lib/utils";
 import { CandlestickData } from "@/api/symbol";
 import ChartWrapper from "./chart-wrapper";
+import { Toggle } from "../ui/toggle";
+import ToggleAxisMode from "./toggle-axis-mode";
 
 export const PortfolioChart = (props: {
   data: CandlestickData[];
@@ -177,6 +180,7 @@ export const PortfolioChart = (props: {
           percentChange={tooltip.percentChange}
         />
       )}
+      <ToggleAxisMode chartRef={chartRef} />
     </ChartWrapper>
   );
 };
