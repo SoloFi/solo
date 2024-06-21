@@ -83,6 +83,20 @@ export const PortfolioTable = (props: {
       const quantity = buys.reduce((acc, buy) => acc + buy.quantity, 0);
       const value = price * quantity;
       const costBasis = getCostBasisAtTime(entry, dayjs().utc().unix() as UTCTimestamp);
+      const last30Days =
+        chartData?.slice(-30).map((data) => ({
+          time: data.time as UTCTimestamp,
+          value: data.close,
+        })) ?? [];
+      // fill in null values with last known non-null value
+      let lastKnownValue = 0;
+      for (let i = 0; i < last30Days.length; i++) {
+        if (last30Days[i].value === null) {
+          last30Days[i].value = lastKnownValue;
+        } else {
+          lastKnownValue = last30Days[i].value;
+        }
+      }
       return {
         symbol,
         price,
@@ -93,11 +107,7 @@ export const PortfolioTable = (props: {
           value: value - costBasis,
           percentChange: percentChange(costBasis, value),
         },
-        last30Days:
-          chartData?.slice(-30).map((data) => ({
-            time: data.time as UTCTimestamp,
-            value: data.close,
-          })) ?? [],
+        last30Days,
       };
     });
   }, [holdings, symbolsData]);
