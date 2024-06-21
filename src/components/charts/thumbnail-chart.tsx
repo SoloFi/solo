@@ -27,6 +27,8 @@ export const ThumbnailChart = (props: {
     crosshair: {
       mode: CrosshairMode.Hidden,
     },
+    handleScroll: false,
+    handleScale: false,
   });
 
   const fitContent = useCallback(() => {
@@ -41,8 +43,8 @@ export const ThumbnailChart = (props: {
     const areaSeries = chart.addAreaSeries({
       lineColor: color,
       lineWidth: 2,
-      topColor: hexTransp(color, 90),
-      bottomColor: hexTransp(color, 10),
+      topColor: hexTransp(color, 75),
+      bottomColor: hexTransp(color, 25),
       priceLineVisible: false,
     });
     areaSeries.setData(data);
