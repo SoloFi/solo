@@ -16,14 +16,16 @@ declare module "@tanstack/react-router" {
   }
 }
 
-createServer({
-  routes() {
-    this.get("/api/portfolio", () =>
-      import("@/mock/data/portfolio.json").then((res) => res.default),
-    );
-    this.passthrough("http://localhost:8080/**");
-  },
-});
+if (import.meta.env.DEV) {
+  createServer({
+    routes() {
+      this.get("/api/portfolio", () =>
+        import("@/mock/data/portfolio.json").then((res) => res.default),
+      );
+      this.passthrough("http://localhost:8080/**");
+    },
+  });
+}
 
 const rootElement = document.getElementById("root")!;
 if (!rootElement.innerHTML) {
