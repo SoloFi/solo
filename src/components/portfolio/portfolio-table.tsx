@@ -164,8 +164,8 @@ export const PortfolioTable = (props: {
             height={50}
             color={
               row.getValue()[0].value < row.getValue()[row.getValue().length - 1].value
-                ? colors.green[500]
-                : colors.red[500]
+                ? colors.green[600]
+                : colors.red[600]
             }
           />
         ),

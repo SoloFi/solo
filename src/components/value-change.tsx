@@ -13,7 +13,7 @@ export default function ValueChange(props: {
     <div
       className={cn(
         "flex items-center font-semibold",
-        change >= threshold ? "text-green-500" : "text-red-500",
+        change >= threshold ? "text-green-600" : "text-red-600",
         className,
       )}
     >

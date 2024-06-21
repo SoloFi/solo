@@ -6,18 +6,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export const ChartTypeToggle = (props: {
-  defaultChartType?: "area" | "candlestick";
   onToggle: (chartType: "area" | "candlestick") => void;
+  defaultChartType?: "area" | "candlestick";
+  className?: string;
 }) => {
-  const { defaultChartType = "area", onToggle } = props;
+  const { onToggle, defaultChartType = "area", className } = props;
   return (
     <Tabs
       defaultValue={defaultChartType}
       onValueChange={(value) => onToggle(value as "area" | "candlestick")}
+      className={cn("p-1", className)}
     >
-      <TabsList className="h-10">
+      <TabsList className="h-8 shadow-inner">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger className="h-full">

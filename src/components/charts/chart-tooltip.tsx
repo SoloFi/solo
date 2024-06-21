@@ -9,19 +9,19 @@ export default function ChartTooltip(props: {
 }) {
   const { time, value, percentChange = 0 } = props;
   return (
-    <div className="absolute top-0 left-0">
+    <div className="absolute z-10 top-0 left-0">
       <div className="flex items-center space-x-3">
         <h1 className="text-3xl font-semibold">{value}</h1>
         <Badge
           className={cn(
-            "h-7 px-2 text-lg",
-            percentChange <= 0 ? "bg-red-500" : "bg-green-500",
+            "h-7 px-2 text-lg text-white",
+            percentChange <= 0 ? "!bg-red-600" : "!bg-green-600",
           )}
         >
           {percentChange.toFixed(2)}%
         </Badge>
       </div>
-      <p className="text-lg">{time}</p>
+      <p className="text-lg text-foreground/60">{time}</p>
     </div>
   );
 }

@@ -16,7 +16,7 @@ export default function ToggleAxisMode(props: {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger
-          className={cn("absolute bottom-0", {
+          className={cn("absolute z-10 bottom-1", {
             "right-4": side === "right",
             "left-4": side === "left",
           })}
@@ -33,7 +33,7 @@ export default function ToggleAxisMode(props: {
             }}
             variant="outline"
             aria-label="Toggle axis mode"
-            className="text-xs font-bold w-5 h-5 p-1.5 data-[state=on]:bg-primary"
+            className="text-xs font-normal w-5 h-5 p-1.5 data-[state=on]:bg-primary data-[state=on]:text-white"
           >
             L
           </Toggle>

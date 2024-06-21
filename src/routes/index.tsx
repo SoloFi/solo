@@ -91,13 +91,9 @@ function Index() {
   return (
     <div className="w-full h-full">
       <Card>
-        <CardHeader>
-          <div className="flex">
-            <h1 className="text-3xl font-bold min-w-[150px]">{portfolio?.name ?? ""}</h1>
-            <div className="ml-auto">
-              <ChartTypeToggle defaultChartType="area" onToggle={setChartType} />
-            </div>
-          </div>
+        <CardHeader className="flex flex-row items-center w-full h-max pb-2 space-y-0 space-x-2">
+          <p className="text-2xl font-semibold">{portfolio?.name ?? ""}</p>
+          <ChartTypeToggle defaultChartType="area" onToggle={setChartType} />
         </CardHeader>
         <CardContent>
           <PortfolioChart

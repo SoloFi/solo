@@ -107,8 +107,8 @@ export const PortfolioChart = (props: {
         const areaSeries = chart.addAreaSeries({
           lastPriceAnimation: LastPriceAnimationMode.Continuous,
           lineColor: colors.blue[500],
-          topColor: hexTransp(colors.blue[500], 50),
-          bottomColor: hexTransp(colors.blue[500], 5),
+          topColor: hexTransp(colors.blue[500], 60),
+          bottomColor: hexTransp(colors.blue[500], 10),
         });
         areaSeries.setData(data.map((d) => ({ value: d.close, ...d })));
         areaSeriesRef.current = areaSeries;
@@ -179,7 +179,6 @@ export const PortfolioChart = (props: {
 
   return (
     <ChartWrapper height={height ?? 400}>
-      <div ref={initContainerRef} />
       {!!tooltip && (
         <ChartTooltip
           time={dayjs(tooltip.time * 1000)
@@ -190,6 +189,7 @@ export const PortfolioChart = (props: {
         />
       )}
       <ToggleAxisMode defaultMode={axisMode} chartRef={chartRef} />
+      <div ref={initContainerRef} />
     </ChartWrapper>
   );
 };
