@@ -1,14 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ChartTypeToggle } from "@/components/charts/chart-type-toggle";
-import { getSymbolChart, type CandlestickData } from "@/api/symbol";
-import { getPortfolio } from "@/api/portfolio";
+import { type CandlestickData } from "@/api/YahooQuote";
+import { getPortfolio } from "@/api/query/portfolio";
 import { usePortfolioChartData } from "@/components/portfolio/usePortfolioChartData";
 import { PortfolioChart } from "@/components/charts/portfolio-chart";
 import { PortfolioTable } from "@/components/portfolio/portfolio-table";
 import dayjs from "dayjs";
+import { getSymbolChart } from "@/api/query/symbol";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -72,13 +73,6 @@ function Index() {
     holdings: doneFetching && portfolio?.holdings ? portfolio.holdings : null,
     data: doneFetching && portfolioSymbolsData ? portfolioSymbolsData : null,
   });
-
-  useEffect(() => {
-    if (doneFetching) {
-      console.log("Portfolio data", portfolioData);
-      console.log("Cost basis data", costBasisData);
-    }
-  }, [doneFetching, portfolioData, costBasisData]);
 
   if (!doneFetching) {
     return <span>Loading...</span>;
