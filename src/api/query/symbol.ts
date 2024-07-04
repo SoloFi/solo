@@ -6,8 +6,6 @@ export const RangeConstruction: Record<
   QuoteRange,
   { value: number; unit: ManipulateType }
 > = {
-  "1d": { value: 1, unit: "day" },
-  "5d": { value: 5, unit: "day" },
   "1mo": { value: 1, unit: "month" },
   "3mo": { value: 3, unit: "month" },
   "6mo": { value: 6, unit: "month" },
@@ -16,7 +14,6 @@ export const RangeConstruction: Record<
   "5y": { value: 5, unit: "year" },
   "10y": { value: 10, unit: "year" },
   ytd: { value: 1, unit: "year" },
-  max: { value: 10, unit: "year" },
 };
 
 export const getSymbolChart = async (params: {
