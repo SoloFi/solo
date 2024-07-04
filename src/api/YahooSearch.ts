@@ -31,20 +31,20 @@ export default YahooSearch;
 
 export interface SearchItem {
   symbol: string;
-  regularMarketPercentChange: {
-    raw: number;
-    fmt: string;
-  };
-  regularMarketChange: {
-    raw: number;
-    fmt: string;
-  };
-  rank: number;
+  // regularMarketPercentChange: {
+  //   raw: number;
+  //   fmt: string;
+  // };
+  // regularMarketChange: {
+  //   raw: number;
+  //   fmt: string;
+  // };
+  // rank: number;
   exchange: string;
   shortName: string;
   quoteType: string;
-  regularMarketPrice: {
-    raw: number;
-    fmt: string;
-  };
+  // regularMarketPrice: {
+  //   raw: number;
+  //   fmt: string;
+  // };
 }

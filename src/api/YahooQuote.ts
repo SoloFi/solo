@@ -60,15 +60,4 @@ export interface Quote {
   close: number[];
 }
 
-export type QuoteRange =
-  | "1d"
-  | "5d"
-  | "1mo"
-  | "3mo"
-  | "6mo"
-  | "1y"
-  | "2y"
-  | "5y"
-  | "10y"
-  | "ytd"
-  | "max";
+export type QuoteRange = "1mo" | "3mo" | "6mo" | "1y" | "2y" | "5y" | "10y" | "ytd";

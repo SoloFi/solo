@@ -1,5 +1,6 @@
 import { ManipulateType } from "dayjs";
 import { CandlestickData, QuoteRange } from "../YahooQuote";
+import { SearchItem } from "../YahooSearch";
 
 export const RangeConstruction: Record<
   QuoteRange,
@@ -33,4 +34,12 @@ export const getSymbolChart = async (params: {
   if (!res.ok) throw new Error("Failed to fetch symbol chart");
   const candlestickData: CandlestickData[] = await res.json();
   return candlestickData;
+};
+
+export const searchSymbol = async (query: string) => {
+  const url: URL = new URL(`http://localhost:8080/search/${query}`);
+  const res = await fetch(url.toString());
+  if (!res.ok) return [];
+  const items: SearchItem[] = await res.json();
+  return items;
 };
