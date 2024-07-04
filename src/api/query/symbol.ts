@@ -1,33 +1,5 @@
 import { ManipulateType } from "dayjs";
-import type { UTCTimestamp } from "lightweight-charts";
-
-export interface CandlestickData {
-  time: UTCTimestamp;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-}
-
-export interface Quote {
-  open: number[];
-  high: number[];
-  low: number[];
-  close: number[];
-}
-
-export type QuoteRange =
-  | "1d"
-  | "5d"
-  | "1mo"
-  | "3mo"
-  | "6mo"
-  | "1y"
-  | "2y"
-  | "5y"
-  | "10y"
-  | "ytd"
-  | "max";
+import { CandlestickData, QuoteRange } from "../YahooQuote";
 
 export const RangeConstruction: Record<
   QuoteRange,
