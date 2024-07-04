@@ -20,7 +20,7 @@ if (import.meta.env.DEV) {
   createServer({
     routes() {
       this.get("/api/portfolio", () =>
-        import("@/mock/data/portfolio.json").then((res) => res.default),
+        import("@/api/mockData/portfolio.json").then((res) => res.default),
       );
       this.passthrough("http://localhost:8080/**");
     },
