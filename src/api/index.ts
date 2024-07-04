@@ -1,8 +1,9 @@
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { logger } from "@bogeychan/elysia-logger";
-import YahooQuote, { QuoteRange } from "./YahooQuote";
+import YahooQuote from "./YahooQuote";
 import YahooSearch from "./YahooSearch";
+import type { QuoteRange } from "./types";
 
 const YQ = new YahooQuote();
 const YS = new YahooSearch();

@@ -1,4 +1,4 @@
-import type { Portfolio } from "@/api/portfolio";
+import type { Portfolio } from "@/api/types";
 import type { CandlestickData, UTCTimestamp } from "lightweight-charts";
 import {
   Table,

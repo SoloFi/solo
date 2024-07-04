@@ -1,5 +1,4 @@
-import type { Portfolio } from "@/api/query/portfolio";
-import type { CandlestickData } from "@/api/YahooQuote";
+import type { Portfolio, CandlestickData } from "@/api/types";
 import { dayjs } from "@/lib/utils";
 import type { LineData, UTCTimestamp } from "lightweight-charts";
 import { useMemo } from "react";

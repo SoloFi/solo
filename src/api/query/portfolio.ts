@@ -1,20 +1,4 @@
-export type Portfolio = {
-  id: string;
-  name: string;
-  holdings: PortfolioHolding[];
-};
-
-export type PortfolioHolding = {
-  symbol: string;
-  buys?: PortfolioAction[];
-  sales?: PortfolioAction[];
-};
-
-export type PortfolioAction = {
-  time: number;
-  quantity: number;
-  price: number;
-};
+import type { Portfolio } from "@/api/types";
 
 export const getPortfolio = async () => {
   const response = await fetch("/api/portfolio");

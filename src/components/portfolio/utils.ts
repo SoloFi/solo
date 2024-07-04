@@ -1,4 +1,4 @@
-import { PortfolioHolding } from "@/api/portfolio";
+import type { PortfolioHolding } from "@/api/types";
 import { UTCTimestamp } from "lightweight-charts";
 
 export function getCostBasisAtTime(holding: PortfolioHolding, time: UTCTimestamp) {

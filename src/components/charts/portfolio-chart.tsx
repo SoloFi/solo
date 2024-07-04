@@ -18,7 +18,7 @@ import colors from "tailwindcss/colors";
 import { useTheme, type Theme } from "@/components/theme-provider";
 import ChartTooltip from "./chart-tooltip";
 import { dayjs, hexTransp, percentChange, usd } from "@/lib/utils";
-import { CandlestickData } from "@/api/symbol";
+import type { CandlestickData } from "@/api/types";
 import ChartWrapper from "./chart-wrapper";
 import ToggleAxisMode from "./toggle-axis-mode";
 

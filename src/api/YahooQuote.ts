@@ -1,4 +1,5 @@
 import { UTCTimestamp } from "lightweight-charts";
+import type { CandlestickData, Quote, QuoteRange } from "./types";
 
 class YahooQuote {
   private baseUrl = "https://query2.finance.yahoo.com/v8/finance/chart/";
@@ -44,20 +45,3 @@ class YahooQuote {
 }
 
 export default YahooQuote;
-
-export interface CandlestickData {
-  time: UTCTimestamp;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-}
-
-export interface Quote {
-  open: number[];
-  high: number[];
-  low: number[];
-  close: number[];
-}
-
-export type QuoteRange = "1mo" | "3mo" | "6mo" | "1y" | "2y" | "5y" | "10y" | "ytd";

@@ -3,7 +3,7 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ChartTypeToggle } from "@/components/charts/chart-type-toggle";
-import { type CandlestickData } from "@/api/YahooQuote";
+import type { CandlestickData } from "@/api/types";
 import { getPortfolio } from "@/api/query/portfolio";
 import { usePortfolioChartData } from "@/components/portfolio/usePortfolioChartData";
 import { PortfolioChart } from "@/components/charts/portfolio-chart";

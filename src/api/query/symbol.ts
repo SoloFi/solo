@@ -1,20 +1,5 @@
-import { ManipulateType } from "dayjs";
-import { CandlestickData, QuoteRange } from "../YahooQuote";
+import type { CandlestickData, QuoteRange } from "@/api/types";
 import { SearchItem } from "../YahooSearch";
-
-export const RangeConstruction: Record<
-  QuoteRange,
-  { value: number; unit: ManipulateType }
-> = {
-  "1mo": { value: 1, unit: "month" },
-  "3mo": { value: 3, unit: "month" },
-  "6mo": { value: 6, unit: "month" },
-  "1y": { value: 1, unit: "year" },
-  "2y": { value: 2, unit: "year" },
-  "5y": { value: 5, unit: "year" },
-  "10y": { value: 10, unit: "year" },
-  ytd: { value: 1, unit: "year" },
-};
 
 export const getSymbolChart = async (params: {
   symbol: string;
