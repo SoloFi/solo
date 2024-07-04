@@ -37,7 +37,8 @@ export const getSymbolChart = async (params: {
 };
 
 export const searchSymbol = async (query: string) => {
-  const url: URL = new URL(`http://localhost:8080/search/${query}`);
+  const encodedQuery = query.replace(/ /g, "-");
+  const url: URL = new URL(`http://localhost:8080/search/${encodedQuery}`);
   const res = await fetch(url.toString());
   if (!res.ok) return [];
   const items: SearchItem[] = await res.json();
