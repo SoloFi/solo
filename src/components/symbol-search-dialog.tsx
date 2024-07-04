@@ -8,7 +8,7 @@ import {
   CommandSeparator,
 } from "./ui/command";
 import { useDebounceValue } from "usehooks-ts";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { searchSymbol } from "@/api/query/symbol";
 import { SearchItem } from "@/api/YahooSearch";
 
@@ -37,7 +37,7 @@ const SymbolSearchDialog = (props: {
   }));
 
   useEffect(() => {
-    if (query.trim() === "") return;
+    if (!validQuery(query)) return;
     const handleSearch = async () => {
       try {
         const items = await searchSymbol(query);
@@ -53,7 +53,7 @@ const SymbolSearchDialog = (props: {
     <CommandDialog open={isOpen} onOpenChange={onOpenChange}>
       <CommandInput
         onValueChange={(search) => {
-          if (search.trim() === "") {
+          if (!validQuery(search)) {
             setSearchItems([]);
           }
           setQuery(search);
@@ -84,3 +84,7 @@ const SymbolSearchDialog = (props: {
 };
 
 export default SymbolSearchDialog;
+
+function validQuery(query: string) {
+  return query.trim() !== "" && query.length >= 3;
+}
