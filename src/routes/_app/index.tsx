@@ -11,8 +11,9 @@ import { PortfolioTable } from "@/components/portfolio/portfolio-table";
 import { getSymbolChart } from "@/query/symbol";
 import { getPortfolios } from "@/query/portfolio";
 import { checkAuth } from "@/check-auth";
+import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_app/")({
   component: Index,
   beforeLoad: checkAuth,
 });
@@ -84,26 +85,38 @@ function Index() {
     return <span>Error: {error.message}</span>;
   }
 
+  const hasPortfolio = (portfolios?.length || 0) > 0;
+
   return (
     <div className="w-full h-full">
       <Card>
         <CardHeader className="flex flex-row items-center w-full h-max pb-2 space-y-0 space-x-2">
-          <p className="text-2xl font-semibold">{portfolios?.[0]?.name ?? ""}</p>
-          <ChartTypeToggle defaultChartType="area" onToggle={setChartType} />
+          {hasPortfolio && (
+            <>
+              <p className="text-2xl font-semibold">{portfolios?.[0]?.name ?? ""}</p>
+              <ChartTypeToggle defaultChartType="area" onToggle={setChartType} />
+            </>
+          )}
         </CardHeader>
         <CardContent>
-          <PortfolioChart
-            data={portfolioData}
-            costBasisData={costBasisData}
-            height={400}
-            type={chartType}
-          />
-          <div className="mt-4">
-            <PortfolioTable
-              holdings={portfolios?.[0]?.holdings ?? []}
-              symbolsData={portfolioSymbolsData ?? {}}
-            />
-          </div>
+          {hasPortfolio ? (
+            <>
+              <PortfolioChart
+                data={portfolioData}
+                costBasisData={costBasisData}
+                height={400}
+                type={chartType}
+              />
+              <div className="mt-4">
+                <PortfolioTable
+                  holdings={portfolios?.[0]?.holdings ?? []}
+                  symbolsData={portfolioSymbolsData ?? {}}
+                />
+              </div>
+            </>
+          ) : (
+            <Button size="lg">Create Portfolio</Button>
+          )}
         </CardContent>
       </Card>
     </div>
