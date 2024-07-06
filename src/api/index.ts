@@ -1,34 +1,31 @@
-import { Elysia } from "elysia";
-import { cors } from "@elysiajs/cors";
-import { logger } from "@bogeychan/elysia-logger";
+import { Hono } from "hono";
+import { handle } from "hono/aws-lambda";
 import YahooQuote from "./YahooQuote";
 import YahooSearch from "./YahooSearch";
 import type { QuoteRange } from "./types";
 
-const YQ = new YahooQuote();
-const YS = new YahooSearch();
+const app = new Hono();
 
-new Elysia()
-  .use(logger())
-  .use(cors())
-  .get("/chart/:symbol", async ({ params, query }) => {
-    const from = query.from;
-    const to = query.to;
-    const range = query.range as QuoteRange | undefined;
+// app.use("/*", cors({ origin: "*" }));
+app
+  .get("/chart/:symbol", async (c) => {
+    const { symbol } = c.req.param();
+    const { from, to, range, interval } = c.req.query();
+    const YQ = new YahooQuote();
     const candlestickData = await YQ.getCandlestickData({
-      symbol: params.symbol,
-      interval: query.interval ?? "1d",
-      range: range,
+      symbol,
+      interval: interval ?? "1d",
+      range: range as QuoteRange | undefined,
       fromDate: from,
       toDate: to,
     });
-    return JSON.stringify(candlestickData);
+    return c.json(candlestickData);
   })
-  .get("/search/:query", async ({ params }) => {
-    const items = await YS.search({ query: params.query });
-    return JSON.stringify(items);
-  })
-  .onError(({ code }) => {
-    return code;
-  })
-  .listen(8080);
+  .get("/search/:query", async (c) => {
+    const YS = new YahooSearch();
+    const { query } = c.req.param();
+    const items = await YS.search({ query });
+    return c.json(items);
+  });
+
+export const handler = handle(app);

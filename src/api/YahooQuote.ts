@@ -1,4 +1,4 @@
-import { UTCTimestamp } from "lightweight-charts";
+import type { UTCTimestamp } from "lightweight-charts";
 import type { CandlestickData, Quote, QuoteRange } from "./types";
 
 class YahooQuote {

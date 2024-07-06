@@ -1,11 +1,12 @@
+import "./index.css";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
-import "./index.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { routeTree } from "./routeTree.gen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createServer } from "miragejs";
+import { API_BASE_URL } from "@/api/query/utils";
 
 const router = createRouter({ routeTree });
 const queryClient = new QueryClient();
@@ -22,7 +23,7 @@ if (import.meta.env.DEV) {
       this.get("/api/portfolio", () =>
         import("@/api/mockData/portfolio.json").then((res) => res.default),
       );
-      this.passthrough("http://localhost:8080/**");
+      this.passthrough(`${API_BASE_URL}/**`);
     },
   });
 }

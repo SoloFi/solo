@@ -1,5 +1,6 @@
 import type { CandlestickData, QuoteRange } from "@/api/types";
-import { SearchItem } from "../YahooSearch";
+import { SearchItem } from "@/api/YahooSearch";
+import { API_BASE_URL } from "./utils";
 
 export const getSymbolChart = async (params: {
   symbol: string;
@@ -8,7 +9,7 @@ export const getSymbolChart = async (params: {
   range?: QuoteRange;
 }) => {
   const { symbol, from, to, range } = params;
-  const url: URL = new URL(`http://localhost:8080/chart/${symbol}`);
+  const url: URL = new URL(`${API_BASE_URL}/chart/${symbol}`);
   if (range) url.searchParams.append("range", range);
   if (from) url.searchParams.append("from", from.toString());
   if (to) url.searchParams.append("to", to.toString());
@@ -20,7 +21,7 @@ export const getSymbolChart = async (params: {
 
 export const searchSymbol = async (query: string) => {
   const encodedQuery = query.replace(/ /g, "-");
-  const url: URL = new URL(`http://localhost:8080/search/${encodedQuery}`);
+  const url: URL = new URL(`${API_BASE_URL}/search/${encodedQuery}`);
   const res = await fetch(url.toString());
   if (!res.ok) return [];
   const items: SearchItem[] = await res.json();

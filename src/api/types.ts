@@ -1,5 +1,5 @@
-import { ManipulateType } from "dayjs";
-import { UTCTimestamp } from "lightweight-charts";
+import type { ManipulateType } from "dayjs";
+import type { UTCTimestamp } from "lightweight-charts";
 
 export type Portfolio = {
   id: string;
