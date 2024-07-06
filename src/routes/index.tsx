@@ -1,37 +1,39 @@
+import { useMemo, useState } from "react";
+import dayjs from "dayjs";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ChartTypeToggle } from "@/components/charts/chart-type-toggle";
 import type { CandlestickData } from "@/api/types";
-import { getPortfolio } from "@/api/query/portfolio";
 import { usePortfolioChartData } from "@/components/portfolio/usePortfolioChartData";
 import { PortfolioChart } from "@/components/charts/portfolio-chart";
 import { PortfolioTable } from "@/components/portfolio/portfolio-table";
-import dayjs from "dayjs";
-import { getSymbolChart } from "@/api/query/symbol";
+import { getSymbolChart } from "@/query/symbol";
+import { getPortfolios } from "@/query/portfolio";
+import { checkAuth } from "@/check-auth";
 
 export const Route = createFileRoute("/")({
   component: Index,
+  beforeLoad: checkAuth,
 });
 
 function Index() {
   const [chartType, setChartType] = useState<"area" | "candlestick">("area");
 
   const {
-    data: portfolio,
+    data: portfolios,
     error,
     isPending,
     isError,
   } = useQuery({
-    queryKey: ["portfolio"],
-    queryFn: getPortfolio,
+    queryKey: ["portfolios"],
+    queryFn: getPortfolios,
     refetchOnWindowFocus: false,
   });
 
   const symbolQueries = useQueries({
-    queries: portfolio?.holdings
-      ? portfolio.holdings
+    queries: portfolios?.[0]?.holdings
+      ? portfolios[0].holdings
           .filter(({ buys }) => buys && buys?.length > 0)
           .map((entry) => {
             const symbol = entry.symbol;
@@ -60,7 +62,7 @@ function Index() {
     [symbolQueries, isError],
   );
 
-  const portfolioSymbolsData = portfolio?.holdings
+  const portfolioSymbolsData = portfolios?.[0]?.holdings
     .map(({ symbol }, index) => ({
       [symbol]: symbolQueries[index].data,
     }))
@@ -70,7 +72,7 @@ function Index() {
     );
 
   const { portfolioData, costBasisData } = usePortfolioChartData({
-    holdings: doneFetching && portfolio?.holdings ? portfolio.holdings : null,
+    holdings: doneFetching && portfolios?.[0]?.holdings ? portfolios[0].holdings : null,
     data: doneFetching && portfolioSymbolsData ? portfolioSymbolsData : null,
   });
 
@@ -86,7 +88,7 @@ function Index() {
     <div className="w-full h-full">
       <Card>
         <CardHeader className="flex flex-row items-center w-full h-max pb-2 space-y-0 space-x-2">
-          <p className="text-2xl font-semibold">{portfolio?.name ?? ""}</p>
+          <p className="text-2xl font-semibold">{portfolios?.[0]?.name ?? ""}</p>
           <ChartTypeToggle defaultChartType="area" onToggle={setChartType} />
         </CardHeader>
         <CardContent>
@@ -98,7 +100,7 @@ function Index() {
           />
           <div className="mt-4">
             <PortfolioTable
-              holdings={portfolio?.holdings ?? []}
+              holdings={portfolios?.[0]?.holdings ?? []}
               symbolsData={portfolioSymbolsData ?? {}}
             />
           </div>
