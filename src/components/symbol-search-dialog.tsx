@@ -9,7 +9,7 @@ import {
 } from "./ui/command";
 import { useDebounceValue } from "usehooks-ts";
 import { useEffect, useState } from "react";
-import { searchSymbol } from "@/api/query/symbol";
+import { searchSymbol } from "@/query/symbol";
 import { SearchItem } from "@/api/YahooSearch";
 
 const SymbolSearchDialog = (props: {
