@@ -66,6 +66,7 @@ const TopBar = () => {
         <SymbolSearchDialog
           isOpen={isSymbolSearchOpen}
           onOpenChange={setIsSymbolSearchOpen}
+          onSymbolSelect={console.log}
         />
       )}
     </header>
