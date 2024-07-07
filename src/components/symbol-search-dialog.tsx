@@ -15,10 +15,10 @@ import { SearchItem } from "@/api/YahooSearch";
 const SymbolSearchDialog = (props: {
   isOpen?: boolean;
   onOpenChange: (open: boolean) => void;
-  onSymbolSelect: (symbol: string) => void;
+  onSelect: (item: SearchItem) => void;
 }) => {
-  const { isOpen, onOpenChange, onSymbolSelect } = props;
-  const [query, setQuery] = useDebounceValue("", 250);
+  const { isOpen, onOpenChange, onSelect } = props;
+  const [query, setQuery] = useDebounceValue("", 150);
   const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
 
   const groups = searchItems.reduce(
@@ -50,8 +50,8 @@ const SymbolSearchDialog = (props: {
     handleSearch();
   }, [query]);
 
-  const handleSymbolSelect = (symbol: string) => {
-    onSymbolSelect(symbol);
+  const handleSelect = (item: SearchItem) => {
+    onSelect(item);
     onOpenChange(false);
   };
 
@@ -67,41 +67,48 @@ const SymbolSearchDialog = (props: {
         }}
         placeholder="Example: AAPL, apple, etc."
       />
-      <CommandList className="max-h-[400px]">
-        {resultGroups.length === 0 && <CommandEmpty>No results found.</CommandEmpty>}
-        {resultGroups.map(({ key, items }, index) => {
-          return (
-            <div key={`group-${key}`}>
-              <CommandGroup key={key} heading={key.toUpperCase()}>
-                {items.map((item) => (
-                  <CommandItem
-                    key={item.symbol}
-                    onClick={() => {}}
-                    className="cursor-pointer pointer-events-auto !py-0 !px-0"
-                  >
-                    <button
-                      onClick={() => {
-                        handleSymbolSelect(item.symbol);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          handleSymbolSelect(item.symbol);
-                        }
-                      }}
-                      className="px-2 py-3 w-full flex justify-start"
+      {resultGroups.length === 0 ? (
+        <CommandList className="max-h-[400px] border-t">
+          <CommandEmpty>No results found.</CommandEmpty>
+        </CommandList>
+      ) : (
+        <CommandList className="max-h-[400px] border-t">
+          {resultGroups.map(({ key, items }, index) => {
+            return (
+              <div key={`group-${key}`}>
+                <CommandGroup key={key} heading={key.toUpperCase()}>
+                  {items.map((item) => (
+                    <CommandItem
+                      key={item.symbol}
+                      onClick={() => {}}
+                      className="cursor-pointer pointer-events-auto !py-0 !px-0"
                     >
-                      <span className="mr-4 font-semibold">{item.symbol}</span>
-                      <span className="text-foreground/70">{item.shortName}</span>
-                      <span className="ml-auto text-foreground/70">{item.exchange}</span>
-                    </button>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-              {index < resultGroups.length - 1 && <CommandSeparator />}
-            </div>
-          );
-        })}
-      </CommandList>
+                      <button
+                        onClick={() => {
+                          handleSelect(item);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleSelect(item);
+                          }
+                        }}
+                        className="px-2 py-3 w-full flex justify-start"
+                      >
+                        <span className="mr-4 font-semibold">{item.symbol}</span>
+                        <span className="text-foreground/70">{item.shortName}</span>
+                        <span className="ml-auto text-foreground/70">
+                          {item.exchange}
+                        </span>
+                      </button>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+                {index < resultGroups.length - 1 && <CommandSeparator />}
+              </div>
+            );
+          })}
+        </CommandList>
+      )}
     </CommandDialog>
   );
 };
