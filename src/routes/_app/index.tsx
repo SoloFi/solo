@@ -11,7 +11,7 @@ import { PortfolioTable } from "@/components/portfolio/portfolio-table";
 import { getSymbolChart } from "@/query/symbol";
 import { getPortfolios } from "@/query/portfolio";
 import { checkAuth } from "@/check-auth";
-import { Button } from "@/components/ui/button";
+import { PortfolioEditor } from "@/components/portfolio/portfolio-editor";
 
 export const Route = createFileRoute("/_app/")({
   component: Index,
@@ -89,13 +89,15 @@ function Index() {
 
   return (
     <div className="w-full h-full">
-      <Card>
-        <CardHeader className="flex flex-row items-center w-full h-max pb-2 space-y-0 space-x-2">
-          {hasPortfolio && (
+      <Card className="min-h-full">
+        <CardHeader className="flex flex-row items-center w-full h-max pb-4 space-y-0 space-x-2">
+          {hasPortfolio ? (
             <>
               <p className="text-2xl font-semibold">{portfolios?.[0]?.name ?? ""}</p>
               <ChartTypeToggle defaultChartType="area" onToggle={setChartType} />
             </>
+          ) : (
+            <h1 className="text-2xl font-semibold">Create a portfolio</h1>
           )}
         </CardHeader>
         <CardContent>
@@ -115,7 +117,7 @@ function Index() {
               </div>
             </>
           ) : (
-            <Button size="lg">Create Portfolio</Button>
+            <PortfolioEditor onPortfolioUpdate={console.log} />
           )}
         </CardContent>
       </Card>

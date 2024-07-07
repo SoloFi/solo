@@ -11,6 +11,7 @@ export type PortfolioHolding = {
   symbol: string;
   buys?: PortfolioAction[];
   sales?: PortfolioAction[];
+  currency: string;
 };
 
 export type PortfolioAction = {
