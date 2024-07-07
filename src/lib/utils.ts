@@ -29,14 +29,14 @@ export function hexTransp(hexColor: string, alpha: number) {
 
 export function stringToColor(str: string) {
   const themeColors = [
-    colors.amber[500],
-    colors.lime[500],
+    colors.amber[600],
+    colors.lime[600],
     colors.emerald[600],
-    colors.cyan[500],
-    colors.blue[500],
-    colors.violet[500],
-    colors.fuchsia[500],
-    colors.rose[500],
+    colors.cyan[600],
+    colors.blue[600],
+    colors.violet[600],
+    colors.fuchsia[600],
+    colors.rose[600],
   ];
   const hash = hashString(str);
   const index = hash % themeColors.length;

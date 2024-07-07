@@ -68,11 +68,11 @@ const SymbolSearchDialog = (props: {
         placeholder="Example: AAPL, apple, etc."
       />
       {resultGroups.length === 0 ? (
-        <CommandList className="max-h-[400px] border-t">
+        <CommandList className="h-[400px] border-t">
           <CommandEmpty>No results found.</CommandEmpty>
         </CommandList>
       ) : (
-        <CommandList className="max-h-[400px] border-t">
+        <CommandList className="h-[400px] border-t">
           {resultGroups.map(({ key, items }, index) => {
             return (
               <div key={`group-${key}`}>

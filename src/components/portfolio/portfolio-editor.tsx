@@ -1,8 +1,8 @@
+import { useCallback, useState } from "react";
 import { Portfolio, PortfolioHolding } from "@/api/types";
 import { Button } from "@/components/ui/button";
-import { cn, getForegroundColor, stringToColor, usd } from "@/lib/utils";
+import { cn, getForegroundColor, stringToColor } from "@/lib/utils";
 import { Activity, DollarSign } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
 import SymbolSearchDialog from "@/components/symbol-search-dialog";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -13,14 +13,12 @@ import {
 } from "@/components/ui/accordion";
 import { SearchItem } from "@/api/YahooSearch";
 import { Badge } from "@/components/ui/badge";
-import { useTheme } from "@/components/theme-provider";
 
 export function PortfolioEditor(props: {
   onPortfolioUpdate: (portfolio: Portfolio) => void;
   initialData?: Portfolio;
 }) {
   const { initialData, onPortfolioUpdate } = props;
-  const { resolvedTheme } = useTheme();
   const [portfolio, setPortfolio] = useState<Portfolio>(
     initialData ?? {
       id: "",
@@ -34,20 +32,22 @@ export function PortfolioEditor(props: {
   const addHolding = useCallback(
     (item: SearchItem) => {
       const newHoldings: PortfolioHolding[] = [...portfolio.holdings];
+      // make sure the holding is not already in the list
+      if (newHoldings.find((holding) => holding.symbol === item.symbol)) {
+        return;
+      }
       newHoldings.push({
         symbol: item.symbol,
         shortName: item.shortName,
         type: item.quoteType,
         currency: "USD",
       });
-      setPortfolio({ ...portfolio, holdings: newHoldings });
+      const newPortfolio = { ...portfolio, holdings: newHoldings };
+      setPortfolio(newPortfolio);
+      onPortfolioUpdate(newPortfolio);
     },
-    [portfolio],
+    [onPortfolioUpdate, portfolio],
   );
-
-  useEffect(() => {
-    console.log(portfolio);
-  }, [portfolio]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -84,24 +84,28 @@ export function PortfolioEditor(props: {
                   <AccordionTrigger
                     iconSide="left"
                     className={cn(
-                      "flex items-center rounded-md p-3 bg-background hover:bg-muted data-[state=open]:rounded-b-none data-[state=open]:bg-muted data-[state=open]:border-b",
+                      "rounded-md p-3 bg-background hover:bg-muted data-[state=open]:rounded-b-none data-[state=open]:bg-muted data-[state=open]:border-b",
                     )}
                   >
-                    <div className="text-lg font-semibold">{holding.shortName}</div>
-                    <div className="text-foreground/70">{holding.symbol}</div>
-                    <Badge
-                      className={cn(
-                        "uppercase text-xs px-1 py-0.5 shadow-none",
-                        getForegroundColor(
-                          stringToColor(holding.type),
-                          "text-white",
-                          "text-black",
-                        ),
-                      )}
-                      style={{ background: stringToColor(holding.type) }}
-                    >
-                      {holding.type}
-                    </Badge>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="text-lg font-semibold">{holding.shortName}</div>
+                        <div className="text-foreground/70">{holding.symbol}</div>
+                      </div>
+                      <Badge
+                        className={cn(
+                          "uppercase text-xs px-1 py-0.5 shadow-none",
+                          getForegroundColor(
+                            stringToColor(holding.type),
+                            "text-white",
+                            "text-black",
+                          ),
+                        )}
+                        style={{ background: stringToColor(holding.type) }}
+                      >
+                        {holding.type}
+                      </Badge>
+                    </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-4 py-3 rounded-b-md bg-muted/50 border border-t-0">
                     Yes. It adheres to the WAI-ARIA design pattern.
