@@ -14,7 +14,7 @@ import { CheckIcon } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { PopoverContentProps } from "@radix-ui/react-popover";
 
-const currencies = [
+export const currencies = [
   { symbol: "USD", name: "United States Dollar" },
   { symbol: "EUR", name: "Euro" },
   { symbol: "JPY", name: "Japanese Yen" },
@@ -40,12 +40,13 @@ const currencies = [
 ];
 
 export function CurrencySelect(props: {
+  defaultValue?: string;
   onSelect: (currency: { symbol: string; name: string }) => void;
   popoverContentProps?: PopoverContentProps;
 }) {
-  const { onSelect, popoverContentProps } = props;
+  const { defaultValue = "USD", onSelect, popoverContentProps } = props;
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("USD");
+  const [value, setValue] = useState(defaultValue);
   const [search, setSearch] = useState("");
 
   const filteredCurrencies = useMemo(() => {
@@ -61,6 +62,7 @@ export function CurrencySelect(props: {
     setValue(currency.symbol);
     onSelect(currency);
     setOpen(false);
+    setSearch("");
   };
 
   return (
@@ -93,10 +95,7 @@ export function CurrencySelect(props: {
               <CommandItem
                 key={currency.symbol}
                 value={currency.symbol}
-                onSelect={() => {
-                  handleSelect(currency);
-                  setOpen(false);
-                }}
+                onSelect={() => handleSelect(currency)}
               >
                 <div className="flex gap-2">
                   <Badge className="w-[45px] h-max flex justify-center" variant="outline">
