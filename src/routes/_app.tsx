@@ -1,9 +1,9 @@
-import LinkButton from "@/components/link-button";
 import { LogoLink } from "@/components/logo";
+import { Nav } from "@/components/nav";
 import TopBar from "@/components/top-bar";
 import { Button } from "@/components/ui/button";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { Bell, LineChart } from "lucide-react";
+import { Bell } from "lucide-react";
 
 export const Route = createFileRoute("/_app")({
   component: () => (
@@ -18,12 +18,7 @@ export const Route = createFileRoute("/_app")({
             </Button>
           </div>
           <div className="flex-1">
-            <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-              <LinkButton href="#" active={true}>
-                <LineChart className="w-4 h-4" />
-                Dashboard
-              </LinkButton>
-            </nav>
+            <Nav />
           </div>
         </div>
       </div>

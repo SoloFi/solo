@@ -15,6 +15,7 @@ import LinkButton from "./link-button";
 import { LogoLink } from "./logo";
 import { Command, CommandInput } from "./ui/command";
 import { useState } from "react";
+import { Nav } from "./nav";
 
 const TopBar = () => {
   const [isSymbolSearchOpen, setIsSymbolSearchOpen] = useState(false);
@@ -29,13 +30,7 @@ const TopBar = () => {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="flex flex-col">
-          <nav className="grid gap-2 text-lg font-medium">
-            <LogoLink href="/" />
-            <LinkButton href="#" active={true}>
-              <LineChart className="w-5 h-5" />
-              Dashboard
-            </LinkButton>
-          </nav>
+          <Nav device="mobile" hasLogo />
         </SheetContent>
       </Sheet>
       <Command className="rounded-lg border h-max max-w-[500px] bg-secondary">
