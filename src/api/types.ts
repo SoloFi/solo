@@ -9,9 +9,11 @@ export type Portfolio = {
 
 export type PortfolioHolding = {
   symbol: string;
+  shortName: string;
+  currency: string;
+  type: string;
   buys?: PortfolioAction[];
   sales?: PortfolioAction[];
-  currency: string;
 };
 
 export type PortfolioAction = {
