@@ -1,3 +1,4 @@
+import { dayjs, parseJwt } from "@/lib/utils";
 import { axios } from "@/query/axios";
 import {
   createContext,
@@ -44,6 +45,13 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (token) {
+      const parsedToken = parseJwt(token);
+      const expiration = parsedToken.exp;
+      const expired = dayjs().isAfter(dayjs(expiration * 1000));
+      if (expired) {
+        setToken(null);
+        return;
+      }
       axios.defaults.headers.common["Authorization"] = "Bearer " + token;
       localStorage.setItem("token", token);
     } else {

@@ -21,3 +21,8 @@ export const updatePortfolio = async (id: string, portfolio: Portfolio) => {
   const { data } = await axios.post(`/api/portfolio/${id}`, portfolio);
   return data.message;
 };
+
+export const deletePortfolio = async (id: string) => {
+  const { data } = await axios.delete(`/api/portfolio/${id}`);
+  return data.message;
+};

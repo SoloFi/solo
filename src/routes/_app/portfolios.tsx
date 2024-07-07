@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { DialogHeader, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { createPortfolio, getPortfolios } from "@/query/portfolio";
+import { createPortfolio, deletePortfolio, getPortfolios } from "@/query/portfolio";
 import {
   Dialog,
   DialogContent,
@@ -18,9 +18,12 @@ import { Portfolio } from "@/api/types";
 import { toast } from "sonner";
 import { queryClient } from "@/main";
 import { useForm } from "@tanstack/react-form";
+import { CurrencySelect } from "@/components/currency-select";
+import { checkAuth } from "@/check-auth";
 
 export const Route = createFileRoute("/_app/portfolios")({
   component: () => <Portfolios />,
+  beforeLoad: checkAuth,
 });
 
 function Portfolios() {
@@ -49,7 +52,7 @@ function Portfolios() {
     [],
   );
 
-  const mutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: handleCreatePortfolio,
     // When mutate is called:
     onMutate: async (newPortfolio) => {
@@ -69,7 +72,36 @@ function Portfolios() {
     },
   });
 
+  const handleDeletePortfolio = useCallback(async (portfolioId: string) => {
+    try {
+      await deletePortfolio(portfolioId);
+      toast.success("Portfolio deleted successfully");
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
+    setPortfolioIdToDelete(null);
+  }, []);
+
+  const deleteMutation = useMutation({
+    mutationFn: handleDeletePortfolio,
+    onMutate: async (deletedPortfolioId: string) => {
+      await queryClient.cancelQueries({ queryKey: ["portfolios"] });
+      const previousPortfolios = queryClient.getQueryData(["portfolios"]);
+      queryClient.setQueryData(["portfolios"], (old: Portfolio[]) =>
+        old.filter((p) => p.id !== deletedPortfolioId),
+      );
+      return { previousPortfolios };
+    },
+    onError: (_, __, context) => {
+      queryClient.setQueryData(["portfolios"], context?.previousPortfolios ?? []);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["portfolios"] });
+    },
+  });
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [portfolioIdToDelete, setPortfolioIdToDelete] = useState<string | null>(null);
 
   return (
     <div className="w-full h-full">
@@ -80,7 +112,7 @@ function Portfolios() {
           </CardHeader>
         )}
         <CardContent className="flex flex-1 items-center justify-center">
-          {isPending && <Spinner className="w-12 h-12" />}
+          {isPending && <Spinner className="w-10 h-10" />}
           {!isPending &&
             (portfolios && portfolios.length > 0 ? (
               <ul>
@@ -89,6 +121,12 @@ function Portfolios() {
                     <Card>
                       <CardHeader>
                         <CardTitle>{portfolio.name}</CardTitle>
+                        <Button
+                          variant="destructive"
+                          onClick={() => setPortfolioIdToDelete(portfolio.id)}
+                        >
+                          Delete
+                        </Button>
                       </CardHeader>
                     </Card>
                   </li>
@@ -112,12 +150,59 @@ function Portfolios() {
       </Card>
       {isCreateDialogOpen && (
         <CreatePortfolioDialog
-          onCreate={async ({ name, currency }) => mutation.mutate({ name, currency })}
+          onCreate={async ({ name, currency }) =>
+            createMutation.mutate({ name, currency })
+          }
           isOpen={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
         />
       )}
+      {portfolioIdToDelete && (
+        <DeletePortfolioDialog
+          isOpen={!!portfolioIdToDelete}
+          onOpenChange={() => setPortfolioIdToDelete(null)}
+          onDelete={async () => deleteMutation.mutate(portfolioIdToDelete)}
+        />
+      )}
     </div>
+  );
+}
+
+function DeletePortfolioDialog(props: {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  onDelete: () => Promise<void>;
+}) {
+  const { isOpen, onOpenChange, onDelete } = props;
+  const [isLoading, setIsLoading] = useState(false);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete portfolio</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete this portfolio? This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)} variant="outline">
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={async () => {
+              setIsLoading(true);
+              await onDelete();
+              setIsLoading(false);
+            }}
+            loading={isLoading}
+          >
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -131,7 +216,7 @@ function CreatePortfolioDialog(props: {
   const form = useForm({
     defaultValues: {
       name: "",
-      currency: "",
+      currency: "USD",
     },
     onSubmit: async ({ value }) => {
       return onCreate({ name: value.name, currency: value.currency });
@@ -182,13 +267,15 @@ function CreatePortfolioDialog(props: {
                   <Label htmlFor="currency" className="text-right">
                     Currency
                   </Label>
-                  <Input
-                    value={state.value}
+                  <CurrencySelect
+                    defaultValue={state.value}
+                    onSelect={({ symbol }) => handleChange(symbol)}
                     onBlur={handleBlur}
-                    onChange={(e) => handleChange(e.target.value)}
-                    placeholder="Enter the currency"
-                    id="currency"
-                    className="col-span-3"
+                    className="w-auto col-span-3"
+                    popoverContentProps={{
+                      align: "center",
+                      side: "bottom",
+                    }}
                   />
                 </div>
               )}

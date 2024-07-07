@@ -40,11 +40,19 @@ export const currencies = [
 ];
 
 export function CurrencySelect(props: {
-  defaultValue?: string;
   onSelect: (currency: { symbol: string; name: string }) => void;
+  defaultValue?: string;
+  className?: string;
+  onBlur?: () => void;
   popoverContentProps?: PopoverContentProps;
 }) {
-  const { defaultValue = "USD", onSelect, popoverContentProps } = props;
+  const {
+    defaultValue = "USD",
+    className,
+    onSelect,
+    onBlur,
+    popoverContentProps,
+  } = props;
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(defaultValue);
   const [search, setSearch] = useState("");
@@ -72,14 +80,15 @@ export function CurrencySelect(props: {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[75px] justify-between uppercase"
+          className={cn("w-[75px] justify-between uppercase", className)}
+          onBlur={onBlur}
         >
           {value}
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[225px] max-h-[400px] p-0 overflow-y-auto"
+        className="w-[225px] max-h-[300px] p-0 overflow-y-auto"
         align="end"
         {...popoverContentProps}
       >
@@ -87,7 +96,7 @@ export function CurrencySelect(props: {
           <CommandInput
             placeholder="Search currency..."
             onValueChange={setSearch}
-            className="h-9"
+            className="h-9 border-b"
           />
           <CommandEmpty>No currency found.</CommandEmpty>
           <CommandGroup>
