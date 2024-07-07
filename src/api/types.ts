@@ -1,26 +1,30 @@
+import z from "zod";
 import type { ManipulateType } from "dayjs";
 import type { UTCTimestamp } from "lightweight-charts";
 
-export type Portfolio = {
-  id: string;
-  name: string;
-  holdings: PortfolioHolding[];
-};
+export const portfolioActionSchema = z.object({
+  time: z.number(),
+  quantity: z.number(),
+  price: z.number(),
+});
+export type PortfolioAction = z.infer<typeof portfolioActionSchema>;
 
-export type PortfolioHolding = {
-  symbol: string;
-  shortName: string;
-  currency: string;
-  type: string;
-  buys?: PortfolioAction[];
-  sales?: PortfolioAction[];
-};
+export const portfolioHoldingSchema = z.object({
+  symbol: z.string(),
+  shortName: z.string(),
+  currency: z.string(),
+  type: z.string(),
+  buys: z.array(portfolioActionSchema),
+  sales: z.array(portfolioActionSchema),
+});
+export type PortfolioHolding = z.infer<typeof portfolioHoldingSchema>;
 
-export type PortfolioAction = {
-  time: number;
-  quantity: number;
-  price: number;
-};
+export const portfolioSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  holdings: z.array(portfolioHoldingSchema),
+});
+export type Portfolio = z.infer<typeof portfolioSchema>;
 
 export interface CandlestickData {
   time: UTCTimestamp;

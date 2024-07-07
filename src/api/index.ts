@@ -7,13 +7,14 @@ import { HTTPException } from "hono/http-exception";
 
 import YahooQuote from "./YahooQuote";
 import YahooSearch from "./YahooSearch";
-import type { QuoteRange } from "./types";
+import { portfolioSchema, type Portfolio, type QuoteRange } from "./types";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 import bcrypt from "bcryptjs";
 import isEmail from "validator/lib/isEmail";
 import isStrongPassword from "validator/lib/isStrongPassword";
 import { Resource } from "sst";
+import { v4 as uuidv4 } from "uuid";
 
 const USERS_TABLE = Resource.Users.name;
 const JWT_SECRET = Resource.JWTSecret.value;
@@ -126,6 +127,99 @@ app
       return c.json([]);
     }
     return c.json(existingUser.portfolios);
+  })
+  .put("/api/portfolio", async (c) => {
+    const payload = c.get("jwtPayload");
+    const email = payload.sub;
+    if (!email) {
+      throw new HTTPException(401, { message: "Unauthorized" });
+    }
+
+    const data = await c.req.json();
+    data.id = uuidv4();
+    // verifiy that data is valid
+    try {
+      portfolioSchema.parse(data);
+    } catch (e) {
+      throw new HTTPException(400, { message: (e as Error).message });
+    }
+
+    const existingUserItem = await db.get({
+      TableName: USERS_TABLE,
+      Key: {
+        email,
+      },
+    });
+    const existingUser = existingUserItem.Item;
+    if (!existingUser) {
+      throw new HTTPException(404, { message: "User not found." });
+    }
+
+    // check if the portfolio already exists or has the same name
+    if (existingUser.portfolios) {
+      const existingPortfolio = existingUser.portfolios.find(
+        (portfolio: Portfolio) =>
+          portfolio.name === data.name || portfolio.id === data.id,
+      );
+      if (existingPortfolio) {
+        throw new HTTPException(400, {
+          message: "A portfolio with this name or id already exists.",
+        });
+      }
+    }
+
+    const updatedPortfolios = existingUser.portfolios
+      ? [...existingUser.portfolios, data]
+      : [data];
+    await db.put({
+      TableName: USERS_TABLE,
+      Item: {
+        email,
+        portfolios: updatedPortfolios,
+      },
+    });
+    return c.json({ message: "Portfolio created successfully." });
+  })
+  .post("/api/portfolio/:id", async (c) => {
+    const payload = c.get("jwtPayload");
+    const email = payload.sub;
+    if (!email) {
+      throw new HTTPException(401, { message: "Unauthorized" });
+    }
+
+    const { id } = c.req.param();
+    const data = await c.req.json();
+    const existingUserItem = await db.get({
+      TableName: USERS_TABLE,
+      Key: {
+        email,
+      },
+    });
+    const existingUser = existingUserItem.Item;
+    if (!existingUser || !existingUser.portfolios) {
+      throw new HTTPException(404, { message: "Portfolio not found." });
+    }
+
+    const updatedPortfolios = existingUser.portfolios.map((portfolio: Portfolio) => {
+      if (portfolio.id === id) {
+        return {
+          ...portfolio,
+          ...data,
+        };
+      }
+      return portfolio;
+    });
+    await db.update({
+      TableName: USERS_TABLE,
+      Key: {
+        email,
+      },
+      UpdateExpression: "SET portfolios = :portfolios",
+      ExpressionAttributeValues: {
+        ":portfolios": updatedPortfolios,
+      },
+    });
+    return c.json({ message: "Portfolio updated successfully." });
   })
   .post("/api/chart/:symbol", async (c) => {
     const { symbol } = c.req.param();
