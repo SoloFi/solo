@@ -38,7 +38,7 @@ const TopBar = () => {
           </nav>
         </SheetContent>
       </Sheet>
-      <Command className="rounded-lg border h-max max-w-[500px]">
+      <Command className="rounded-lg border h-max max-w-[500px] bg-secondary">
         <CommandInput
           placeholder="Search for symbols..."
           onClick={() => setIsSymbolSearchOpen(true)}
