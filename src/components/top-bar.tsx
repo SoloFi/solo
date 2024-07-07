@@ -9,19 +9,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SheetTrigger, SheetContent, Sheet } from "@/components/ui/sheet";
-import { CircleUser, LineChart, Menu } from "lucide-react";
+import { CircleUser, Menu } from "lucide-react";
 import { Button } from "./ui/button";
-import LinkButton from "./link-button";
-import { LogoLink } from "./logo";
 import { Command, CommandInput } from "./ui/command";
 import { useState } from "react";
 import { Nav } from "./nav";
+import { CurrencySelect } from "./currency-select";
 
 const TopBar = () => {
   const [isSymbolSearchOpen, setIsSymbolSearchOpen] = useState(false);
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-background lg:h-[60px] px-4 lg:px-8">
+    <header className="flex h-14 items-center gap-3 border-b bg-background lg:h-[60px] px-4 lg:px-8">
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon" className="shrink-0 md:hidden">
@@ -40,6 +39,7 @@ const TopBar = () => {
         />
       </Command>
       <div className="flex-1 w-full" />
+      <CurrencySelect onSelect={console.log} />
       <ModeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -61,7 +61,7 @@ const TopBar = () => {
         <SymbolSearchDialog
           isOpen={isSymbolSearchOpen}
           onOpenChange={setIsSymbolSearchOpen}
-          onSymbolSelect={console.log}
+          onSelect={console.log}
         />
       )}
     </header>
