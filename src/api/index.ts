@@ -178,7 +178,7 @@ app
         portfolios: updatedPortfolios,
       },
     });
-    return c.json({ message: "Portfolio created successfully." });
+    return c.json(data);
   })
   .post("/api/portfolio/:id", async (c) => {
     const payload = c.get("jwtPayload");

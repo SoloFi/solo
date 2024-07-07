@@ -12,7 +12,6 @@ export type PortfolioAction = z.infer<typeof portfolioActionSchema>;
 export const portfolioHoldingSchema = z.object({
   symbol: z.string(),
   shortName: z.string(),
-  currency: z.string(),
   type: z.string(),
   buys: z.array(portfolioActionSchema),
   sales: z.array(portfolioActionSchema),
@@ -22,6 +21,7 @@ export type PortfolioHolding = z.infer<typeof portfolioHoldingSchema>;
 export const portfolioSchema = z.object({
   id: z.string(),
   name: z.string(),
+  currency: z.string(),
   holdings: z.array(portfolioHoldingSchema),
 });
 export type Portfolio = z.infer<typeof portfolioSchema>;
