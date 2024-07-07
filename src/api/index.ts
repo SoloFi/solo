@@ -15,6 +15,10 @@ import isEmail from "validator/lib/isEmail";
 import isStrongPassword from "validator/lib/isStrongPassword";
 import { Resource } from "sst";
 import { v4 as uuidv4 } from "uuid";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
 
 const USERS_TABLE = Resource.Users.name;
 const JWT_SECRET = Resource.JWTSecret.value;
@@ -103,7 +107,7 @@ app
 
     const payload = {
       sub: existingUser.email,
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // Token expires in 24 hours
+      exp: dayjs().utc().unix() + 60 * 60 * 24, // Token expires in 24 hours
     };
     const token = await sign(payload, JWT_SECRET);
     return c.json({ token });
@@ -220,6 +224,40 @@ app
       },
     });
     return c.json({ message: "Portfolio updated successfully." });
+  })
+  .delete("/api/portfolio/:id", async (c) => {
+    const payload = c.get("jwtPayload");
+    const email = payload.sub;
+    if (!email) {
+      throw new HTTPException(401, { message: "Unauthorized" });
+    }
+
+    const { id } = c.req.param();
+    const existingUserItem = await db.get({
+      TableName: USERS_TABLE,
+      Key: {
+        email,
+      },
+    });
+    const existingUser = existingUserItem.Item;
+    if (!existingUser || !existingUser.portfolios) {
+      throw new HTTPException(404, { message: "Portfolio not found." });
+    }
+
+    const updatedPortfolios = existingUser.portfolios.filter(
+      (portfolio: Portfolio) => portfolio.id !== id,
+    );
+    await db.update({
+      TableName: USERS_TABLE,
+      Key: {
+        email,
+      },
+      UpdateExpression: "SET portfolios = :portfolios",
+      ExpressionAttributeValues: {
+        ":portfolios": updatedPortfolios,
+      },
+    });
+    return c.json({ message: "Portfolio deleted successfully." });
   })
   .get("/api/quote/:symbol", async (c) => {
     const { symbol } = c.req.param();
