@@ -19,6 +19,12 @@ export const getSymbolChart = async (params: {
   return data as CandlestickData[];
 };
 
+export const getSymbolQuote = async (symbol: string) => {
+  const { data } = await axios.get(`/api/quote/${symbol}`);
+  if (!data) throw new Error("Failed to fetch symbol quote");
+  return data as CandlestickData;
+};
+
 export const searchSymbol = async (query: string) => {
   const encodedQuery = query.replace(/ /g, "-");
   const { data } = await axios.get(`/api/search/${encodedQuery}`);

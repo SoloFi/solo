@@ -221,6 +221,12 @@ app
     });
     return c.json({ message: "Portfolio updated successfully." });
   })
+  .get("/api/quote/:symbol", async (c) => {
+    const { symbol } = c.req.param();
+    const YQ = new YahooQuote();
+    const quote = await YQ.getLatestQuote(symbol);
+    return c.json(quote);
+  })
   .post("/api/chart/:symbol", async (c) => {
     const { symbol } = c.req.param();
     const { from, to, range, interval } = c.req.query();
