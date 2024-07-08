@@ -8,7 +8,8 @@
     "dev": "sst dev vite",
     "format": "prettier --write .",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup": "bun setup.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.609.0",
@@ -29,9 +30,7 @@
     "@tanstack/react-query": "^5.45.0",
     "@tanstack/react-router": "^1.36.3",
     "@tanstack/react-table": "^8.17.3",
-    "@tanstack/router-devtools": "^1.36.3",
     "@tanstack/router-vite-plugin": "^1.37.0",
-    "@types/bcryptjs": "^2.4.6",
     "axios": "^1.7.2",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
@@ -56,7 +55,10 @@
   },
   "devDependencies": {
     "@tanstack/eslint-plugin-query": "^5.43.1",
+    "@tanstack/router-devtools": "^1.43.12",
     "@types/aws-lambda": "8.10.140",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/bun": "^1.1.6",
     "@types/lodash": "^4.17.5",
     "@types/node": "^20.14.2",
     "@types/react": "^18.2.66",
@@ -67,6 +69,7 @@
     "@typescript-eslint/parser": "^7.2.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
     "autoprefixer": "^10.4.19",
+    "bun": "^1.1.18",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",

@@ -1,39 +1,56 @@
-# React + TypeScript + Vite
+# Setup
 
-This template provides a minimal setup to get React working in Vite with HMR and
-some ESLint rules.
+## 1. Create AWS access keys by following the instructions [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user_manage_add-key.html).
 
-Currently, two official plugins are available:
+### Loading access keys from a file
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md)
-  uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc)
-  uses [SWC](https://swc.rs/) for Fast Refresh
+You can keep your AWS credentials in a file. The credentials are found at:
 
-## Expanding the ESLint configuration
+- `~/.aws/credentials` on Linux, Unix, and macOS;
+- `C:\Users\USER_NAME\.aws\credentials` on Windows
 
-If you are developing a production application, we recommend updating the
-configuration to enable type aware lint rules:
+If the credentials file does not exist on your machine, create it. The file should have the following format:
 
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: "latest",
-    sourceType: "module",
-    project: ["./tsconfig.json", "./tsconfig.node.json"],
-    tsconfigRootDir: __dirname,
-  },
-};
+```plaintext
+[default]
+aws_access_key_id = <YOUR_ACCESS_KEY_ID>
+aws_secret_access_key = <YOUR_SECRET_ACCESS_KEY>
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to
-  `plugin:@typescript-eslint/recommended-type-checked` or
-  `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install
-  [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and
-  add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends`
-  list
+### Loading from environment variables
+
+SST automatically detects AWS credentials in your environment and uses them for making requests to AWS. The environment variables that you need to set are:
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+
+## 2. Install the dependencies
+
+### Using Bun
+
+```bash
+$ bun install
+```
+
+### Using NPM
+
+```bash
+$ npm install
+```
+
+## 3. Run the setup script
+
+```bash
+$ npm run setup
+```
+Copy the outputted `API_KEY` if you want to create a new user on the frontend.
+
+## 4. Run the dev environment & deploy the stack
+
+```bash
+$ npm run dev
+```
+
+## 5. Create a new user
+
+Navigate to `http://localhost:3000/signUp` and create a new user. Use the `API_KEY` from the setup script for the `Access key` field. You can also find this value in your `.env` file.
