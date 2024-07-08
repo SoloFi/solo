@@ -15,12 +15,14 @@ import { Command, CommandInput } from "./ui/command";
 import { useState } from "react";
 import { Nav } from "./nav";
 import { CurrencySelect } from "./currency-select";
+import { useAuth } from "./auth";
 
 const TopBar = () => {
   const [isSymbolSearchOpen, setIsSymbolSearchOpen] = useState(false);
+  const { signOut } = useAuth();
 
   return (
-    <header className="flex h-14 items-center gap-3 border-b bg-background lg:h-[60px] px-4 lg:px-8">
+    <header className="flex h-14 items-center gap-1.5 border-b bg-background lg:h-[60px] px-4 lg:px-8">
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon" className="shrink-0 md:hidden">
@@ -39,11 +41,11 @@ const TopBar = () => {
         />
       </Command>
       <div className="flex-1 w-full" />
-      <CurrencySelect onSelect={console.log} />
+      <CurrencySelect onSelect={console.log} variant="ghost" />
       <ModeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="secondary" size="icon" className="rounded-full">
+          <Button variant="ghost" size="icon">
             <CircleUser className="w-5 h-5" />
             <span className="sr-only">Toggle user menu</span>
           </Button>
@@ -54,7 +56,7 @@ const TopBar = () => {
           <DropdownMenuItem>Settings</DropdownMenuItem>
           <DropdownMenuItem>Support</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Logout</DropdownMenuItem>
+          <DropdownMenuItem onClick={signOut}>Logout</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       {isSymbolSearchOpen && (

@@ -39,7 +39,6 @@ export default $config({
 
     return {
       api: hono.url,
-      usersTable,
     };
   },
 });

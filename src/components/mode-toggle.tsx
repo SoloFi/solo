@@ -15,7 +15,7 @@ export function ModeToggle(props: { className?: string }) {
 
   return (
     <Button
-      variant="outline"
+      variant="ghost"
       size="icon"
       className={cn("p-2 bg-transparent", className)}
       onClick={toggleTheme}

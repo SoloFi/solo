@@ -39,8 +39,6 @@ export function Nav(props: {
     },
   ];
 
-  console.log("routes", routes);
-
   return (
     <nav className={cn(navStyle, className)}>
       {hasLogo && <LogoLink href="/" />}
