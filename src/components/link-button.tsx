@@ -12,7 +12,7 @@ export default function LinkButton(props: {
     <Link
       to={href}
       className={cn(
-        "flex items-center gap-3 px-3 py-2 font-semibold transition-all rounded-lg text-muted-foreground hover:text-primary aria-selected:bg-muted aria-selected:text-primary",
+        "flex items-center gap-3 px-3 py-2 font-semibold transition-all rounded-lg text-foreground/75 hover:text-primary aria-selected:bg-muted aria-selected:text-primary",
         className,
       )}
       aria-selected={active}
