@@ -10,30 +10,42 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/auth";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
+import { useState } from "react";
+import { useForm } from "@tanstack/react-form";
+import { checkAuth } from "@/check-auth";
 
 export const Route = createFileRoute("/_auth/signUp")({
   component: SignUp,
+  beforeLoad: checkAuth,
 });
 
 function SignUp() {
   const { signUp } = useAuth();
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const email = form.email.value;
-    const password = form.password.value;
-    const accessKey = form.apiAccessKey.value;
-    try {
-      const successMsg = await signUp(email, password, accessKey);
-      console.log(successMsg);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const form = useForm({
+    defaultValues: {
+      email: "",
+      password: "",
+      apiAccessKey: "",
+    },
+    onSubmit: async ({ value }) => {
+      const email = value.email;
+      const password = value.password;
+      const apiAccessKey = value.apiAccessKey;
+      try {
+        await signUp(email, password, apiAccessKey);
+      } catch (error) {
+        setError((error as Error).message);
+      }
+    },
+  });
+  const { Field } = form;
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle className="text-2xl">Sign up</CardTitle>
         <CardDescription>
@@ -41,29 +53,84 @@ function SignUp() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="grid gap-4" onSubmit={handleSubmit}>
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="m@example.com" required />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" required autoComplete="password" />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="apiAccessKey">Access key</Label>
-            <Input
-              id="apiAccessKey"
-              type="apiAccessKey"
-              required
-              autoComplete="apiAccessKey"
-            />
-          </div>
-          <div>
-            <Button className="w-full mt-2" formAction="submit">
-              Sign up
-            </Button>
-          </div>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <ExclamationTriangleIcon className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        <form
+          className="grid gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
+        >
+          <Field
+            name="email"
+            children={({ state, handleChange, handleBlur }) => (
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  value={state.value}
+                  onChange={(e) => handleChange(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  onBlur={handleBlur}
+                  autoComplete="email"
+                  required
+                />
+              </div>
+            )}
+          />
+          <Field
+            name="password"
+            children={({ state, handleChange, handleBlur }) => (
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  value={state.value}
+                  onChange={(e) => handleChange(e.target.value)}
+                  id="password"
+                  type="password"
+                  onBlur={handleBlur}
+                  required
+                  autoComplete="password"
+                />
+              </div>
+            )}
+          />
+          <Field
+            name="apiAccessKey"
+            children={({ state, handleChange, handleBlur }) => (
+              <div className="grid gap-2">
+                <Label htmlFor="apiAccessKey">Access key</Label>
+                <Input
+                  value={state.value}
+                  onChange={(e) => handleChange(e.target.value)}
+                  id="apiAccessKey"
+                  onBlur={handleBlur}
+                  required
+                />
+              </div>
+            )}
+          />
+          <form.Subscribe
+            selector={(state) => [state.canSubmit, state.isSubmitting]}
+            children={([canSubmit, isSubmitting]) => (
+              <Button
+                className="w-full mt-2"
+                type="submit"
+                disabled={!canSubmit}
+                loading={isSubmitting}
+              >
+                Sign up
+              </Button>
+            )}
+          />
         </form>
       </CardContent>
     </Card>
