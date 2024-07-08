@@ -12,6 +12,31 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export const currencies = [
+  { symbol: "USD", name: "United States Dollar" },
+  { symbol: "EUR", name: "Euro" },
+  { symbol: "JPY", name: "Japanese Yen" },
+  { symbol: "GBP", name: "Pound Sterling" },
+  { symbol: "CHF", name: "Swiss Franc" },
+  { symbol: "CAD", name: "Canadian Dollar" },
+  { symbol: "AUD", name: "Australian Dollar" },
+  { symbol: "CNY", name: "Chinese Yuan" },
+  { symbol: "MXN", name: "Mexican Peso" },
+  { symbol: "INR", name: "Indian Rupee" },
+  { symbol: "ZAR", name: "South African Rand" },
+  { symbol: "RUB", name: "Russian Ruble" },
+  { symbol: "TRY", name: "Turkish Lira" },
+  { symbol: "SGD", name: "Singapore Dollar" },
+  { symbol: "HKD", name: "Hong Kong Dollar" },
+  { symbol: "MYR", name: "Malaysian Ringgit" },
+  { symbol: "THB", name: "Thai Baht" },
+  { symbol: "PHP", name: "Philippine Peso" },
+  { symbol: "IDR", name: "Indonesian Rupiah" },
+  { symbol: "HUF", name: "Hungarian Forint" },
+  { symbol: "SEK", name: "Swedish Krona" },
+  { symbol: "NZD", name: "New Zealand Dollar" },
+];
+
 export function hexTransp(hexColor: string, alpha: number) {
   const map = (value: number, oldRange: [number, number], newRange: [number, number]) => {
     const newValue =
