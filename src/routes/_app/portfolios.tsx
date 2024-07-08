@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { DialogHeader, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Input, InputErrorLabel } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { createPortfolio, deletePortfolio, getPortfolios } from "@/query/portfolio";
 import {
@@ -150,9 +150,11 @@ function Portfolios() {
       </Card>
       {isCreateDialogOpen && (
         <CreatePortfolioDialog
-          onCreate={async ({ name, currency }) =>
-            createMutation.mutate({ name, currency })
-          }
+          onCreate={async ({ name, currency }) => {
+            return new Promise((resolve) => {
+              createMutation.mutate({ name, currency }, { onSettled: () => resolve() });
+            });
+          }}
           isOpen={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
         />
@@ -161,7 +163,11 @@ function Portfolios() {
         <DeletePortfolioDialog
           isOpen={!!portfolioIdToDelete}
           onOpenChange={() => setPortfolioIdToDelete(null)}
-          onDelete={async () => deleteMutation.mutate(portfolioIdToDelete)}
+          onDelete={async () => {
+            return new Promise((resolve) => {
+              deleteMutation.mutate(portfolioIdToDelete, { onSettled: () => resolve() });
+            });
+          }}
         />
       )}
     </div>
@@ -219,7 +225,7 @@ function CreatePortfolioDialog(props: {
       currency: "USD",
     },
     onSubmit: async ({ value }) => {
-      return onCreate({ name: value.name, currency: value.currency });
+      await onCreate({ name: value.name, currency: value.currency });
     },
   });
   const { Field } = form;
@@ -244,8 +250,11 @@ function CreatePortfolioDialog(props: {
           <div className="grid gap-4 py-4">
             <Field
               name="name"
+              validators={{
+                onChange: ({ value }) => (value !== "" ? undefined : "Name is required"),
+              }}
               children={({ state, handleChange, handleBlur }) => (
-                <div className="grid grid-cols-4 items-center gap-4">
+                <div className="grid grid-cols-4 items-center gap-x-4">
                   <Label htmlFor="name" className="text-right">
                     Name
                   </Label>
@@ -254,9 +263,15 @@ function CreatePortfolioDialog(props: {
                     onBlur={handleBlur}
                     onChange={(e) => handleChange(e.target.value)}
                     placeholder="Enter the portfolio name"
-                    id="name"
                     className="col-span-3"
+                    id="name"
                   />
+                  <div />
+                  {state.meta.errors && (
+                    <InputErrorLabel className="col-span-3">
+                      {state.meta.errors}
+                    </InputErrorLabel>
+                  )}
                 </div>
               )}
             />
