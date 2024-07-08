@@ -1,5 +1,6 @@
 import { dayjs, parseJwt } from "@/lib/utils";
 import { axios } from "@/query/axios";
+import { AxiosError } from "axios";
 import {
   createContext,
   useCallback,
@@ -12,7 +13,8 @@ import {
 export interface AuthContextType {
   token: string | null;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, accessKey: string) => Promise<string>;
+  signUp: (email: string, password: string, accessKey: string) => Promise<void>;
+  signOut: () => void;
 }
 export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
@@ -20,28 +22,43 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const res = await axios.post("/signIn", { email, password });
-    const token = res.data.token;
-    if (!token) throw new Error(res.data.message);
-    setToken(token);
-    return token as string | undefined;
+    try {
+      const { data } = await axios.post("/signIn", { email, password });
+      const token = data?.token;
+      setToken(token);
+      return token as string;
+    } catch (e) {
+      const error = e as AxiosError;
+      throw new Error(error.response?.data as string);
+    }
   }, []);
 
   const signUp = useCallback(
     async (email: string, password: string, accessKey: string) => {
-      const res = await axios.post(
-        "/signUp",
-        { email, password },
-        {
-          headers: {
-            Authorization: `Bearer ${accessKey}`,
+      try {
+        const { data } = await axios.post(
+          "/signUp",
+          { email, password },
+          {
+            headers: {
+              Authorization: `Bearer ${accessKey}`,
+            },
           },
-        },
-      );
-      return res.data as string;
+        );
+        if (data?.token) {
+          setToken(data?.token);
+        }
+      } catch (e) {
+        const error = e as AxiosError;
+        throw new Error(error.response?.data as string);
+      }
     },
     [],
   );
+
+  const signOut = useCallback(() => {
+    setToken(null);
+  }, []);
 
   useEffect(() => {
     if (token) {
@@ -65,8 +82,9 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
       token,
       signIn,
       signUp,
+      signOut,
     }),
-    [signIn, signUp, token],
+    [signIn, signOut, signUp, token],
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
