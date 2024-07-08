@@ -9,8 +9,7 @@ const jwtSecret = keyGen();
   await $`echo "API_KEY=${apiKey}
 JWT_SECRET=${jwtSecret}" > .env`;
   console.log("JWT_SECRET and API_KEY generated and saved to .env file");
-  console.log(
-    "When creating your account, use the API_KEY as the 'Access key' value: ",
-    apiKey,
-  );
+
+  console.log("API_KEY: ", apiKey);
+  console.log("JWT_SECRET:", jwtSecret);
 })();

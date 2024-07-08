@@ -26,13 +26,22 @@ SST automatically detects AWS credentials in your environment and uses them for 
 
 ## 2. Install the dependencies
 
-### Using Bun
+### SST CLI
+
+```bash
+curl -fsSL https://ion.sst.dev/install | bash
+```
+Make sure to source your shell profile or restart you shell after running the command above.
+
+### Node Modules
+
+#### Using Bun
 
 ```bash
 $ bun install
 ```
 
-### Using NPM
+#### Using NPM
 
 ```bash
 $ npm install
@@ -43,7 +52,13 @@ $ npm install
 ```bash
 $ npm run setup
 ```
-Copy the outputted `API_KEY` if you want to create a new user on the frontend.
+
+### Set the SST secrets
+
+```bash
+$ sst secrets set JWT_SECRET <YOUR_JWT_SECRET>
+$ sst secrets set API_KEY <YOUR_API_KEY>
+```
 
 ## 4. Run the dev environment & deploy the stack
 
