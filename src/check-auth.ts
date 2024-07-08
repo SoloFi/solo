@@ -1,7 +1,7 @@
 import { ParsedLocation, redirect } from "@tanstack/react-router";
 import { RouteContextType } from "./routes/__root";
 
-export const checkAuth = ({
+export const checkNotAuth = ({
   context,
   location,
 }: {
@@ -14,6 +14,19 @@ export const checkAuth = ({
       search: {
         redirect: location.href,
       },
+    });
+  }
+};
+
+export const checkAuth = ({
+  context,
+}: {
+  context: RouteContextType;
+  location: ParsedLocation;
+}) => {
+  if (context.auth.token) {
+    throw redirect({
+      to: "/",
     });
   }
 };

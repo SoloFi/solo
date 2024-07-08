@@ -19,11 +19,11 @@ import { toast } from "sonner";
 import { queryClient } from "@/main";
 import { useForm } from "@tanstack/react-form";
 import { CurrencySelect } from "@/components/currency-select";
-import { checkAuth } from "@/check-auth";
+import { checkNotAuth } from "@/check-auth";
 
 export const Route = createFileRoute("/_app/portfolios")({
   component: () => <Portfolios />,
-  beforeLoad: checkAuth,
+  beforeLoad: checkNotAuth,
 });
 
 function Portfolios() {
@@ -226,7 +226,7 @@ function CreatePortfolioDialog(props: {
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create a portfolio</DialogTitle>
           <DialogDescription>

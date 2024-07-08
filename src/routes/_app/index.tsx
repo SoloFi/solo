@@ -10,12 +10,12 @@ import { PortfolioChart } from "@/components/charts/portfolio-chart";
 import { PortfolioTable } from "@/components/portfolio/portfolio-table";
 import { getSymbolChart } from "@/query/symbol";
 import { getPortfolios } from "@/query/portfolio";
-import { checkAuth } from "@/check-auth";
+import { checkNotAuth } from "@/check-auth";
 import { PortfolioEditor } from "@/components/portfolio/portfolio-editor";
 
 export const Route = createFileRoute("/_app/")({
   component: Index,
-  beforeLoad: checkAuth,
+  beforeLoad: checkNotAuth,
 });
 
 function Index() {
