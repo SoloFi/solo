@@ -49,8 +49,15 @@ app
     const data = await c.req.json();
     const email = data.email;
     const password = data.password;
-    if (!email || !isEmail(email) || !password || !isStrongPassword(password)) {
-      throw new HTTPException(400, { message: "Invalid email or password." });
+    if (!email || !isEmail(email)) {
+      throw new HTTPException(400, { message: "Invalid email address." });
+    }
+
+    if (!password || !isStrongPassword(password)) {
+      throw new HTTPException(400, {
+        message:
+          "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
+      });
     }
 
     const existingUserItem = await db.get({
@@ -76,7 +83,12 @@ app
       },
     });
 
-    return c.json({ message: `Account created successfully for ${email}.` });
+    const payload = {
+      sub: email,
+      exp: dayjs().utc().unix() + 60 * 60 * 24, // Token expires in 24 hours
+    };
+    const token = await sign(payload, JWT_SECRET);
+    return c.json({ token });
   })
   .post("/signIn", async (c) => {
     const data = await c.req.json();
@@ -175,11 +187,14 @@ app
     const updatedPortfolios = existingUser.portfolios
       ? [...existingUser.portfolios, data]
       : [data];
-    await db.put({
+    await db.update({
       TableName: USERS_TABLE,
-      Item: {
+      Key: {
         email,
-        portfolios: updatedPortfolios,
+      },
+      UpdateExpression: "SET portfolios = :portfolios",
+      ExpressionAttributeValues: {
+        ":portfolios": updatedPortfolios,
       },
     });
     return c.json(data);
