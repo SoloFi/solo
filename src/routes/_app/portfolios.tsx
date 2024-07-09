@@ -12,7 +12,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Label } from "@/components/ui/label";
 import { Portfolio } from "@/api/types";
 import { toast } from "sonner";
@@ -20,13 +20,16 @@ import { queryClient } from "@/main";
 import { useForm } from "@tanstack/react-form";
 import { CurrencySelect } from "@/components/currency-select";
 import { checkNotAuth } from "@/check-auth";
+import { Plus } from "lucide-react";
 
 export const Route = createFileRoute("/_app/portfolios")({
-  component: () => <Portfolios />,
+  component: Portfolios,
   beforeLoad: checkNotAuth,
 });
 
 function Portfolios() {
+  const navigate = useNavigate();
+
   const { data: portfolios, isPending } = useQuery({
     queryKey: ["portfolios"],
     queryFn: getPortfolios,
@@ -111,27 +114,43 @@ function Portfolios() {
             <h1 className="text-2xl font-semibold">My portfolios</h1>
           </CardHeader>
         )}
-        <CardContent className="flex flex-1 items-center justify-center">
+        <CardContent className="flex flex-1">
           {isPending && <Spinner className="w-10 h-10" />}
           {!isPending &&
             (portfolios && portfolios.length > 0 ? (
-              <ul>
-                {portfolios.map((portfolio) => (
-                  <li key={portfolio.id}>
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>{portfolio.name}</CardTitle>
-                        <Button
-                          variant="destructive"
-                          onClick={() => setPortfolioIdToDelete(portfolio.id)}
-                        >
-                          Delete
-                        </Button>
-                      </CardHeader>
-                    </Card>
-                  </li>
+              <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 flex-1">
+                <Card
+                  className="w-full h-52 border-primary border-4 border-dashed cursor-pointer bg-primary/10"
+                  onClick={() => setIsCreateDialogOpen(true)}
+                >
+                  <CardContent className="flex h-full items-center justify-center gap-2">
+                    <h1 className="text-xl lg:text-2xl text-primary font-semibold">
+                      Create portfolio
+                    </h1>
+                    <Plus strokeWidth={3} className="text-primary" />
+                  </CardContent>
+                </Card>
+                {(portfolios ?? []).map((portfolio) => (
+                  <Card
+                    key={portfolio.id}
+                    className="w-full h-52 bg-secondary hover:-translate-y-1 transition-transform cursor-pointer border shadow-none"
+                    onClick={() =>
+                      navigate({
+                        from: "/portfolios",
+                        to: "/portfolio/$portfolioId",
+                        params: { portfolioId: portfolio.id },
+                      })
+                    }
+                  >
+                    <CardHeader>
+                      <CardTitle className="text-xl lg:text-2xl">
+                        {portfolio.name}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent></CardContent>
+                  </Card>
                 ))}
-              </ul>
+              </div>
             ) : (
               <div className="flex flex-col gap-6 max-w-[600px] items-center">
                 <h1 className="text-2xl lg:text-4xl font-semibold text-center text-pretty">
