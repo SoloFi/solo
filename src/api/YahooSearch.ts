@@ -16,7 +16,7 @@ class YahooSearch {
 
     const response = await fetch(url.toString());
     if (!response.ok) {
-      return response;
+      throw new Error(response.statusText);
     }
     const data = await response.json();
     const items: SearchItem[] = data?.finance?.result?.[0]?.documents;

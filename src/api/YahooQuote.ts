@@ -14,7 +14,7 @@ class YahooQuote {
     url.searchParams.append("interval", "1d");
     const response = await fetch(url.toString());
     if (!response.ok) {
-      return response;
+      throw new Error(response.statusText);
     }
     const data = await response.json();
     const timestamp = data?.chart?.result?.[0]?.timestamp as UTCTimestamp[];
@@ -51,7 +51,7 @@ class YahooQuote {
     }
     const response = await fetch(url.toString());
     if (!response.ok) {
-      return response;
+      throw new Error(response.statusText);
     }
     const data = await response.json();
     const timestamp = data?.chart?.result?.[0]?.timestamp as UTCTimestamp[];

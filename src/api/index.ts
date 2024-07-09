@@ -280,6 +280,13 @@ app
     const quote = await YQ.getLatestQuote(symbol);
     return c.json(quote);
   })
+  // Foreign exchange quote
+  .get("/api/fx/:symbol", async (c) => {
+    const { symbol } = c.req.param();
+    const YQ = new YahooQuote();
+    const quote = await YQ.getLatestQuote(`${symbol.toUpperCase()}=X`);
+    return c.json(quote.close);
+  })
   .post("/api/chart/:symbol", async (c) => {
     const { symbol } = c.req.param();
     const { from, to, range, interval } = c.req.query();
