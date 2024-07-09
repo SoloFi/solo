@@ -56,8 +56,8 @@ $ npm run setup
 ### Set the SST secrets
 
 ```bash
-$ sst secrets set JWT_SECRET <YOUR_JWT_SECRET>
-$ sst secrets set API_TOKEN <YOUR_API_TOKEN>
+$ sst secrets set JWTSecret <YOUR_JWT_SECRET>
+$ sst secrets set APITOKEN <YOUR_API_TOKEN>
 ```
 
 ## 4. Run the dev environment & deploy the stack
