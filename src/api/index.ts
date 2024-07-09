@@ -60,14 +60,14 @@ app
       });
     }
 
-    const existingUserItem = await db.get({
+    const userItem = await db.get({
       TableName: USERS_TABLE,
       Key: {
         email: data.email,
       },
     });
-    const existingUser = existingUserItem.Item;
-    if (existingUser) {
+    const user = userItem.Item;
+    if (user) {
       throw new HTTPException(400, {
         message: "An account with this email already exists.",
       });
@@ -98,19 +98,19 @@ app
       throw new HTTPException(400, { message: "Invalid email or password." });
     }
 
-    const existingUserItem = await db.get({
+    const userItem = await db.get({
       TableName: USERS_TABLE,
       Key: {
         email: data.email,
       },
     });
-    const existingUser = existingUserItem.Item;
-    if (!existingUser || !existingUser.password) {
+    const user = userItem.Item;
+    if (!user || !user.password) {
       throw new HTTPException(400, {
         message: "Invalid email or password.",
       });
     }
-    const passwordMatch = await bcrypt.compare(password, existingUser.password);
+    const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
       throw new HTTPException(400, {
         message: "Invalid email or password.",
@@ -118,7 +118,7 @@ app
     }
 
     const payload = {
-      sub: existingUser.email,
+      sub: user.email,
       exp: dayjs().utc().unix() + 60 * 60 * 24, // Token expires in 24 hours
     };
     const token = await sign(payload, JWT_SECRET);
@@ -131,18 +131,18 @@ app
       throw new HTTPException(401, { message: "Unauthorized" });
     }
 
-    const existingUserItem = await db.get({
+    const userItem = await db.get({
       TableName: USERS_TABLE,
       Key: {
         email,
       },
     });
-    const existingUser = existingUserItem.Item;
+    const user = userItem.Item;
 
-    if (!existingUser || !existingUser.portfolios) {
+    if (!user || !user.portfolios) {
       return c.json([]);
     }
-    return c.json(existingUser.portfolios);
+    return c.json(user.portfolios);
   })
   .put("/api/portfolio", async (c) => {
     const payload = c.get("jwtPayload");
@@ -160,20 +160,20 @@ app
       throw new HTTPException(400, { message: (e as Error).message });
     }
 
-    const existingUserItem = await db.get({
+    const userItem = await db.get({
       TableName: USERS_TABLE,
       Key: {
         email,
       },
     });
-    const existingUser = existingUserItem.Item;
-    if (!existingUser) {
+    const user = userItem.Item;
+    if (!user) {
       throw new HTTPException(404, { message: "User not found." });
     }
 
     // check if the portfolio already exists or has the same name
-    if (existingUser.portfolios) {
-      const existingPortfolio = existingUser.portfolios.find(
+    if (user.portfolios) {
+      const existingPortfolio = user.portfolios.find(
         (portfolio: Portfolio) =>
           portfolio.name === data.name || portfolio.id === data.id,
       );
@@ -184,9 +184,7 @@ app
       }
     }
 
-    const updatedPortfolios = existingUser.portfolios
-      ? [...existingUser.portfolios, data]
-      : [data];
+    const updatedPortfolios = user.portfolios ? [...user.portfolios, data] : [data];
     await db.update({
       TableName: USERS_TABLE,
       Key: {
@@ -199,6 +197,31 @@ app
     });
     return c.json(data);
   })
+  .get("/api/portfolio/:id", async (c) => {
+    const payload = c.get("jwtPayload");
+    const email = payload.sub;
+    if (!email) {
+      throw new HTTPException(401, { message: "Unauthorized" });
+    }
+
+    const { id } = c.req.param();
+    const userItem = await db.get({
+      TableName: USERS_TABLE,
+      Key: {
+        email,
+      },
+    });
+    const user = userItem.Item;
+    if (!user || !user.portfolios) {
+      throw new HTTPException(404, { message: "Portfolio not found." });
+    }
+
+    const portfolio = user.portfolios.find((portfolio: Portfolio) => portfolio.id === id);
+    if (!portfolio) {
+      throw new HTTPException(404, { message: "Portfolio not found." });
+    }
+    return c.json(portfolio);
+  })
   .post("/api/portfolio/:id", async (c) => {
     const payload = c.get("jwtPayload");
     const email = payload.sub;
@@ -208,18 +231,18 @@ app
 
     const { id } = c.req.param();
     const data = await c.req.json();
-    const existingUserItem = await db.get({
+    const userItem = await db.get({
       TableName: USERS_TABLE,
       Key: {
         email,
       },
     });
-    const existingUser = existingUserItem.Item;
-    if (!existingUser || !existingUser.portfolios) {
+    const user = userItem.Item;
+    if (!user || !user.portfolios) {
       throw new HTTPException(404, { message: "Portfolio not found." });
     }
 
-    const updatedPortfolios = existingUser.portfolios.map((portfolio: Portfolio) => {
+    const updatedPortfolios = user.portfolios.map((portfolio: Portfolio) => {
       if (portfolio.id === id) {
         return {
           ...portfolio,
@@ -248,18 +271,18 @@ app
     }
 
     const { id } = c.req.param();
-    const existingUserItem = await db.get({
+    const userItem = await db.get({
       TableName: USERS_TABLE,
       Key: {
         email,
       },
     });
-    const existingUser = existingUserItem.Item;
-    if (!existingUser || !existingUser.portfolios) {
+    const user = userItem.Item;
+    if (!user || !user.portfolios) {
       throw new HTTPException(404, { message: "Portfolio not found." });
     }
 
-    const updatedPortfolios = existingUser.portfolios.filter(
+    const updatedPortfolios = user.portfolios.filter(
       (portfolio: Portfolio) => portfolio.id !== id,
     );
     await db.update({
