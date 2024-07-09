@@ -17,6 +17,7 @@ import { Route as AppIndexImport } from './routes/_app/index'
 import { Route as AuthSignUpImport } from './routes/_auth/signUp'
 import { Route as AuthSignInImport } from './routes/_auth/signIn'
 import { Route as AppPortfoliosImport } from './routes/_app/portfolios'
+import { Route as AppPortfolioPortfolioIdImport } from './routes/_app/portfolio.$portfolioId'
 
 // Create/Update Routes
 
@@ -47,6 +48,11 @@ const AuthSignInRoute = AuthSignInImport.update({
 
 const AppPortfoliosRoute = AppPortfoliosImport.update({
   path: '/portfolios',
+  getParentRoute: () => AppRoute,
+} as any)
+
+const AppPortfolioPortfolioIdRoute = AppPortfolioPortfolioIdImport.update({
+  path: '/portfolio/$portfolioId',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -96,13 +102,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexImport
       parentRoute: typeof AppImport
     }
+    '/_app/portfolio/$portfolioId': {
+      id: '/_app/portfolio/$portfolioId'
+      path: '/portfolio/$portfolioId'
+      fullPath: '/portfolio/$portfolioId'
+      preLoaderRoute: typeof AppPortfolioPortfolioIdImport
+      parentRoute: typeof AppImport
+    }
   }
 }
 
 // Create and export the route tree
 
 export const routeTree = rootRoute.addChildren({
-  AppRoute: AppRoute.addChildren({ AppPortfoliosRoute, AppIndexRoute }),
+  AppRoute: AppRoute.addChildren({
+    AppPortfoliosRoute,
+    AppIndexRoute,
+    AppPortfolioPortfolioIdRoute,
+  }),
   AuthRoute: AuthRoute.addChildren({ AuthSignInRoute, AuthSignUpRoute }),
 })
 
@@ -122,7 +139,8 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "_app.tsx",
       "children": [
         "/_app/portfolios",
-        "/_app/"
+        "/_app/",
+        "/_app/portfolio/$portfolioId"
       ]
     },
     "/_auth": {
@@ -146,6 +164,10 @@ export const routeTree = rootRoute.addChildren({
     },
     "/_app/": {
       "filePath": "_app/index.tsx",
+      "parent": "/_app"
+    },
+    "/_app/portfolio/$portfolioId": {
+      "filePath": "_app/portfolio.$portfolioId.tsx",
       "parent": "/_app"
     }
   }

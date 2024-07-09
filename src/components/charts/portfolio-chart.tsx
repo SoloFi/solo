@@ -161,6 +161,7 @@ export const PortfolioChart = (props: {
       null;
     }
     chartRef.current = undefined;
+    if (data.length === 0) return;
     handleCreateChart({ data, costBasisData, options, theme, type });
     addChartEventListeners();
     setTooltip(getLastTooltipValue());
