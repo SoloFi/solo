@@ -57,7 +57,7 @@ $ npm run setup
 
 ```bash
 $ sst secrets set JWT_SECRET <YOUR_JWT_SECRET>
-$ sst secrets set API_KEY <YOUR_API_KEY>
+$ sst secrets set API_TOKEN <YOUR_API_TOKEN>
 ```
 
 ## 4. Run the dev environment & deploy the stack
@@ -68,4 +68,4 @@ $ npm run dev
 
 ## 5. Create a new user
 
-Navigate to `http://localhost:3000/signUp` and create a new user. Use the `API_KEY` from the setup script for the `Access key` field. You can also find this value in your `.env` file.
+Navigate to `http://localhost:3000/signUp` and create a new user. Use the `API_TOKEN` from the setup script for the `Access key` field. You can also find this value in your `.env` file.

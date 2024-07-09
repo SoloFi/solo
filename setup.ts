@@ -6,10 +6,10 @@ const apiKey = keyGen();
 const jwtSecret = keyGen();
 
 (async () => {
-  await $`echo "API_KEY=${apiKey}
+  await $`echo "API_TOKEN=${apiKey}
 JWT_SECRET=${jwtSecret}" > .env`;
   console.log("JWT_SECRET and API_KEY generated and saved to .env file");
 
-  console.log("API_KEY: ", apiKey);
+  console.log("API_TOKEN: ", apiKey);
   console.log("JWT_SECRET:", jwtSecret);
 })();
