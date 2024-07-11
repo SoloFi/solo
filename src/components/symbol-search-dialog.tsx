@@ -8,9 +8,10 @@ import {
   CommandSeparator,
 } from "./ui/command";
 import { useDebounceValue } from "usehooks-ts";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { searchSymbol } from "@/query/symbol";
-import { SearchItem } from "@/api/YahooSearch";
+import type { SearchItem } from "@/api/YahooSearch";
+import { useQuery } from "@tanstack/react-query";
 
 const SymbolSearchDialog = (props: {
   isOpen?: boolean;
@@ -19,36 +20,36 @@ const SymbolSearchDialog = (props: {
 }) => {
   const { isOpen, onOpenChange, onSelect } = props;
   const [query, setQuery] = useDebounceValue("", 150);
-  const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
 
-  const groups = searchItems.reduce(
-    (acc, item) => {
-      if (acc[item.quoteType]) {
-        acc[item.quoteType].push(item);
-      } else {
-        acc[item.quoteType] = [item];
-      }
-      return acc;
+  const { data: searchItems } = useQuery({
+    queryKey: ["searchSymbol", query],
+    queryFn: async () => {
+      if (!validQuery(query)) return [];
+      return searchSymbol(query);
     },
-    {} as Record<string, SearchItem[]>,
-  );
-  const resultGroups = Object.entries(groups).map(([key, items]) => ({
-    key,
-    items,
-  }));
+    enabled: validQuery(query),
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
+    refetchIntervalInBackground: false,
+  });
 
-  useEffect(() => {
-    if (!validQuery(query)) return;
-    const handleSearch = async () => {
-      try {
-        const items = await searchSymbol(query);
-        setSearchItems(items);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    handleSearch();
-  }, [query]);
+  const resultGroups = useMemo(() => {
+    const groups = (searchItems ?? []).reduce(
+      (acc, item) => {
+        if (acc[item.quoteType]) {
+          acc[item.quoteType].push(item);
+        } else {
+          acc[item.quoteType] = [item];
+        }
+        return acc;
+      },
+      {} as Record<string, SearchItem[]>,
+    );
+    return Object.entries(groups).map(([key, items]) => ({
+      key,
+      items,
+    }));
+  }, [searchItems]);
 
   const handleSelect = (item: SearchItem) => {
     onSelect(item);
@@ -58,16 +59,8 @@ const SymbolSearchDialog = (props: {
   return (
     <CommandDialog open={isOpen} onOpenChange={onOpenChange}>
       <h1 className="text-lg font-semibold px-4 pt-3">Search for a symbol</h1>
-      <CommandInput
-        onValueChange={(search) => {
-          if (!validQuery(search)) {
-            setSearchItems([]);
-          }
-          setQuery(search);
-        }}
-        placeholder="Example: AAPL, apple, etc."
-      />
-      {resultGroups.length === 0 ? (
+      <CommandInput onValueChange={setQuery} placeholder="Example: AAPL, apple, etc." />
+      {resultGroups.length === 0 || !validQuery(query) ? (
         <CommandList className="h-[400px] border-t">
           <CommandEmpty>No results found.</CommandEmpty>
         </CommandList>
