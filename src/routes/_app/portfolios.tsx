@@ -34,6 +34,7 @@ function Portfolios() {
     queryKey: ["portfolios"],
     queryFn: getPortfolios,
     refetchOnWindowFocus: false,
+    staleTime: Infinity,
   });
 
   const handleCreatePortfolio = useCallback(

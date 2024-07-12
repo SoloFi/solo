@@ -21,12 +21,10 @@ function Portfolio() {
   const { portfolioId } = Route.useParams();
   const [chartType, setChartType] = useState<"area" | "candlestick">("area");
 
-  const {
-    data: portfolio,
-    isPending,
-    // isError,
-  } = useQuery({
+  const { data: portfolio, isPending } = useQuery({
     queryKey: ["portfolio", portfolioId],
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
     queryFn: async () => getPortfolio(portfolioId),
   });
 

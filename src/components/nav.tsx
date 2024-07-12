@@ -36,6 +36,7 @@ export function Nav(props: {
       icon: LineChart,
       label: "Portfolios",
       href: "/portfolios",
+      activeUnder: ["/portfolio"],
     },
   ];
 
@@ -46,7 +47,11 @@ export function Nav(props: {
         <LinkButton
           key={route.label}
           href={route.href}
-          active={route.href === router.location.pathname}
+          active={
+            route.href === router.location.pathname ||
+            (route.activeUnder &&
+              route.activeUnder.some((path) => router.location.pathname.startsWith(path)))
+          }
         >
           <route.icon className={iconSize} />
           {route.label}
