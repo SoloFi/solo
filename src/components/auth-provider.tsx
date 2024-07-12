@@ -1,4 +1,4 @@
-import { dayjs, parseJwt } from "@/lib/utils";
+import { isTokenExpired } from "@/lib/utils";
 import { axios } from "@/query/axios";
 import { AxiosError } from "axios";
 import {
@@ -26,7 +26,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data } = await axios.post("/signIn", { email, password });
       const token = data?.token;
       setToken(token);
-      return token as string;
+      localStorage.setItem("token", token);
     } catch (e) {
       const error = e as AxiosError;
       throw new Error(error.response?.data as string);
@@ -45,9 +45,9 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
             },
           },
         );
-        if (data?.token) {
-          setToken(data?.token);
-        }
+        const token = data?.token;
+        setToken(token);
+        localStorage.setItem("token", token);
       } catch (e) {
         const error = e as AxiosError;
         throw new Error(error.response?.data as string);
@@ -58,14 +58,12 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = useCallback(() => {
     setToken(null);
+    localStorage.removeItem("token");
   }, []);
 
   useEffect(() => {
     if (token) {
-      const parsedToken = parseJwt(token);
-      const expiration = parsedToken.exp;
-      const expired = dayjs().isAfter(dayjs(expiration * 1000));
-      if (expired) {
+      if (isTokenExpired(token)) {
         setToken(null);
         return;
       }
