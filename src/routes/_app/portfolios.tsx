@@ -19,12 +19,12 @@ import { toast } from "sonner";
 import { queryClient } from "@/main";
 import { useForm } from "@tanstack/react-form";
 import { CurrencySelect } from "@/components/currency-select";
-import { checkNotAuth } from "@/check-auth";
 import { Plus } from "lucide-react";
+import { mustBeAuthenticated } from "../-utils";
 
 export const Route = createFileRoute("/_app/portfolios")({
   component: Portfolios,
-  beforeLoad: checkNotAuth,
+  beforeLoad: mustBeAuthenticated,
 });
 
 function Portfolios() {
@@ -118,7 +118,7 @@ function Portfolios() {
           {isPending && <Spinner className="w-10 h-10" />}
           {!isPending &&
             (portfolios && portfolios.length > 0 ? (
-              <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 flex-1">
+              <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 flex-1 grid-rows-3">
                 <Card
                   className="w-full h-52 border-primary border-4 border-dashed cursor-pointer bg-primary/10"
                   onClick={() => setIsCreateDialogOpen(true)}

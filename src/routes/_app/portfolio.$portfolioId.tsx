@@ -1,5 +1,4 @@
 import { CandlestickData } from "@/api/types";
-import { checkNotAuth } from "@/check-auth";
 import { ChartTypeToggle } from "@/components/charts/chart-type-toggle";
 import { PortfolioChart } from "@/components/charts/portfolio-chart";
 import { PortfolioTable } from "@/components/portfolio/portfolio-table";
@@ -11,10 +10,11 @@ import { getSymbolChart } from "@/query/symbol";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { mustBeAuthenticated } from "../-utils";
 
 export const Route = createFileRoute("/_app/portfolio/$portfolioId")({
   component: Portfolio,
-  beforeLoad: checkNotAuth,
+  beforeLoad: mustBeAuthenticated,
 });
 
 function Portfolio() {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,17 +14,18 @@ import { useAuth } from "@/components/auth";
 import { useForm } from "@tanstack/react-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
-import { checkAuth } from "@/check-auth";
 import { Logo } from "@/components/logo";
+import { alreadyAuthenticated } from "../-utils";
 
 export const Route = createFileRoute("/_auth/signIn")({
   component: SignIn,
-  beforeLoad: checkAuth,
+  beforeLoad: alreadyAuthenticated,
 });
 
 function SignIn() {
   const { signIn } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const form = useForm({
     defaultValues: {
@@ -36,6 +37,9 @@ function SignIn() {
       const password = value.password;
       try {
         await signIn(email, password);
+        navigate({
+          to: "/",
+        });
       } catch (error) {
         setError((error as Error).message);
       }
