@@ -23,10 +23,12 @@ export const ChartTypeToggle = (props: {
       <TabsList className="h-8 shadow-inner">
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger className="h-full">
-              <TabsTrigger value="area" className="h-full">
-                <AreaChart className="w-4 h-4" />
-              </TabsTrigger>
+            <TooltipTrigger className="h-full" asChild>
+              <div>
+                <TabsTrigger value="area" className="h-full">
+                  <AreaChart className="w-4 h-4" />
+                </TabsTrigger>
+              </div>
             </TooltipTrigger>
             <TooltipContent>
               <p className="text-xs">Area chart</p>
@@ -35,10 +37,12 @@ export const ChartTypeToggle = (props: {
         </TooltipProvider>
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger className="h-full">
-              <TabsTrigger value="candlestick" className="h-full">
-                <CandlestickChart className="w-4 h-4" />
-              </TabsTrigger>
+            <TooltipTrigger className="h-full" asChild>
+              <div>
+                <TabsTrigger value="candlestick" className="h-full">
+                  <CandlestickChart className="w-4 h-4" />
+                </TabsTrigger>
+              </div>
             </TooltipTrigger>
             <TooltipContent>
               <p className="text-xs">Candlestick chart</p>

@@ -20,23 +20,26 @@ export default function ToggleAxisMode(props: {
             "right-4": side === "right",
             "left-4": side === "left",
           })}
+          asChild
         >
-          <Toggle
-            defaultPressed={mode === PriceScaleMode.Logarithmic}
-            onPressedChange={(pressed) => {
-              chartRef?.current?.applyOptions({
-                [side === "right" ? "rightPriceScale" : "leftPriceScale"]: {
-                  mode: pressed ? PriceScaleMode.Logarithmic : PriceScaleMode.Normal,
-                },
-              });
-              setMode(pressed ? PriceScaleMode.Logarithmic : PriceScaleMode.Normal);
-            }}
-            variant="outline"
-            aria-label="Toggle axis mode"
-            className="text-xs font-normal w-5 h-5 p-1.5 data-[state=on]:bg-primary data-[state=on]:text-white"
-          >
-            L
-          </Toggle>
+          <div>
+            <Toggle
+              defaultPressed={mode === PriceScaleMode.Logarithmic}
+              onPressedChange={(pressed) => {
+                chartRef?.current?.applyOptions({
+                  [side === "right" ? "rightPriceScale" : "leftPriceScale"]: {
+                    mode: pressed ? PriceScaleMode.Logarithmic : PriceScaleMode.Normal,
+                  },
+                });
+                setMode(pressed ? PriceScaleMode.Logarithmic : PriceScaleMode.Normal);
+              }}
+              variant="outline"
+              aria-label="Toggle axis mode"
+              className="text-xs font-normal w-5 h-5 p-1.5 data-[state=on]:bg-primary data-[state=on]:text-white"
+            >
+              L
+            </Toggle>
+          </div>
         </TooltipTrigger>
         <TooltipContent>
           <p className="text-xs">

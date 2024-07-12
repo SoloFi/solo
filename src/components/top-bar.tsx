@@ -12,14 +12,21 @@ import { SheetTrigger, SheetContent, Sheet } from "@/components/ui/sheet";
 import { CircleUser, Menu } from "lucide-react";
 import { Button } from "./ui/button";
 import { Command, CommandInput } from "./ui/command";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Nav } from "./nav";
 import { CurrencySelect } from "./currency-select";
 import { useAuth } from "./auth";
+import { useNavigate } from "@tanstack/react-router";
 
 const TopBar = () => {
   const [isSymbolSearchOpen, setIsSymbolSearchOpen] = useState(false);
   const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = useCallback(() => {
+    signOut();
+    navigate({ to: "/signIn" });
+  }, [navigate, signOut]);
 
   return (
     <header className="flex h-14 items-center gap-1.5 border-b bg-background lg:h-[60px] px-4 lg:px-8">
@@ -56,7 +63,7 @@ const TopBar = () => {
           <DropdownMenuItem>Settings</DropdownMenuItem>
           <DropdownMenuItem>Support</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={signOut}>Logout</DropdownMenuItem>
+          <DropdownMenuItem onClick={handleSignOut}>Logout</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       {isSymbolSearchOpen && (
