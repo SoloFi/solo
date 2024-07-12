@@ -1,8 +1,8 @@
-import { LineChart } from "lucide-react";
+import { type ReactNode, useMemo } from "react";
+import { LineChart, LucideProps } from "lucide-react";
 import LinkButton from "./link-button";
 import { cn } from "@/lib/utils";
 import { LogoLink } from "./logo";
-import { useMemo } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
 export function Nav(props: {
@@ -26,7 +26,13 @@ export function Nav(props: {
     [device],
   );
 
-  const routes = [
+  type Route = {
+    icon: (props: LucideProps) => ReactNode;
+    label: string;
+    href: string;
+    activeUnder?: string[];
+  };
+  const routes: Route[] = [
     {
       icon: LineChart,
       label: "Dashboard",
@@ -36,7 +42,6 @@ export function Nav(props: {
       icon: LineChart,
       label: "Portfolios",
       href: "/portfolios",
-      activeUnder: ["/portfolio"],
     },
   ];
 

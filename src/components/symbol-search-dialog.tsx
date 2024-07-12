@@ -88,8 +88,8 @@ const SymbolSearchDialog = (props: {
                         className="px-2 py-3 w-full flex justify-start"
                       >
                         <span className="mr-4 font-semibold">{item.symbol}</span>
-                        <span className="text-foreground/70">{item.shortName}</span>
-                        <span className="ml-auto text-foreground/70">
+                        <span className="text-muted-foreground">{item.shortName}</span>
+                        <span className="ml-auto text-muted-foreground">
                           {item.exchange}
                         </span>
                       </button>

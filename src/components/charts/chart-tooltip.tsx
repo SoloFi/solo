@@ -21,7 +21,7 @@ export default function ChartTooltip(props: {
           {percentChange.toFixed(2)}%
         </Badge>
       </div>
-      <p className="text-lg text-foreground/60">{time}</p>
+      <p className="text-lg text-muted-foreground">{time}</p>
     </div>
   );
 }

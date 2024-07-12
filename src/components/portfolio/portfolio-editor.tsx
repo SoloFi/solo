@@ -92,7 +92,7 @@ export function PortfolioEditor(props: {
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
                         <div className="text-lg font-semibold">{holding.shortName}</div>
-                        <div className="text-foreground/70">{holding.symbol}</div>
+                        <div className="text-muted-foreground">{holding.symbol}</div>
                       </div>
                       <Badge
                         className={cn(
