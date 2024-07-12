@@ -24,6 +24,7 @@ export function PortfolioEditor(props: {
       id: "",
       name: "",
       holdings: [],
+      currency: "USD",
     },
   );
 
@@ -40,7 +41,8 @@ export function PortfolioEditor(props: {
         symbol: item.symbol,
         shortName: item.shortName,
         type: item.quoteType,
-        currency: "USD",
+        buys: [],
+        sales: [],
       });
       const newPortfolio = { ...portfolio, holdings: newHoldings };
       setPortfolio(newPortfolio);

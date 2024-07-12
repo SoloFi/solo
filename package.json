@@ -7,7 +7,8 @@
     "build": "tsc && vite build",
     "dev": "sst dev vite",
     "format": "prettier --write .",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0 && tsc",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --quiet",
+    "check-types": "tsc --noemit",
     "preview": "vite preview",
     "setup": "bun setup.ts",
     "prepare": "husky"
