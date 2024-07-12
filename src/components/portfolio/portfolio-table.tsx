@@ -1,5 +1,5 @@
-import type { Portfolio } from "@/api/types";
-import type { CandlestickData, UTCTimestamp } from "lightweight-charts";
+import type { CandlestickData, Portfolio } from "@/api/types";
+import type { UTCTimestamp } from "lightweight-charts";
 import {
   Table,
   TableBody,
@@ -16,13 +16,21 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { dayjs, percentChange, usd } from "@/lib/utils";
-import ValueChange from "../value-change";
+import { cn, usd } from "@/lib/utils";
+import ValueChange from "@/components/value-change";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { Button } from "../ui/button";
-import { getCostBasisAtTime } from "./utils";
+import { Button } from "@/components/ui/button";
 import { ThumbnailChart } from "../charts/thumbnail-chart";
 import colors from "tailwindcss/colors";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { usePortfolioTableData } from "./usePortfolioTableData";
+import { useQueries } from "@tanstack/react-query";
+import { getSymbolChart } from "@/query/symbol";
 
 type PortfolioTableData = {
   symbol: string;
@@ -42,11 +50,9 @@ type PortfolioTableData = {
 
 const columnHelper = createColumnHelper<PortfolioTableData>();
 
-export const PortfolioTable = (props: {
-  holdings: Portfolio["holdings"];
-  symbolsData: Record<string, CandlestickData[] | undefined>;
-}) => {
-  const { holdings, symbolsData } = props;
+export const PortfolioTable = (props: { portfolio: Portfolio }) => {
+  const { portfolio } = props;
+  const holdings = portfolio.holdings;
   const [sorting, setSorting] = useState([
     {
       id: "value",
@@ -58,59 +64,37 @@ export const PortfolioTable = (props: {
     },
   ]);
 
-  const data = useMemo(() => {
-    return holdings.map((entry) => {
+  const symbolQueries = useQueries({
+    queries: portfolio.holdings.map((entry) => {
       const symbol = entry.symbol;
-      const buys = entry.buys;
-      if (!buys) {
-        return {
-          symbol,
-          price: 0,
-          quantity: 0,
-          value: 0,
-          costBasis: 0,
-          change: {
-            value: 0,
-            percentChange: 0,
-          },
-          last30Days: [],
-        };
-      }
-      const lastBuy = buys[buys.length - 1];
-      const chartData = symbolsData[symbol];
-      const lastData = chartData ? chartData[chartData.length - 1] : undefined;
-      const price = lastData?.close ?? lastBuy.price;
-      const quantity = buys.reduce((acc, buy) => acc + buy.quantity, 0);
-      const value = price * quantity;
-      const costBasis = getCostBasisAtTime(entry, dayjs().utc().unix() as UTCTimestamp);
-      const last30Days =
-        chartData?.slice(-30).map((data) => ({
-          time: data.time as UTCTimestamp,
-          value: data.close,
-        })) ?? [];
-      // fill in null values with last known non-null value
-      let lastKnownValue = 0;
-      for (let i = 0; i < last30Days.length; i++) {
-        if (last30Days[i].value === null) {
-          last30Days[i].value = lastKnownValue;
-        } else {
-          lastKnownValue = last30Days[i].value;
-        }
-      }
       return {
-        symbol,
-        price,
-        quantity,
-        value,
-        costBasis,
-        change: {
-          value: value - costBasis,
-          percentChange: percentChange(costBasis, value),
-        },
-        last30Days,
+        queryKey: [symbol, "chart", "1mo"],
+        queryFn: async () =>
+          getSymbolChart({
+            symbol,
+            range: "1mo",
+          }),
+        refetchOnWindowFocus: false,
+        staleTime: 1000 * 60 * 5, // 5 minutes
       };
-    });
-  }, [holdings, symbolsData]);
+    }),
+  });
+
+  const symbolsData = useMemo(() => {
+    return portfolio.holdings
+      .map(({ symbol }, index) => ({
+        [symbol]: symbolQueries[index].data,
+      }))
+      .reduce(
+        (acc, curr) => ({ ...acc, ...curr }),
+        {} as Record<string, CandlestickData[]>,
+      );
+  }, [portfolio.holdings, symbolQueries]);
+
+  const data = usePortfolioTableData({
+    holdings,
+    symbolsData,
+  });
 
   const columns = useMemo(() => {
     return [
@@ -158,17 +142,20 @@ export const PortfolioTable = (props: {
       }),
       columnHelper.accessor("last30Days", {
         header: "Last 30 Days",
-        cell: (row) => (
+        cell: (row) => {
+          if (row.getValue()?.length === 0) {
+            return <div />;
+          }
           <ThumbnailChart
             data={row.getValue()}
             height={50}
             color={
-              row.getValue()[0].value < row.getValue()[row.getValue().length - 1].value
+              row.getValue()?.[0]?.value < row.getValue()[row.getValue().length - 1].value
                 ? colors.green[600]
                 : colors.red[600]
             }
-          />
-        ),
+          />;
+        },
         enableSorting: false,
       }),
     ];
@@ -189,45 +176,70 @@ export const PortfolioTable = (props: {
   });
 
   return (
-    <Table>
-      <TableHeader>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <TableHead key={header.id} colSpan={header.colSpan}>
-                <div className="flex items-center">
-                  <p>{flexRender(header.column.columnDef.header, header.getContext())}</p>
-                  {header.column.getCanSort() && (
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => header.column.toggleSorting()}
-                      className="w-6 h-6 ml-2"
-                    >
-                      {header.column.getIsSorted() === "asc" ? (
-                        <ArrowDown className="w-4 h-4" />
-                      ) : (
-                        <ArrowUp className="w-4 h-4" />
+    <div className="min-h-96">
+      <Accordion type="single" collapsible className="flex flex-col w-full gap-1">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id} colSpan={header.colSpan}>
+                    <div className="flex items-center">
+                      <p>
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </p>
+                      {header.column.getCanSort() && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => header.column.toggleSorting()}
+                          className="w-6 h-6 ml-2"
+                        >
+                          {header.column.getIsSorted() === "asc" ? (
+                            <ArrowDown className="w-4 h-4" />
+                          ) : (
+                            <ArrowUp className="w-4 h-4" />
+                          )}
+                        </Button>
                       )}
-                    </Button>
+                    </div>
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id} className="h-[64px]">
+                <AccordionTrigger
+                  iconSide="left"
+                  className={cn(
+                    "rounded-md p-3 bg-background hover:bg-muted data-[state=open]:rounded-b-none data-[state=open]:bg-muted data-[state=open]:border-b",
                   )}
-                </div>
-              </TableHead>
+                >
+                  <>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </>
+                </AccordionTrigger>
+                <AccordionItem value={row.original.symbol} className="table border-none">
+                  <AccordionContent className="px-4 py-3 rounded-b-md bg-muted/50 border border-t-0">
+                    Yes. It adheres to the WAI-ARIA design pattern.
+                  </AccordionContent>
+                </AccordionItem>
+              </TableRow>
             ))}
-          </TableRow>
-        ))}
-      </TableHeader>
-      <TableBody>
-        {table.getRowModel().rows.map((row) => (
-          <TableRow key={row.id} className="h-[64px]">
-            {row.getVisibleCells().map((cell) => (
-              <TableCell key={cell.id}>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </TableCell>
-            ))}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+          </TableBody>
+        </Table>
+      </Accordion>
+      {table.getRowModel().rows.length === 0 && (
+        <div className="flex items-center justify-center text-muted-foreground text-sm h-[64px] w-full">
+          <p>No holdings added yet.</p>
+        </div>
+      )}
+    </div>
   );
 };
