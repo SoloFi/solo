@@ -149,3 +149,15 @@ export function parseJwt(token: string) {
   );
   return JSON.parse(jsonPayload);
 }
+
+export const isTokenExpired = (token: string | null) => {
+  if (!token) return true;
+  try {
+    const parsedToken = parseJwt(token);
+    const expiration = parsedToken.exp;
+    const expired = dayjs().isAfter(dayjs(expiration * 1000));
+    return expired;
+  } catch (error) {
+    return true;
+  }
+};
