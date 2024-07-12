@@ -44,8 +44,8 @@
     "lightweight-charts": "^4.1.5",
     "lodash": "^4.17.21",
     "lucide-react": "^0.394.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
     "sonner": "^1.5.0",
     "sst": "ion",
     "tailwind-merge": "^2.3.0",
@@ -53,6 +53,7 @@
     "usehooks-ts": "^3.1.0",
     "uuid": "^10.0.0",
     "validator": "^13.12.0",
+    "vite-plugin-checker": "^0.7.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -63,8 +64,8 @@
     "@types/bun": "^1.1.6",
     "@types/lodash": "^4.17.5",
     "@types/node": "^20.14.2",
-    "@types/react": "^18.2.66",
-    "@types/react-dom": "^18.2.22",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
     "@types/uuid": "^10.0.0",
     "@types/validator": "^13.12.0",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
@@ -81,7 +82,7 @@
     "prettier": "^3.3.2",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.2.2",
-    "vite": "^5.2.0"
+    "vite": "^5.3.3"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
