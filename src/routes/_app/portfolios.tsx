@@ -120,17 +120,6 @@ function Portfolios() {
           {!isPending &&
             (portfolios && portfolios.length > 0 ? (
               <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 flex-1 grid-rows-3">
-                <Card
-                  className="w-full h-52 border-primary border-4 border-dashed cursor-pointer bg-primary/10"
-                  onClick={() => setIsCreateDialogOpen(true)}
-                >
-                  <CardContent className="flex h-full items-center justify-center gap-2">
-                    <h1 className="text-xl lg:text-2xl text-primary font-semibold">
-                      Create portfolio
-                    </h1>
-                    <Plus strokeWidth={3} className="text-primary" />
-                  </CardContent>
-                </Card>
                 {(portfolios ?? []).map((portfolio) => (
                   <Card
                     key={portfolio.id}
@@ -151,6 +140,17 @@ function Portfolios() {
                     <CardContent></CardContent>
                   </Card>
                 ))}
+                <Card
+                  className="w-full h-52 border-primary border-4 border-dashed cursor-pointer bg-primary/10"
+                  onClick={() => setIsCreateDialogOpen(true)}
+                >
+                  <CardContent className="flex h-full items-center justify-center gap-2">
+                    <h1 className="text-xl lg:text-2xl text-primary font-semibold">
+                      Create portfolio
+                    </h1>
+                    <Plus strokeWidth={3} className="text-primary" />
+                  </CardContent>
+                </Card>
               </div>
             ) : (
               <div className="flex flex-col gap-6 max-w-[600px] items-center">
