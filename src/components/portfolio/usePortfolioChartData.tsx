@@ -1,4 +1,4 @@
-import type { Portfolio, CandlestickData } from "@/api/types";
+import { type Portfolio, type CandlestickData, TransactionType } from "@/api/types";
 import { dayjs } from "@/lib/utils";
 import type { LineData, UTCTimestamp } from "lightweight-charts";
 import { useMemo } from "react";
@@ -17,7 +17,9 @@ export const usePortfolioChartData = (props: {
   const { portfolioData, costBasisData } = useMemo(() => {
     if (!holdings || !data) return { portfolioData: [], costBasisData: [] };
 
-    const chartMaps = holdings.map(({ symbol, buys, sales }) => {
+    const chartMaps = holdings.map(({ symbol, transactions }) => {
+      const buys = transactions?.filter((tx) => tx.type === TransactionType.BUY);
+      const sells = transactions?.filter((tx) => tx.type === TransactionType.SELL);
       const symbolData = data[symbol];
       if (!symbolData) return null;
       // compute the holding's chart over time based on the current price and shares held
@@ -26,7 +28,7 @@ export const usePortfolioChartData = (props: {
         const buyShares = buys
           ?.filter((buy) => buy.time <= time)
           .reduce((acc, buy) => acc + buy.quantity, 0);
-        const sellShares = sales
+        const sellShares = sells
           ?.filter((sell) => sell.time <= time)
           .reduce((acc, sell) => acc + sell.quantity, 0);
         const shares = (buyShares ?? 0) - (sellShares ?? 0);
@@ -79,16 +81,15 @@ export const usePortfolioChartData = (props: {
       .map(([, value]) => value);
 
     // compute the cost basis of each holding over the merged timeline
-    // based on the total cost of buys minus sales for a given holding
+    // based on the total cost of buys minus sells for a given holding
     const costBasisChart: Record<UTCTimestamp, LineData<UTCTimestamp>> = {};
     for (let i = 0; i < holdings.length; i++) {
       const holding = holdings[i];
-      if (!holding?.buys && !holding?.sales) continue;
-      // set buys and sales time to start of day
-      holding.buys = holding.buys?.map((buy) => ({ ...buy, time: startOfDay(buy.time) }));
-      holding.sales = holding.sales?.map((sell) => ({
-        ...sell,
-        time: startOfDay(sell.time),
+      if ((holding?.transactions?.length ?? -1) <= 0) continue;
+      // set buys and sells time to start of day
+      holding.transactions = holding.transactions.map((tx) => ({
+        ...tx,
+        time: startOfDay(tx.time),
       }));
       // compute average buy price over time
       for (const time of mergedTimeline) {

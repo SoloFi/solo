@@ -1,4 +1,4 @@
-import type { Portfolio } from "@/api/types";
+import type { Portfolio, PortfolioHolding } from "@/api/types";
 import type { UTCTimestamp } from "lightweight-charts";
 import {
   Table,
@@ -58,6 +58,14 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
   ]);
   const [expanded, setExpanded] = useState<string>("");
 
+  const holdingsMap = useMemo(() => {
+    const map = new Map<string, PortfolioHolding>();
+    portfolio.holdings.forEach((holding) => {
+      map.set(holding.symbol, holding);
+    });
+    return map;
+  }, [portfolio.holdings]);
+
   const data = usePortfolioTableData({
     holdings: portfolio.holdings,
   });
@@ -85,12 +93,12 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
         enableSorting: false,
       }),
       columnHelper.accessor("price", {
-        header: "Price",
+        header: "Marktet Price",
         cell: (row) => usd(row.getValue()),
         enableSorting: false,
       }),
       columnHelper.accessor("quantity", {
-        header: "Quantity",
+        header: "Shares",
         cell: (row) => row.getValue(),
         enableSorting: false,
       }),
@@ -100,13 +108,13 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
         enableSorting: false,
       }),
       columnHelper.accessor("value", {
-        header: "Value",
+        header: "Portfolio Value",
         cell: (row) => usd(row.getValue()),
         enableSorting: true,
         enableMultiSort: false,
       }),
       columnHelper.accessor("change", {
-        header: "Change",
+        header: "Day Change",
         cell: (row) => (
           <div>
             <ValueChange change={row.getValue().percentChange}>
@@ -124,15 +132,18 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
       columnHelper.accessor("last30Days", {
         header: "Last 30 Days",
         cell: (row) => {
-          <ThumbnailChart
-            data={row.getValue()}
-            height={50}
-            color={
-              row.getValue()?.[0]?.value < row.getValue()[row.getValue().length - 1].value
-                ? colors.green[600]
-                : colors.red[600]
-            }
-          />;
+          <div>
+            <ThumbnailChart
+              data={row.getValue()}
+              height={50}
+              color={
+                row.getValue()?.[0]?.value <
+                row.getValue()[row.getValue().length - 1].value
+                  ? colors.green[600]
+                  : colors.red[600]
+              }
+            />
+          </div>;
         },
         enableSorting: false,
       }),
@@ -197,7 +208,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
               <AccordionItem key={row.id} value={row.original.symbol} asChild>
                 <>
                   <TableRow
-                    className="h-[64px] cursor-pointer hover:bg-muted data-[state=open]:rounded-b-none data-[state=open]:bg-muted border-0"
+                    className="h-[64px] cursor-pointer hover:bg-muted/40 data-[state=open]:rounded-b-none data-[state=open]:bg-muted/40 border-0"
                     onClick={() =>
                       setExpanded(
                         expanded === row.original.symbol ? "" : row.original.symbol,
@@ -217,7 +228,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
                       </TableCell>
                     ))}
                   </TableRow>
-                  <TableRow className="!bg-muted">
+                  <TableRow className="!bg-muted/40">
                     <TableCell colSpan={columns.length} className="!p-0">
                       <AccordionContent className="flex p-2 justify-center">
                         <Card className="w-full rounded-none">
@@ -228,7 +239,8 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
                               Add Transaction
                             </Button>
                           </CardHeader>
-                          <CardContent></CardContent>
+                          {(holdingsMap.get(row.original.symbol)?.transactions.length ??
+                            0) > 0 && <CardContent></CardContent>}
                         </Card>
                       </AccordionContent>
                     </TableCell>

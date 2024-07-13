@@ -35,7 +35,7 @@ function MyPortfolio() {
   });
 
   const hasTransactions = useMemo(
-    () => portfolio?.holdings?.some((holding) => holding.buys.length > 0),
+    () => portfolio?.holdings?.some((holding) => holding.transactions.length > 0),
     [portfolio],
   );
 
@@ -44,7 +44,7 @@ function MyPortfolio() {
       hasTransactions && portfolio
         ? portfolio.holdings.map((entry) => {
             const symbol = entry.symbol;
-            const from = entry.buys?.sort((a, b) => a.time - b.time)[0].time;
+            const from = entry.transactions?.sort((a, b) => a.time - b.time)[0].time;
             const to = dayjs().utc().unix();
             return {
               queryKey: [symbol],
@@ -117,8 +117,7 @@ function MyPortfolio() {
         symbol: item.symbol,
         shortName: item.shortName,
         type: item.quoteType,
-        buys: [],
-        sales: [],
+        transactions: [],
       });
       const newPortfolio = { ...portfolio, holdings: newHoldings };
       portfolioMutation.mutate(newPortfolio);

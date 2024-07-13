@@ -1,4 +1,4 @@
-import { CandlestickData, PortfolioHolding } from "@/api/types";
+import { CandlestickData, PortfolioHolding, TransactionType } from "@/api/types";
 import { useMemo } from "react";
 import { getCostBasisAtTime } from "./utils";
 import { dayjs, percentChange } from "@/lib/utils";
@@ -39,7 +39,7 @@ export const usePortfolioTableData = (props: { holdings: PortfolioHolding[] }) =
     if (isPending) return [];
     return holdings.map((entry, index) => {
       const symbol = entry.symbol;
-      const buys = entry.buys;
+      const buys = entry.transactions.filter((t) => t.type === TransactionType.BUY);
       const chartData = symbolsData[index];
       const last30Days =
         chartData?.slice(-30).map((data) => ({

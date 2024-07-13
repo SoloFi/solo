@@ -2,19 +2,24 @@ import z from "zod";
 import type { ManipulateType } from "dayjs";
 import type { UTCTimestamp } from "lightweight-charts";
 
-export const portfolioActionSchema = z.object({
+export enum TransactionType {
+  BUY = "BUY",
+  SELL = "SELL",
+}
+
+export const portfolioTransactionSchema = z.object({
   time: z.number(),
   quantity: z.number(),
   price: z.number(),
+  type: z.nativeEnum(TransactionType),
 });
-export type PortfolioAction = z.infer<typeof portfolioActionSchema>;
+export type PortfolioTransaction = z.infer<typeof portfolioTransactionSchema>;
 
 export const portfolioHoldingSchema = z.object({
   symbol: z.string(),
   shortName: z.string(),
   type: z.string(),
-  buys: z.array(portfolioActionSchema),
-  sales: z.array(portfolioActionSchema),
+  transactions: z.array(portfolioTransactionSchema),
 });
 export type PortfolioHolding = z.infer<typeof portfolioHoldingSchema>;
 
