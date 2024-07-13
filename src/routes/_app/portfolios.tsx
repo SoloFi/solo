@@ -1,26 +1,17 @@
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { DialogHeader, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Input, InputErrorLabel } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { createPortfolio, deletePortfolio, getPortfolios } from "@/query/portfolio";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Label } from "@/components/ui/label";
 import { Portfolio } from "@/api/types";
 import { toast } from "sonner";
 import { queryClient } from "@/main";
-import { useForm } from "@tanstack/react-form";
-import { CurrencySelect } from "@/components/currency-select";
 import { Plus } from "lucide-react";
 import { mustBeAuthenticated } from "../-utils";
+import { CreatePortfolioDialog } from "@/components/portfolio/create-portfolio-dialog";
+import { DeletePortfolioDialog } from "@/components/portfolio/delete-portfolio-dialog";
 
 export const Route = createFileRoute("/_app/portfolios")({
   component: Portfolios,
@@ -191,148 +182,5 @@ function Portfolios() {
         />
       )}
     </div>
-  );
-}
-
-function DeletePortfolioDialog(props: {
-  isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
-  onDelete: () => Promise<void>;
-}) {
-  const { isOpen, onOpenChange, onDelete } = props;
-  const [isLoading, setIsLoading] = useState(false);
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete portfolio</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete this portfolio? This action cannot be undone.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="outline">
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={async () => {
-              setIsLoading(true);
-              await onDelete();
-              setIsLoading(false);
-            }}
-            loading={isLoading}
-          >
-            Delete
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function CreatePortfolioDialog(props: {
-  isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
-  onCreate: (portfolioDetails: { name: string; currency: string }) => Promise<void>;
-}) {
-  const { isOpen, onOpenChange, onCreate } = props;
-
-  const form = useForm({
-    defaultValues: {
-      name: "",
-      currency: "USD",
-    },
-    onSubmit: async ({ value }) => {
-      await onCreate({ name: value.name, currency: value.currency });
-    },
-  });
-  const { Field } = form;
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Create a portfolio</DialogTitle>
-          <DialogDescription>
-            Enter the name of the portfolio and select the currency you want to use. You
-            can always change these later.
-          </DialogDescription>
-        </DialogHeader>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
-          }}
-        >
-          <div className="grid gap-4 py-4">
-            <Field
-              name="name"
-              validators={{
-                onChange: ({ value }) => (value !== "" ? undefined : "Name is required"),
-              }}
-              children={({ state, handleChange, handleBlur }) => (
-                <div className="grid grid-cols-4 items-center gap-x-4">
-                  <Label htmlFor="name" className="text-right">
-                    Name
-                  </Label>
-                  <Input
-                    value={state.value}
-                    onBlur={handleBlur}
-                    onChange={(e) => handleChange(e.target.value)}
-                    placeholder="Enter the portfolio name"
-                    className="col-span-3"
-                    id="name"
-                  />
-                  <div />
-                  {state.meta.errors && (
-                    <InputErrorLabel className="col-span-3">
-                      {state.meta.errors}
-                    </InputErrorLabel>
-                  )}
-                </div>
-              )}
-            />
-            <Field
-              name="currency"
-              children={({ state, handleChange, handleBlur }) => (
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="currency" className="text-right">
-                    Currency
-                  </Label>
-                  <CurrencySelect
-                    defaultValue={state.value}
-                    onSelect={({ symbol }) => handleChange(symbol)}
-                    onBlur={handleBlur}
-                    className="w-auto col-span-3"
-                    popoverContentProps={{
-                      align: "center",
-                      side: "bottom",
-                    }}
-                  />
-                </div>
-              )}
-            />
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-            </DialogClose>
-            <form.Subscribe
-              selector={(state) => [state.canSubmit, state.isSubmitting]}
-              children={([canSubmit, isSubmitting]) => (
-                <Button type="submit" disabled={!canSubmit} loading={isSubmitting}>
-                  Create
-                </Button>
-              )}
-            />
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }
