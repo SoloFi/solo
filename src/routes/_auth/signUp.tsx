@@ -52,7 +52,7 @@ function SignUp() {
   return (
     <div className="flex flex-col gap-8 items-center">
       <Logo className="text-3xl" />
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md bg-muted/40">
         <CardHeader>
           <CardTitle className="text-2xl">Sign up</CardTitle>
           <CardDescription>
