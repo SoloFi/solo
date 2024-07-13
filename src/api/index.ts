@@ -312,7 +312,7 @@ app
   })
   .post("/api/chart/:symbol", async (c) => {
     const { symbol } = c.req.param();
-    const { from, to, range, interval } = c.req.query();
+    const { from, to, range, interval } = await c.req.json();
     const YQ = new YahooQuote();
     const candlestickData = await YQ.getCandlestickData({
       symbol,

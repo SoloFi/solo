@@ -10,11 +10,7 @@ export const getSymbolChart = async (params: {
 }) => {
   const { symbol, from, to, range } = params;
   const payload = { from, to, range };
-  const { data } = await axios.post(`/api/chart/${symbol}`, payload, {
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-  });
+  const { data } = await axios.post(`/api/chart/${symbol}`, payload);
   if (!data) throw new Error("Failed to fetch symbol chart");
   return data as CandlestickData[];
 };
