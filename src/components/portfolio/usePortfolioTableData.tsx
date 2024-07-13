@@ -3,21 +3,53 @@ import { useMemo } from "react";
 import { getCostBasisAtTime } from "./utils";
 import { dayjs, percentChange } from "@/lib/utils";
 import { UTCTimestamp } from "lightweight-charts";
+import { useQueries } from "@tanstack/react-query";
+import { getSymbolChart } from "@/query/symbol";
+import isNil from "lodash/isNil";
 
-export const usePortfolioTableData = (props: {
-  holdings: PortfolioHolding[];
-  symbolsData: Record<string, CandlestickData[] | undefined>;
-}) => {
-  const { holdings, symbolsData } = props;
+export const usePortfolioTableData = (props: { holdings: PortfolioHolding[] }) => {
+  const holdings = useMemo(() => props.holdings, [props.holdings]);
+
+  const { data: symbolsData, isPending } = useQueries({
+    queries:
+      holdings?.map((entry) => {
+        const symbol = entry.symbol;
+        return {
+          queryKey: [symbol, "chart", "1mo"],
+          queryFn: async () =>
+            getSymbolChart({
+              symbol,
+              range: "1mo",
+            }),
+          refetchOnWindowFocus: false,
+          staleTime: 1000 * 60 * 5, // 5 minutes
+        };
+      }) ?? [],
+    combine: (results) => {
+      return {
+        data: results
+          .filter(({ data }) => !isNil(data))
+          .map((result) => result.data as CandlestickData[]),
+        isPending: results.some((result) => result.isLoading),
+      };
+    },
+  });
 
   const tableData = useMemo(() => {
-    return holdings.map((entry) => {
+    if (isPending) return [];
+    return holdings.map((entry, index) => {
       const symbol = entry.symbol;
       const buys = entry.buys;
+      const chartData = symbolsData[index];
+      const last30Days =
+        chartData?.slice(-30).map((data) => ({
+          time: data.time as UTCTimestamp,
+          value: data.close,
+        })) ?? [];
       if (buys.length === 0) {
         return {
           symbol,
-          price: 0,
+          price: symbolsData[index]?.[symbolsData[index].length - 1]?.close ?? 0,
           quantity: 0,
           value: 0,
           costBasis: 0,
@@ -25,21 +57,15 @@ export const usePortfolioTableData = (props: {
             value: 0,
             percentChange: 0,
           },
-          last30Days: [],
+          last30Days,
         };
       }
       const lastBuy = buys[buys.length - 1];
-      const chartData = symbolsData[symbol];
       const lastData = chartData ? chartData[chartData.length - 1] : undefined;
       const price = lastData?.close ?? lastBuy.price;
       const quantity = buys.reduce((acc, buy) => acc + buy.quantity, 0);
       const value = price * quantity;
       const costBasis = getCostBasisAtTime(entry, dayjs().utc().unix() as UTCTimestamp);
-      const last30Days =
-        chartData?.slice(-30).map((data) => ({
-          time: data.time as UTCTimestamp,
-          value: data.close,
-        })) ?? [];
       // fill in null values with last known non-null value
       let lastKnownValue = 0;
       for (let i = 0; i < last30Days.length; i++) {
@@ -62,7 +88,7 @@ export const usePortfolioTableData = (props: {
         last30Days,
       };
     });
-  }, [holdings, symbolsData]);
+  }, [holdings, isPending, symbolsData]);
 
   return tableData;
 };

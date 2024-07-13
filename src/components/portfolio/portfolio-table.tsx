@@ -1,4 +1,4 @@
-import type { CandlestickData, Portfolio } from "@/api/types";
+import type { Portfolio } from "@/api/types";
 import type { UTCTimestamp } from "lightweight-charts";
 import {
   Table,
@@ -13,24 +13,17 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { cn, usd } from "@/lib/utils";
+import { usd } from "@/lib/utils";
 import ValueChange from "@/components/value-change";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThumbnailChart } from "../charts/thumbnail-chart";
 import colors from "tailwindcss/colors";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { usePortfolioTableData } from "./usePortfolioTableData";
-import { useQueries } from "@tanstack/react-query";
-import { getSymbolChart } from "@/query/symbol";
 
 type PortfolioTableData = {
   symbol: string;
@@ -52,7 +45,6 @@ const columnHelper = createColumnHelper<PortfolioTableData>();
 
 export const PortfolioTable = (props: { portfolio: Portfolio }) => {
   const { portfolio } = props;
-  const holdings = portfolio.holdings;
   const [sorting, setSorting] = useState([
     {
       id: "value",
@@ -64,40 +56,27 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
     },
   ]);
 
-  const symbolQueries = useQueries({
-    queries: portfolio.holdings.map((entry) => {
-      const symbol = entry.symbol;
-      return {
-        queryKey: [symbol, "chart", "1mo"],
-        queryFn: async () =>
-          getSymbolChart({
-            symbol,
-            range: "1mo",
-          }),
-        refetchOnWindowFocus: false,
-        staleTime: 1000 * 60 * 5, // 5 minutes
-      };
-    }),
-  });
-
-  const symbolsData = useMemo(() => {
-    return portfolio.holdings
-      .map(({ symbol }, index) => ({
-        [symbol]: symbolQueries[index].data,
-      }))
-      .reduce(
-        (acc, curr) => ({ ...acc, ...curr }),
-        {} as Record<string, CandlestickData[]>,
-      );
-  }, [portfolio.holdings, symbolQueries]);
-
   const data = usePortfolioTableData({
-    holdings,
-    symbolsData,
+    holdings: portfolio.holdings,
   });
 
   const columns = useMemo(() => {
     return [
+      columnHelper.display({
+        id: "expand",
+        header: "",
+        cell: ({ row }) => (
+          <ChevronDownIcon
+            className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200"
+            data-state={row.getIsExpanded() ? "open" : "closed"}
+          />
+        ),
+        enableSorting: false,
+        size: 20,
+        meta: {
+          className: "[&[data-state=open]>svg]:rotate-180",
+        },
+      }),
       columnHelper.accessor("symbol", {
         header: "Asset",
         cell: (row) => <p className="font-semibold">{row.getValue()}</p>,
@@ -143,6 +122,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
       columnHelper.accessor("last30Days", {
         header: "Last 30 Days",
         cell: (row) => {
+          console.log(row.getValue());
           if (row.getValue()?.length === 0) {
             return <div />;
           }
@@ -166,6 +146,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
     data,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
     state: {
       sorting,
     },
@@ -173,68 +154,63 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
     enableMultiRemove: true,
     sortDescFirst: true,
     enableSortingRemoval: false,
+    enableExpanding: true,
   });
 
   return (
     <div className="min-h-96">
-      <Accordion type="single" collapsible className="flex flex-col w-full gap-1">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} colSpan={header.colSpan}>
-                    <div className="flex items-center">
-                      <p>
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                      </p>
-                      {header.column.getCanSort() && (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => header.column.toggleSorting()}
-                          className="w-6 h-6 ml-2"
-                        >
-                          {header.column.getIsSorted() === "asc" ? (
-                            <ArrowDown className="w-4 h-4" />
-                          ) : (
-                            <ArrowUp className="w-4 h-4" />
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} className="h-[64px]">
-                <AccordionTrigger
-                  iconSide="left"
-                  className={cn(
-                    "rounded-md p-3 bg-background hover:bg-muted data-[state=open]:rounded-b-none data-[state=open]:bg-muted data-[state=open]:border-b",
-                  )}
+      {/* <Accordion type="single" collapsible className="flex flex-col w-full gap-1"> */}
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead key={header.id} colSpan={header.colSpan}>
+                  <div className="flex items-center">
+                    <p>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </p>
+                    {header.column.getCanSort() && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => header.column.toggleSorting()}
+                        className="w-6 h-6 ml-2"
+                      >
+                        {header.column.getIsSorted() === "asc" ? (
+                          <ArrowDown className="w-4 h-4" />
+                        ) : (
+                          <ArrowUp className="w-4 h-4" />
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows.map((row) => (
+            <TableRow
+              key={row.id}
+              className="h-[64px] cursor-pointer"
+              onClick={() => row.toggleExpanded()}
+            >
+              {row.getVisibleCells().map((cell) => (
+                <TableCell
+                  key={cell.id}
+                  className={cell.column.columnDef.meta?.className}
+                  data-state={cell.row.getIsExpanded() ? "open" : "closed"}
                 >
-                  <>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </>
-                </AccordionTrigger>
-                <AccordionItem value={row.original.symbol} className="table border-none">
-                  <AccordionContent className="px-4 py-3 rounded-b-md bg-muted/50 border border-t-0">
-                    Yes. It adheres to the WAI-ARIA design pattern.
-                  </AccordionContent>
-                </AccordionItem>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Accordion>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      {/* </Accordion> */}
       {table.getRowModel().rows.length === 0 && (
         <div className="flex items-center justify-center text-muted-foreground text-sm h-[64px] w-full">
           <p>No holdings added yet.</p>

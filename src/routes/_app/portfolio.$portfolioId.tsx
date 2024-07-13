@@ -18,11 +18,11 @@ import { Activity, DollarSign } from "lucide-react";
 import { queryClient } from "@/main";
 
 export const Route = createFileRoute("/_app/portfolio/$portfolioId")({
-  component: SpecificPortfolio,
+  component: MyPortfolio,
   beforeLoad: mustBeAuthenticated,
 });
 
-function SpecificPortfolio() {
+function MyPortfolio() {
   const { portfolioId } = Route.useParams();
   const [chartType, setChartType] = useState<"area" | "candlestick">("area");
   const [symbolSearchOpen, setSymbolSearchOpen] = useState(false);
