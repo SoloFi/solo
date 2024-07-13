@@ -141,10 +141,10 @@ function Portfolios() {
                   </Card>
                 ))}
                 <Card
-                  className="w-full h-52 border-primary border-4 border-dashed cursor-pointer bg-primary/10"
+                  className="w-full h-52 border-primary border-4 border-dashed hover:-translate-y-1 transition-transform cursor-pointer bg-primary/10"
                   onClick={() => setIsCreateDialogOpen(true)}
                 >
-                  <CardContent className="flex h-full items-center justify-center gap-2">
+                  <CardContent className="flex h-full items-center justify-center gap-2 py-0">
                     <h1 className="text-xl lg:text-2xl text-primary font-semibold">
                       Create portfolio
                     </h1>
