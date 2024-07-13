@@ -1,4 +1,4 @@
-import type { Portfolio, PortfolioHolding } from "@/api/types";
+import type { Portfolio, PortfolioHolding, PortfolioTransaction } from "@/api/types";
 import type { UTCTimestamp } from "lightweight-charts";
 import {
   Table,
@@ -25,6 +25,7 @@ import colors from "tailwindcss/colors";
 import { usePortfolioTableData } from "./usePortfolioTableData";
 import { Accordion, AccordionContent, AccordionItem } from "../ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { TransactionDialog } from "./transaction-dialog";
 
 type PortfolioTableData = {
   symbol: string;
@@ -57,6 +58,10 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
     },
   ]);
   const [expanded, setExpanded] = useState<string>("");
+  const [transactionToEdit, setTransactionToEdit] = useState<{
+    tx: Partial<PortfolioTransaction>;
+    symbol: string;
+  } | null>(null);
 
   const holdingsMap = useMemo(() => {
     const map = new Map<string, PortfolioHolding>();
@@ -234,7 +239,17 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
                         <Card className="w-full rounded-none">
                           <CardHeader className="flex flex-row items-center gap-3 space-y-0">
                             <CardTitle>Transactions</CardTitle>
-                            <Button size="sm">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 border-dashed hover:border-primary !text-primary"
+                              onClick={() => {
+                                setTransactionToEdit({
+                                  symbol: row.original.symbol,
+                                  tx: {},
+                                });
+                              }}
+                            >
                               <Plus width={16} height={16} />
                               Add Transaction
                             </Button>
@@ -255,6 +270,17 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
         <div className="flex items-center justify-center text-muted-foreground text-sm h-[64px] w-full">
           <p>No holdings added yet.</p>
         </div>
+      )}
+      {!!transactionToEdit && (
+        <TransactionDialog
+          symbol={transactionToEdit.symbol}
+          transaction={transactionToEdit.tx}
+          isOpen={!!transactionToEdit}
+          onOpenChange={(isOpen) =>
+            setTransactionToEdit((prev) => (isOpen ? prev : null))
+          }
+          onSave={() => Promise.resolve()}
+        />
       )}
     </div>
   );
