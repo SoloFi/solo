@@ -13,17 +13,18 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
-  getExpandedRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { usd } from "@/lib/utils";
 import ValueChange from "@/components/value-change";
-import { ArrowDown, ArrowUp, ChevronDownIcon } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDownIcon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThumbnailChart } from "../charts/thumbnail-chart";
 import colors from "tailwindcss/colors";
 import { usePortfolioTableData } from "./usePortfolioTableData";
+import { Accordion, AccordionContent, AccordionItem } from "../ui/accordion";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 type PortfolioTableData = {
   symbol: string;
@@ -55,6 +56,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
       desc: true,
     },
   ]);
+  const [expanded, setExpanded] = useState<string>("");
 
   const data = usePortfolioTableData({
     holdings: portfolio.holdings,
@@ -122,10 +124,6 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
       columnHelper.accessor("last30Days", {
         header: "Last 30 Days",
         cell: (row) => {
-          console.log(row.getValue());
-          if (row.getValue()?.length === 0) {
-            return <div />;
-          }
           <ThumbnailChart
             data={row.getValue()}
             height={50}
@@ -146,7 +144,6 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
     data,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
     state: {
       sorting,
     },
@@ -154,63 +151,94 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
     enableMultiRemove: true,
     sortDescFirst: true,
     enableSortingRemoval: false,
-    enableExpanding: true,
   });
 
   return (
     <div className="min-h-96">
-      {/* <Accordion type="single" collapsible className="flex flex-col w-full gap-1"> */}
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} colSpan={header.colSpan}>
-                  <div className="flex items-center">
-                    <p>
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                    </p>
-                    {header.column.getCanSort() && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => header.column.toggleSorting()}
-                        className="w-6 h-6 ml-2"
+      <Accordion
+        type="single"
+        value={expanded}
+        onValueChange={setExpanded}
+        collapsible
+        className="flex flex-col w-full gap-1"
+      >
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id} colSpan={header.colSpan}>
+                    <div className="flex items-center">
+                      <p>
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </p>
+                      {header.column.getCanSort() && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => header.column.toggleSorting()}
+                          className="w-6 h-6 ml-2"
+                        >
+                          {header.column.getIsSorted() === "asc" ? (
+                            <ArrowDown className="w-4 h-4" />
+                          ) : (
+                            <ArrowUp className="w-4 h-4" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.map((row) => (
+              <AccordionItem key={row.id} value={row.original.symbol} asChild>
+                <>
+                  <TableRow
+                    className="h-[64px] cursor-pointer hover:bg-muted data-[state=open]:rounded-b-none data-[state=open]:bg-muted border-0"
+                    onClick={() =>
+                      setExpanded(
+                        expanded === row.original.symbol ? "" : row.original.symbol,
+                      )
+                    }
+                    data-state={expanded === row.original.symbol ? "open" : "closed"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className={cell.column.columnDef.meta?.className}
+                        data-state={
+                          cell.row.original.symbol === expanded ? "open" : "closed"
+                        }
                       >
-                        {header.column.getIsSorted() === "asc" ? (
-                          <ArrowDown className="w-4 h-4" />
-                        ) : (
-                          <ArrowUp className="w-4 h-4" />
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows.map((row) => (
-            <TableRow
-              key={row.id}
-              className="h-[64px] cursor-pointer"
-              onClick={() => row.toggleExpanded()}
-            >
-              {row.getVisibleCells().map((cell) => (
-                <TableCell
-                  key={cell.id}
-                  className={cell.column.columnDef.meta?.className}
-                  data-state={cell.row.getIsExpanded() ? "open" : "closed"}
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      {/* </Accordion> */}
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow className="!bg-muted">
+                    <TableCell colSpan={columns.length} className="!p-0">
+                      <AccordionContent className="flex p-2 justify-center">
+                        <Card className="w-full rounded-none">
+                          <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+                            <CardTitle>Transactions</CardTitle>
+                            <Button size="sm">
+                              <Plus width={16} height={16} />
+                              Add Transaction
+                            </Button>
+                          </CardHeader>
+                          <CardContent></CardContent>
+                        </Card>
+                      </AccordionContent>
+                    </TableCell>
+                  </TableRow>
+                </>
+              </AccordionItem>
+            ))}
+          </TableBody>
+        </Table>
+      </Accordion>
       {table.getRowModel().rows.length === 0 && (
         <div className="flex items-center justify-center text-muted-foreground text-sm h-[64px] w-full">
           <p>No holdings added yet.</p>

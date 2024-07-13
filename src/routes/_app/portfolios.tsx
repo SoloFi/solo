@@ -145,10 +145,10 @@ function Portfolios() {
                   onClick={() => setIsCreateDialogOpen(true)}
                 >
                   <CardContent className="flex h-full items-center justify-center gap-2 py-0">
+                    <Plus strokeWidth={3} className="text-primary" />
                     <h1 className="text-xl lg:text-2xl text-primary font-semibold">
                       Create portfolio
                     </h1>
-                    <Plus strokeWidth={3} className="text-primary" />
                   </CardContent>
                 </Card>
               </div>
