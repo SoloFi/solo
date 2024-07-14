@@ -36,44 +36,40 @@ function MyPortfolio() {
     queryFn: async () => getPortfolio(portfolioId),
   });
 
-  const hasTransactions = useMemo(
-    () => portfolio?.holdings?.some((holding) => holding.transactions.length > 0),
+  const holdingsWithTransactions = useMemo(
+    () => portfolio?.holdings?.filter((holding) => holding.transactions.length > 0) ?? [],
     [portfolio],
   );
+  const hasTransactions = holdingsWithTransactions.length > 0;
 
   const symbolQueries = useQueries({
-    queries:
-      hasTransactions && portfolio
-        ? portfolio.holdings.map((entry) => {
-            const symbol = entry.symbol;
-            const from = entry.transactions?.sort((a, b) => a.time - b.time)[0].time;
-            const to = dayjs().utc().unix();
-            return {
-              queryKey: [symbol],
-              queryFn: async () =>
-                getSymbolChart({
-                  symbol,
-                  from,
-                  to,
-                }),
-              refetchOnWindowFocus: false,
-            };
-          })
-        : [],
+    queries: holdingsWithTransactions.map((entry) => {
+      const symbol = entry.symbol;
+      const from = entry.transactions?.sort((a, b) => a.time - b.time)[0].time;
+      const to = dayjs().utc().unix();
+      return {
+        queryKey: [symbol],
+        queryFn: async () =>
+          getSymbolChart({
+            symbol,
+            from,
+            to,
+          }),
+        refetchOnWindowFocus: false,
+      };
+    }),
   });
 
   const portfolioSymbolsData = useMemo(() => {
-    return hasTransactions && portfolio
-      ? portfolio.holdings
-          .map(({ symbol }, index) => ({
-            [symbol]: symbolQueries[index].data,
-          }))
-          .reduce(
-            (acc, curr) => ({ ...acc, ...curr }),
-            {} as Record<string, CandlestickData[]>,
-          )
-      : {};
-  }, [hasTransactions, portfolio, symbolQueries]);
+    return holdingsWithTransactions
+      .map(({ symbol }, index) => ({
+        [symbol]: symbolQueries[index].data,
+      }))
+      .reduce(
+        (acc, curr) => ({ ...acc, ...curr }),
+        {} as Record<string, CandlestickData[]>,
+      );
+  }, [holdingsWithTransactions, symbolQueries]);
 
   const addHolding = useCallback(
     async (item: SearchItem) => {
@@ -88,9 +84,9 @@ function MyPortfolio() {
     [portfolioAddHoldingMutation, portfolioId],
   );
 
-  const { portfolioData, costBasisData } = usePortfolioChartData({
-    holdings: hasTransactions && portfolio ? portfolio.holdings : null,
-    data: portfolioSymbolsData ? portfolioSymbolsData : null,
+  const { portfolioChartData, costBasisChartData } = usePortfolioChartData({
+    portfolio: portfolio ?? null,
+    symbolDataMap: portfolioSymbolsData,
   });
 
   return (
@@ -104,10 +100,10 @@ function MyPortfolio() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-4">
-            {portfolio && hasTransactions && (
+            {hasTransactions && (
               <PortfolioChart
-                data={portfolioData}
-                costBasisData={costBasisData}
+                data={portfolioChartData}
+                costBasisData={costBasisChartData}
                 height={400}
                 type={chartType}
               />
