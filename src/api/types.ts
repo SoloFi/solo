@@ -8,6 +8,7 @@ export enum TransactionType {
 }
 
 export const portfolioTransactionSchema = z.object({
+  id: z.string(),
   time: z.number(),
   quantity: z.number(),
   price: z.number(),

@@ -20,32 +20,36 @@ import { CalendarIcon } from "lucide-react";
 import { Calendar } from "../ui/calendar";
 
 export const TransactionDialog = (props: {
+  transaction?: Partial<PortfolioTransaction>;
   symbol: string;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onSave: (transation: PortfolioTransaction) => Promise<void>;
-  transaction?: Partial<PortfolioTransaction>;
 }) => {
-  const { symbol, isOpen, onOpenChange, transaction = {} } = props;
+  const { transaction = {}, symbol, isOpen, onOpenChange, onSave } = props;
   const [calendarMonth, setCalendarMonth] = useState(dayjs().toDate());
 
   const form = useForm({
     defaultValues: {
+      id: "",
       type: TransactionType.BUY,
       time: dayjs().unix(),
       ...transaction,
       price: transaction.price ? `${transaction.price}` : "0",
       quantity: transaction.quantity ? `${transaction.quantity}` : "0",
     },
-    onSubmit: async () => {
-      // await onSave({ name: value.name, currency: value.currency });
+    onSubmit: async (form) => {
+      await onSave({
+        ...form.value,
+        price: Number(form.value.price),
+        quantity: Number(form.value.quantity),
+      });
     },
   });
   const { Field } = form;
 
   const handleFloatInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    console.log(newValue);
     if (isFloat(newValue, { locale: "en-US" })) {
       return newValue;
     } else if (newValue.trim() === "") {
@@ -83,7 +87,7 @@ export const TransactionDialog = (props: {
                     value={state.value}
                     onValueChange={(value: TransactionType) => handleChange(value)}
                   >
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-max">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -204,33 +208,6 @@ export const TransactionDialog = (props: {
                 </div>
               )}
             />
-            {/* <Field
-              name="name"
-              validators={{
-                onChange: ({ value }) => (value !== "" ? undefined : "Name is required"),
-              }}
-              children={({ state, handleChange, handleBlur }) => (
-                <div className="grid grid-cols-4 items-center gap-x-4">
-                  <Label htmlFor="name" className="text-right">
-                    Name
-                  </Label>
-                  <Input
-                    value={state.value}
-                    onBlur={handleBlur}
-                    onChange={(e) => handleChange(e.target.value)}
-                    placeholder="Enter the portfolio name"
-                    className="col-span-3"
-                    id="name"
-                  />
-                  <div />
-                  {state.meta.errors && (
-                    <InputErrorLabel className="col-span-3">
-                      {state.meta.errors}
-                    </InputErrorLabel>
-                  )}
-                </div>
-              )}
-            /> */}
           </div>
           <DialogFooter>
             <DialogClose asChild>

@@ -1,3 +1,4 @@
+import { useCallback, useMemo, useState } from "react";
 import type { Portfolio, PortfolioHolding, PortfolioTransaction } from "@/api/types";
 import type { UTCTimestamp } from "lightweight-charts";
 import {
@@ -8,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useMemo, useState } from "react";
 import {
   createColumnHelper,
   flexRender,
@@ -20,12 +20,12 @@ import { usd } from "@/lib/utils";
 import ValueChange from "@/components/value-change";
 import { ArrowDown, ArrowUp, ChevronDownIcon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThumbnailChart } from "../charts/thumbnail-chart";
-import colors from "tailwindcss/colors";
 import { usePortfolioTableData } from "./usePortfolioTableData";
 import { Accordion, AccordionContent, AccordionItem } from "../ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { TransactionDialog } from "./transaction-dialog";
+import { usePortfolioMutation } from "./usePortfolioMutation";
+import { toast } from "sonner";
 
 type PortfolioTableData = {
   symbol: string;
@@ -58,10 +58,34 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
     },
   ]);
   const [expanded, setExpanded] = useState<string>("");
-  const [transactionToEdit, setTransactionToEdit] = useState<{
-    tx: Partial<PortfolioTransaction>;
+  const [transaction, setTransaction] = useState<{
+    body: Partial<PortfolioTransaction>;
     symbol: string;
   } | null>(null);
+
+  const portfolioMutation = usePortfolioMutation();
+
+  const handleAddTransaction = useCallback(
+    async (tx: { symbol: string; body: PortfolioTransaction }) => {
+      const newPortfolio = { ...portfolio };
+      const holding = newPortfolio.holdings.find(
+        (holding) => holding.symbol === tx.symbol,
+      );
+      if (!holding) {
+        return;
+      }
+      holding.transactions.push(tx.body);
+      try {
+        await portfolioMutation.mutateAsync(newPortfolio);
+        toast.success(`Transaction added successfully for ${tx.symbol}`);
+      } catch (error) {
+        toast.error((error as Error).message);
+      }
+      setTransaction(null);
+      return;
+    },
+    [portfolio, portfolioMutation],
+  );
 
   const holdingsMap = useMemo(() => {
     const map = new Map<string, PortfolioHolding>();
@@ -138,7 +162,8 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
         header: "Last 30 Days",
         cell: (row) => {
           <div>
-            <ThumbnailChart
+            {JSON.stringify(row.getValue())}
+            {/* <ThumbnailChart
               data={row.getValue()}
               height={50}
               color={
@@ -147,7 +172,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
                   ? colors.green[600]
                   : colors.red[600]
               }
-            />
+            /> */}
           </div>;
         },
         enableSorting: false,
@@ -213,7 +238,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
               <AccordionItem key={row.id} value={row.original.symbol} asChild>
                 <>
                   <TableRow
-                    className="h-[64px] cursor-pointer hover:bg-muted/40 data-[state=open]:rounded-b-none data-[state=open]:bg-muted/40 border-0"
+                    className="h-[64px] cursor-pointer hover:bg-muted data-[state=open]:rounded-b-none data-[state=open]:bg-muted border-0"
                     onClick={() =>
                       setExpanded(
                         expanded === row.original.symbol ? "" : row.original.symbol,
@@ -233,7 +258,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
                       </TableCell>
                     ))}
                   </TableRow>
-                  <TableRow className="!bg-muted/40">
+                  <TableRow className="!bg-muted">
                     <TableCell colSpan={columns.length} className="!p-0">
                       <AccordionContent className="flex p-2 justify-center">
                         <Card className="w-full rounded-none">
@@ -244,9 +269,9 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
                               variant="outline"
                               className="h-8 border-dashed hover:border-primary !text-primary"
                               onClick={() => {
-                                setTransactionToEdit({
+                                setTransaction({
                                   symbol: row.original.symbol,
-                                  tx: {},
+                                  body: {},
                                 });
                               }}
                             >
@@ -271,15 +296,15 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
           <p>No holdings added yet.</p>
         </div>
       )}
-      {!!transactionToEdit && (
+      {!!transaction && (
         <TransactionDialog
-          symbol={transactionToEdit.symbol}
-          transaction={transactionToEdit.tx}
-          isOpen={!!transactionToEdit}
-          onOpenChange={(isOpen) =>
-            setTransactionToEdit((prev) => (isOpen ? prev : null))
+          symbol={transaction.symbol}
+          transaction={transaction.body}
+          isOpen={!!transaction}
+          onOpenChange={(isOpen) => setTransaction((prev) => (isOpen ? prev : null))}
+          onSave={async (txBody) =>
+            handleAddTransaction({ ...transaction, body: txBody })
           }
-          onSave={() => Promise.resolve()}
         />
       )}
     </div>

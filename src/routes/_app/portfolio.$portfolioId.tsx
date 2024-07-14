@@ -1,13 +1,13 @@
-import { CandlestickData, Portfolio, PortfolioHolding } from "@/api/types";
+import { CandlestickData, PortfolioHolding } from "@/api/types";
 import { ChartTypeToggle } from "@/components/charts/chart-type-toggle";
 import { PortfolioChart } from "@/components/charts/portfolio-chart";
 import { PortfolioTable } from "@/components/portfolio/portfolio-table";
 import { usePortfolioChartData } from "@/components/portfolio/usePortfolioChartData";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { dayjs } from "@/lib/utils";
-import { getPortfolio, updatePortfolio } from "@/query/portfolio";
+import { getPortfolio } from "@/query/portfolio";
 import { getSymbolChart } from "@/query/symbol";
-import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQueries, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { mustBeAuthenticated } from "../-utils";
@@ -15,7 +15,7 @@ import SymbolSearchDialog from "@/components/symbol-search-dialog";
 import { SearchItem } from "@/api/YahooSearch";
 import { Button } from "@/components/ui/button";
 import { Activity, DollarSign } from "lucide-react";
-import { queryClient } from "@/main";
+import { usePortfolioMutation } from "@/components/portfolio/usePortfolioMutation";
 
 export const Route = createFileRoute("/_app/portfolio/$portfolioId")({
   component: MyPortfolio,
@@ -27,10 +27,11 @@ function MyPortfolio() {
   const [chartType, setChartType] = useState<"area" | "candlestick">("area");
   const [symbolSearchOpen, setSymbolSearchOpen] = useState(false);
 
-  const { data: portfolio, isPending } = useQuery({
+  const { data: portfolio } = useQuery({
     queryKey: ["portfolio", portfolioId],
     staleTime: Infinity,
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
     queryFn: async () => getPortfolio(portfolioId),
   });
 
@@ -60,35 +61,7 @@ function MyPortfolio() {
         : [],
   });
 
-  const portfolioMutation = useMutation({
-    mutationFn: async (newPortfolio: Portfolio) => {
-      return await updatePortfolio(newPortfolio.id, newPortfolio);
-    },
-    onMutate: async (newPortfolio) => {
-      await queryClient.cancelQueries({ queryKey: ["portfolio", newPortfolio.id] });
-      const previousPortfolio = queryClient.getQueryData(["portfolio", newPortfolio.id]);
-      queryClient.setQueryData(["portfolio", newPortfolio.id], newPortfolio);
-      return { previousPortfolio, newPortfolio };
-    },
-    onError: (_, __, context) => {
-      queryClient.setQueryData(
-        ["portfolio", context?.newPortfolio.id],
-        context?.previousPortfolio,
-      );
-    },
-    onSettled: (newPortfolio) => {
-      queryClient.invalidateQueries({ queryKey: ["portfolio", newPortfolio.id] });
-    },
-  });
-
-  const doneFetching = useMemo(
-    () => symbolQueries.every((query) => query.isSuccess) && !isPending,
-    [symbolQueries, isPending],
-  );
-  // const hasError = useMemo(
-  //   () => symbolQueries.some((query) => query.isError) || isError,
-  //   [symbolQueries, isError],
-  // );
+  const portfolioMutation = usePortfolioMutation();
 
   const portfolioSymbolsData = useMemo(() => {
     return hasTransactions && portfolio
@@ -127,12 +100,8 @@ function MyPortfolio() {
 
   const { portfolioData, costBasisData } = usePortfolioChartData({
     holdings: hasTransactions && portfolio ? portfolio.holdings : null,
-    data: doneFetching && portfolioSymbolsData ? portfolioSymbolsData : null,
+    data: portfolioSymbolsData ? portfolioSymbolsData : null,
   });
-
-  if (!doneFetching) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <div className="w-full h-full">
