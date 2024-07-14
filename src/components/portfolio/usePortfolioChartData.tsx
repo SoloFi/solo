@@ -6,21 +6,27 @@ import { getCostBasisAtTime } from "./utils";
 
 // Hook to transform portfolio holdings and symbol chart data into a format that can be used by the chart component
 export const usePortfolioChartData = (props: {
-  holdings: Portfolio["holdings"] | null;
-  data: Record<string, CandlestickData[] | undefined> | null;
+  portfolio: Portfolio | null;
+  symbolDataMap: Record<string, CandlestickData[] | undefined> | null;
 }): {
-  portfolioData: CandlestickData[];
-  costBasisData: LineData<UTCTimestamp>[];
+  portfolioChartData: CandlestickData[];
+  costBasisChartData: LineData<UTCTimestamp>[];
 } => {
-  const { holdings, data } = props;
+  const { portfolio, symbolDataMap } = props;
 
-  const { portfolioData, costBasisData } = useMemo(() => {
-    if (!holdings || !data) return { portfolioData: [], costBasisData: [] };
+  const holdings = useMemo(
+    () => portfolio?.holdings?.filter(({ transactions }) => transactions.length > 0),
+    [portfolio],
+  );
+
+  const { portfolioChartData, costBasisChartData } = useMemo(() => {
+    if (!holdings || holdings.length === 0 || !symbolDataMap)
+      return { portfolioChartData: [], costBasisChartData: [] };
 
     const chartMaps = holdings.map(({ symbol, transactions }) => {
       const buys = transactions?.filter((tx) => tx.type === TransactionType.BUY);
       const sells = transactions?.filter((tx) => tx.type === TransactionType.SELL);
-      const symbolData = data[symbol];
+      const symbolData = symbolDataMap[symbol];
       if (!symbolData) return null;
       // compute the holding's chart over time based on the current price and shares held
       const holdingChart: Record<UTCTimestamp, CandlestickData> = {};
@@ -76,7 +82,7 @@ export const usePortfolioChartData = (props: {
         };
       }
     }
-    const portfolioData = Object.entries(portfolioChart)
+    const portfolioChartData = Object.entries(portfolioChart)
       .sort(([a], [b]) => Number.parseInt(a) - Number.parseInt(b))
       .map(([, value]) => value);
 
@@ -100,14 +106,14 @@ export const usePortfolioChartData = (props: {
         };
       }
     }
-    const costBasisData = Object.entries(costBasisChart)
+    const costBasisChartData = Object.entries(costBasisChart)
       .sort(([a], [b]) => Number.parseInt(a) - Number.parseInt(b))
       .map(([, value]) => value);
 
-    return { portfolioData, costBasisData };
-  }, [data, holdings]);
+    return { portfolioChartData, costBasisChartData };
+  }, [symbolDataMap, holdings]);
 
-  return { portfolioData, costBasisData };
+  return { portfolioChartData, costBasisChartData };
 };
 
 const startOfDay = (time: number) =>
