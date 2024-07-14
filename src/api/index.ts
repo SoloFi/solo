@@ -25,10 +25,13 @@ import {
   addUser,
   createPortfolio,
   deletePortfolioById,
+  deletePortfolioHolding,
+  deletePortfolioTransaction,
   getPortfolioById,
   getReqEmail,
   getUserByEmail,
   updatePortfolioById,
+  updatePortfolioTransaction,
 } from "./utils";
 import { v4 as uuidv4 } from "uuid";
 
@@ -149,7 +152,7 @@ app
     await updatePortfolioById(email, id, { name, currency });
     return c.json({ message: "Portfolio updated successfully." });
   })
-  .post("/api/portfolio/:id/addHolding", async (c) => {
+  .put("/api/portfolio/:id/holding", async (c) => {
     const email = getReqEmail(c);
     const { id } = c.req.param();
     const data = await c.req.json();
@@ -161,6 +164,12 @@ app
     }
     await addPortfolioHolding(email, id, data);
     return c.json({ message: "Added holding successfully." });
+  })
+  .delete("/api/portfolio/:id/:symbol", async (c) => {
+    const email = getReqEmail(c);
+    const { id, symbol } = c.req.param();
+    await deletePortfolioHolding(email, id, symbol);
+    return c.json({ message: "Holding deleted successfully." });
   })
   .put("/api/portfolio/:id/:symbol/tx", async (c) => {
     const email = getReqEmail(c);
@@ -175,6 +184,25 @@ app
     }
     await addPortfolioTransaction(email, id, symbol, data);
     return c.json({ message: "Transaction added successfully." });
+  })
+  .delete("/api/portfolio/:id/:symbol/:txId", async (c) => {
+    const email = getReqEmail(c);
+    const { id, symbol, txId } = c.req.param();
+    await deletePortfolioTransaction(email, id, symbol, txId);
+    return c.json({ message: "Transaction deleted successfully." });
+  })
+  .post("/api/portfolio/:id/:symbol/tx/:txId", async (c) => {
+    const email = getReqEmail(c);
+    const { id, symbol, txId } = c.req.param();
+    const data = await c.req.json();
+    // verify that data is valid
+    try {
+      portfolioTransactionSchema.parse(data);
+    } catch (e) {
+      throw new HTTPException(400, { message: (e as Error).message });
+    }
+    await updatePortfolioTransaction(email, id, symbol, txId, data);
+    return c.json({ message: "Transaction updated successfully." });
   })
   .get("/api/quote/:symbol", async (c) => {
     const { symbol } = c.req.param();

@@ -45,10 +45,18 @@ export const deletePortfolio = async (id: string) => {
 };
 
 export const addHolding = async (portfolioId: string, holding: PortfolioHolding) => {
-  const { data, status } = await axios.post(
-    `/api/portfolio/${portfolioId}/addHolding`,
+  const { data, status } = await axios.put(
+    `/api/portfolio/${portfolioId}/holding`,
     holding,
   );
+  if (status !== 200) {
+    throw new Error(data.message);
+  }
+  return data.message;
+};
+
+export const deleteHolding = async (portfolioId: string, symbol: string) => {
+  const { data, status } = await axios.delete(`/api/portfolio/${portfolioId}/${symbol}`);
   if (status !== 200) {
     throw new Error(data.message);
   }
@@ -62,6 +70,36 @@ export const addTransaction = async (
 ) => {
   const { data, status } = await axios.put(
     `/api/portfolio/${portfolioId}/${symbol}/tx`,
+    transaction,
+  );
+  if (status !== 200) {
+    throw new Error(data.message);
+  }
+  return data.message;
+};
+
+export const deleteTransaction = async (
+  portfolioId: string,
+  symbol: string,
+  transactionId: string,
+) => {
+  const { data, status } = await axios.delete(
+    `/api/portfolio/${portfolioId}/${symbol}/tx/${transactionId}`,
+  );
+  if (status !== 200) {
+    throw new Error(data.message);
+  }
+  return data.message;
+};
+
+export const updateTransaction = async (
+  portfolioId: string,
+  symbol: string,
+  transactionId: string,
+  transaction: PortfolioTransaction,
+) => {
+  const { data, status } = await axios.post(
+    `/api/portfolio/${portfolioId}/${symbol}/tx/${transactionId}`,
     transaction,
   );
   if (status !== 200) {

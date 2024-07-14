@@ -188,6 +188,35 @@ export const addPortfolioHolding = async (
   return portfolio.holdings;
 };
 
+export const deletePortfolioHolding = async (
+  email: string,
+  portfolioId: string,
+  symbol: string,
+) => {
+  const user = await getUserByEmail(email);
+  const portfolio = user.portfolios.find((p: Portfolio) => p.id === portfolioId);
+  if (!user.portfolios || !portfolio) {
+    throw new HTTPException(404, { message: "Portfolio not found." });
+  }
+  if (!portfolio.holdings) {
+    throw new HTTPException(404, { message: "Holding not found." });
+  }
+  const updatedHoldings = portfolio.holdings.filter(
+    (holding: PortfolioHolding) => holding.symbol !== symbol,
+  );
+  await db.update({
+    TableName: USERS_TABLE,
+    Key: {
+      email,
+    },
+    UpdateExpression: "SET portfolios = :portfolios",
+    ExpressionAttributeValues: {
+      ":portfolios": user.portfolios,
+    },
+  });
+  return updatedHoldings;
+};
+
 export const addPortfolioTransaction = async (
   email: string,
   portfolioId: string,
@@ -218,4 +247,81 @@ export const addPortfolioTransaction = async (
     },
   });
   return holding.transactions;
+};
+
+export const deletePortfolioTransaction = async (
+  email: string,
+  portfolioId: string,
+  symbol: string,
+  transactionId: string,
+) => {
+  const user = await getUserByEmail(email);
+  const portfolio = user.portfolios.find((p: Portfolio) => p.id === portfolioId);
+  if (!user.portfolios || !portfolio) {
+    throw new HTTPException(404, { message: "Portfolio not found." });
+  }
+  const holding = portfolio.holdings.find((h: PortfolioHolding) => h.symbol === symbol);
+  if (!portfolio.holdings || !holding) {
+    throw new HTTPException(404, { message: "Holding not found." });
+  }
+  if (!holding.transactions) {
+    throw new HTTPException(404, { message: "Transaction not found." });
+  }
+  const updatedTransactions = holding.transactions.filter(
+    (transaction: PortfolioTransaction) => transaction.id !== transactionId,
+  );
+  await db.update({
+    TableName: USERS_TABLE,
+    Key: {
+      email,
+    },
+    UpdateExpression: "SET portfolios = :portfolios",
+    ExpressionAttributeValues: {
+      ":portfolios": user.portfolios,
+    },
+  });
+  return updatedTransactions;
+};
+
+export const updatePortfolioTransaction = async (
+  email: string,
+  portfolioId: string,
+  symbol: string,
+  transactionId: string,
+  data: PortfolioTransaction,
+) => {
+  const user = await getUserByEmail(email);
+  const portfolio = user.portfolios.find((p: Portfolio) => p.id === portfolioId);
+  if (!user.portfolios || !portfolio) {
+    throw new HTTPException(404, { message: "Portfolio not found." });
+  }
+  const holding = portfolio.holdings.find((h: PortfolioHolding) => h.symbol === symbol);
+  if (!portfolio.holdings || !holding) {
+    throw new HTTPException(404, { message: "Holding not found." });
+  }
+  if (!holding.transactions) {
+    throw new HTTPException(404, { message: "Transaction not found." });
+  }
+  const updatedTransactions = holding.transactions.map(
+    (transaction: PortfolioTransaction) => {
+      if (transaction.id === transactionId) {
+        return {
+          ...transaction,
+          ...data,
+        };
+      }
+      return transaction;
+    },
+  );
+  await db.update({
+    TableName: USERS_TABLE,
+    Key: {
+      email,
+    },
+    UpdateExpression: "SET portfolios = :portfolios",
+    ExpressionAttributeValues: {
+      ":portfolios": user.portfolios,
+    },
+  });
+  return updatedTransactions;
 };
