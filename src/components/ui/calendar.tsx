@@ -119,7 +119,7 @@ function Calendar({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectGroup className="flex flex-row w-[460px] flex-wrap">
+                  <SelectGroup className="flex flex-row max-w-[460px] flex-wrap">
                     {/* <SelectLabel>Month</SelectLabel> */}
                     {months.map((month) => (
                       <SelectItem key={month} value={month} className="w-[115px]">
@@ -141,7 +141,7 @@ function Calendar({
                 >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[300px]">
                   <SelectGroup>
                     <SelectLabel>Year</SelectLabel>
                     {years.map((year) => (
