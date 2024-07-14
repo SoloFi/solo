@@ -32,6 +32,12 @@ export const portfolioSchema = z.object({
 });
 export type Portfolio = z.infer<typeof portfolioSchema>;
 
+export interface User {
+  email: string;
+  password: string;
+  portfolios: Portfolio[];
+}
+
 export interface CandlestickData {
   time: UTCTimestamp;
   open: number;

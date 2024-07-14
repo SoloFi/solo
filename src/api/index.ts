@@ -7,30 +7,35 @@ import { HTTPException } from "hono/http-exception";
 
 import YahooQuote from "./YahooQuote";
 import YahooSearch from "./YahooSearch";
-import { portfolioSchema, type Portfolio, type QuoteRange } from "./types";
-import { DynamoDB } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
+import {
+  portfolioHoldingSchema,
+  portfolioSchema,
+  portfolioTransactionSchema,
+  type QuoteRange,
+} from "./types";
 import bcrypt from "bcryptjs";
 import isEmail from "validator/lib/isEmail";
 import isStrongPassword from "validator/lib/isStrongPassword";
 import { Resource } from "sst";
-import { v4 as uuidv4 } from "uuid";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import {
+  addPortfolioHolding,
+  addPortfolioTransaction,
+  addUser,
+  createPortfolio,
+  deletePortfolioById,
+  getPortfolioById,
+  getReqEmail,
+  getUserByEmail,
+  updatePortfolioById,
+} from "./utils";
+import { v4 as uuidv4 } from "uuid";
 
 dayjs.extend(utc);
 
-const USERS_TABLE = Resource.Users.name;
 const JWT_SECRET = Resource.JWTSecret.value;
 const API_TOKEN = Resource.APIToken.value;
-
-const db = DynamoDBDocument.from(new DynamoDB({ region: "us-east-1" }), {
-  marshallOptions: {
-    convertEmptyValues: true,
-    removeUndefinedValues: true,
-    convertClassInstanceToMap: true,
-  },
-});
 
 type Variables = JwtVariables;
 const app = new Hono<{ Variables: Variables }>();
@@ -52,37 +57,24 @@ app
     if (!email || !isEmail(email)) {
       throw new HTTPException(400, { message: "Invalid email address." });
     }
-
     if (!password || !isStrongPassword(password)) {
       throw new HTTPException(400, {
         message:
           "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
       });
     }
-
-    const userItem = await db.get({
-      TableName: USERS_TABLE,
-      Key: {
-        email: data.email,
-      },
-    });
-    const user = userItem.Item;
+    const user = await getUserByEmail(email);
     if (user) {
       throw new HTTPException(400, {
         message: "An account with this email already exists.",
       });
     }
-
     const passwordHash = await bcrypt.hash(password, 10);
-    await db.put({
-      TableName: USERS_TABLE,
-      Item: {
-        email,
-        password: passwordHash,
-        portfolios: [],
-      },
+    await addUser({
+      email,
+      password: passwordHash,
+      portfolios: [],
     });
-
     const payload = {
       sub: email,
       exp: dayjs().utc().unix() + 60 * 60 * 24, // Token expires in 24 hours
@@ -97,14 +89,7 @@ app
     if (!email || !isEmail(email) || !password) {
       throw new HTTPException(400, { message: "Invalid email or password." });
     }
-
-    const userItem = await db.get({
-      TableName: USERS_TABLE,
-      Key: {
-        email: data.email,
-      },
-    });
-    const user = userItem.Item;
+    const user = await getUserByEmail(email);
     if (!user || !user.password) {
       throw new HTTPException(400, {
         message: "Invalid email or password.",
@@ -116,7 +101,6 @@ app
         message: "Invalid email or password.",
       });
     }
-
     const payload = {
       sub: user.email,
       exp: dayjs().utc().unix() + 60 * 60 * 24, // Token expires in 24 hours
@@ -125,32 +109,21 @@ app
     return c.json({ token });
   })
   .get("/api/portfolios", async (c) => {
-    const payload = c.get("jwtPayload");
-    const email = payload.sub;
-    if (!email) {
-      throw new HTTPException(401, { message: "Unauthorized" });
-    }
-
-    const userItem = await db.get({
-      TableName: USERS_TABLE,
-      Key: {
-        email,
-      },
-    });
-    const user = userItem.Item;
-
+    const email = getReqEmail(c);
+    const user = await getUserByEmail(email);
     if (!user || !user.portfolios) {
       return c.json([]);
     }
     return c.json(user.portfolios);
   })
+  .get("/api/portfolio/:id", async (c) => {
+    const email = getReqEmail(c);
+    const { id } = c.req.param();
+    const portfolio = await getPortfolioById(email, id);
+    return c.json(portfolio);
+  })
   .put("/api/portfolio", async (c) => {
-    const payload = c.get("jwtPayload");
-    const email = payload.sub;
-    if (!email) {
-      throw new HTTPException(401, { message: "Unauthorized" });
-    }
-
+    const email = getReqEmail(c);
     const data = await c.req.json();
     data.id = uuidv4();
     // verifiy that data is valid
@@ -159,143 +132,49 @@ app
     } catch (e) {
       throw new HTTPException(400, { message: (e as Error).message });
     }
-
-    const userItem = await db.get({
-      TableName: USERS_TABLE,
-      Key: {
-        email,
-      },
-    });
-    const user = userItem.Item;
-    if (!user) {
-      throw new HTTPException(404, { message: "User not found." });
-    }
-
-    // check if the portfolio already exists or has the same name
-    if (user.portfolios) {
-      const existingPortfolio = user.portfolios.find(
-        (portfolio: Portfolio) =>
-          portfolio.name === data.name || portfolio.id === data.id,
-      );
-      if (existingPortfolio) {
-        throw new HTTPException(400, {
-          message: "A portfolio with this name or id already exists.",
-        });
-      }
-    }
-
-    const updatedPortfolios = user.portfolios ? [...user.portfolios, data] : [data];
-    await db.update({
-      TableName: USERS_TABLE,
-      Key: {
-        email,
-      },
-      UpdateExpression: "SET portfolios = :portfolios",
-      ExpressionAttributeValues: {
-        ":portfolios": updatedPortfolios,
-      },
-    });
+    await createPortfolio(email, data);
     return c.json(data);
   })
-  .get("/api/portfolio/:id", async (c) => {
-    const payload = c.get("jwtPayload");
-    const email = payload.sub;
-    if (!email) {
-      throw new HTTPException(401, { message: "Unauthorized" });
-    }
-
+  .delete("/api/portfolio/:id", async (c) => {
+    const email = getReqEmail(c);
     const { id } = c.req.param();
-    const userItem = await db.get({
-      TableName: USERS_TABLE,
-      Key: {
-        email,
-      },
-    });
-    const user = userItem.Item;
-    if (!user || !user.portfolios) {
-      throw new HTTPException(404, { message: "Portfolio not found." });
-    }
-
-    const portfolio = user.portfolios.find((portfolio: Portfolio) => portfolio.id === id);
-    if (!portfolio) {
-      throw new HTTPException(404, { message: "Portfolio not found." });
-    }
-    return c.json(portfolio);
+    await deletePortfolioById(email, id);
+    return c.json({ message: "Portfolio deleted successfully." });
   })
   .post("/api/portfolio/:id", async (c) => {
-    const payload = c.get("jwtPayload");
-    const email = payload.sub;
-    if (!email) {
-      throw new HTTPException(401, { message: "Unauthorized" });
-    }
-
+    const email = getReqEmail(c);
     const { id } = c.req.param();
     const data = await c.req.json();
-    const userItem = await db.get({
-      TableName: USERS_TABLE,
-      Key: {
-        email,
-      },
-    });
-    const user = userItem.Item;
-    if (!user || !user.portfolios) {
-      throw new HTTPException(404, { message: "Portfolio not found." });
-    }
-
-    const updatedPortfolios = user.portfolios.map((portfolio: Portfolio) => {
-      if (portfolio.id === id) {
-        return {
-          ...portfolio,
-          ...data,
-        };
-      }
-      return portfolio;
-    });
-    await db.update({
-      TableName: USERS_TABLE,
-      Key: {
-        email,
-      },
-      UpdateExpression: "SET portfolios = :portfolios",
-      ExpressionAttributeValues: {
-        ":portfolios": updatedPortfolios,
-      },
-    });
+    const { name, currency } = data;
+    await updatePortfolioById(email, id, { name, currency });
     return c.json({ message: "Portfolio updated successfully." });
   })
-  .delete("/api/portfolio/:id", async (c) => {
-    const payload = c.get("jwtPayload");
-    const email = payload.sub;
-    if (!email) {
-      throw new HTTPException(401, { message: "Unauthorized" });
-    }
-
+  .post("/api/portfolio/:id/addHolding", async (c) => {
+    const email = getReqEmail(c);
     const { id } = c.req.param();
-    const userItem = await db.get({
-      TableName: USERS_TABLE,
-      Key: {
-        email,
-      },
-    });
-    const user = userItem.Item;
-    if (!user || !user.portfolios) {
-      throw new HTTPException(404, { message: "Portfolio not found." });
+    const data = await c.req.json();
+    // verify that data is valid
+    try {
+      portfolioHoldingSchema.parse(data);
+    } catch (e) {
+      throw new HTTPException(400, { message: (e as Error).message });
     }
-
-    const updatedPortfolios = user.portfolios.filter(
-      (portfolio: Portfolio) => portfolio.id !== id,
-    );
-    await db.update({
-      TableName: USERS_TABLE,
-      Key: {
-        email,
-      },
-      UpdateExpression: "SET portfolios = :portfolios",
-      ExpressionAttributeValues: {
-        ":portfolios": updatedPortfolios,
-      },
-    });
-    return c.json({ message: "Portfolio deleted successfully." });
+    await addPortfolioHolding(email, id, data);
+    return c.json({ message: "Added holding successfully." });
+  })
+  .put("/api/portfolio/:id/:symbol/tx", async (c) => {
+    const email = getReqEmail(c);
+    const { id, symbol } = c.req.param();
+    const data = await c.req.json();
+    data.id = uuidv4();
+    // verify that data is valid
+    try {
+      portfolioTransactionSchema.parse(data);
+    } catch (e) {
+      throw new HTTPException(400, { message: (e as Error).message });
+    }
+    await addPortfolioTransaction(email, id, symbol, data);
+    return c.json({ message: "Transaction added successfully." });
   })
   .get("/api/quote/:symbol", async (c) => {
     const { symbol } = c.req.param();
