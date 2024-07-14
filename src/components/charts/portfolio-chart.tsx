@@ -17,7 +17,7 @@ import useChartOptions from "./useChartOptions";
 import colors from "tailwindcss/colors";
 import { useTheme, type Theme } from "@/components/theme-provider";
 import ChartTooltip from "./chart-tooltip";
-import { dayjs, hexTransp, percentChange, usd } from "@/lib/utils";
+import { dayjs, hexTransp, percentChange, currency } from "@/lib/utils";
 import type { CandlestickData } from "@/api/types";
 import ChartWrapper from "./chart-wrapper";
 import ToggleAxisMode from "./toggle-axis-mode";
@@ -185,7 +185,7 @@ export const PortfolioChart = (props: {
           time={dayjs(tooltip.time * 1000)
             .utc()
             .format("MMMM D, YYYY")}
-          value={usd(tooltip.value)}
+          value={currency(tooltip.value)}
           percentChange={tooltip.percentChange}
         />
       )}

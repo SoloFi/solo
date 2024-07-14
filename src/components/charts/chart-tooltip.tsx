@@ -14,7 +14,7 @@ export default function ChartTooltip(props: {
         <h1 className="text-3xl font-semibold">{value}</h1>
         <Badge
           className={cn(
-            "h-7 px-2 text-lg text-white",
+            "h-6 px-1 text-md text-white",
             percentChange <= 0 ? "!bg-red-600" : "!bg-green-600",
           )}
         >

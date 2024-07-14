@@ -104,10 +104,10 @@ export function calculateLuminance(rgb: { r: number; g: number; b: number }) {
   return (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
 }
 
-export function usd(value: number, decimals = 2) {
+export function currency(value: number, currency = "USD", decimals = 2) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: currency,
     maximumFractionDigits: decimals,
   }).format(value);
 }

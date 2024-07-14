@@ -5,7 +5,7 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
+  TableHeaderGroup,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
@@ -16,9 +16,9 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { usd } from "@/lib/utils";
+import { currency } from "@/lib/utils";
 import ValueChange from "@/components/value-change";
-import { ArrowDown, ArrowUp, ChevronDownIcon, Plus } from "lucide-react";
+import { ChevronDownIcon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePortfolioTableData } from "./usePortfolioTableData";
 import { Accordion, AccordionContent, AccordionItem } from "../ui/accordion";
@@ -26,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { TransactionDialog } from "./transaction-dialog";
 import { usePortfolioMutation } from "./usePortfolioMutation";
 import { toast } from "sonner";
+import { TransactionsTable } from "./transaction-table";
 
 type PortfolioTableData = {
   symbol: string;
@@ -119,7 +120,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
       }),
       columnHelper.accessor("price", {
         header: "Marktet Price",
-        cell: (row) => usd(row.getValue()),
+        cell: (row) => currency(row.getValue()),
         enableSorting: false,
       }),
       columnHelper.accessor("quantity", {
@@ -129,21 +130,21 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
       }),
       columnHelper.accessor("costBasis", {
         header: "Cost Basis",
-        cell: (row) => usd(row.getValue()),
+        cell: (row) => currency(row.getValue()),
         enableSorting: false,
       }),
       columnHelper.accessor("value", {
         header: "Portfolio Value",
-        cell: (row) => usd(row.getValue()),
+        cell: (row) => currency(row.getValue()),
         enableSorting: true,
         enableMultiSort: false,
       }),
       columnHelper.accessor("change", {
-        header: "Day Change",
+        header: "Total Change",
         cell: (row) => (
           <div>
             <ValueChange change={row.getValue().percentChange}>
-              {usd(row.getValue().value)}
+              {currency(row.getValue().value)}
             </ValueChange>
             <ValueChange change={row.getValue().percentChange}>
               ({row.getValue().percentChange >= 0 ? "+" : ""}
@@ -202,31 +203,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} colSpan={header.colSpan}>
-                    <div className="flex items-center">
-                      <p>
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                      </p>
-                      {header.column.getCanSort() && (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => header.column.toggleSorting()}
-                          className="w-6 h-6 ml-2"
-                        >
-                          {header.column.getIsSorted() === "asc" ? (
-                            <ArrowDown className="w-4 h-4" />
-                          ) : (
-                            <ArrowUp className="w-4 h-4" />
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  </TableHead>
-                ))}
-              </TableRow>
+              <TableHeaderGroup headerGroup={headerGroup} />
             ))}
           </TableHeader>
           <TableBody>
@@ -276,7 +253,15 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
                             </Button>
                           </CardHeader>
                           {(holdingsMap.get(row.original.symbol)?.transactions.length ??
-                            0) > 0 && <CardContent></CardContent>}
+                            0) > 0 && (
+                            <CardContent>
+                              <TransactionsTable
+                                transactions={
+                                  holdingsMap.get(row.original.symbol)?.transactions ?? []
+                                }
+                              />
+                            </CardContent>
+                          )}
                         </Card>
                       </AccordionContent>
                     </TableCell>
