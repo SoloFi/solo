@@ -1,10 +1,27 @@
+import type { ManipulateType } from "dayjs";
 import type { UTCTimestamp } from "lightweight-charts";
-import type { CandlestickData, Quote, QuoteRange } from "./types";
+import { CandlestickData } from "./types";
 
 class YahooQuote {
   private baseUrl = "https://query2.finance.yahoo.com/v8/finance/chart/";
   private region = "US";
   private lang = "en-US";
+
+  async getSymbolDetails(symbol: string) {
+    const url: URL = new URL(`${this.baseUrl}${symbol}`);
+    url.searchParams.append("region", this.region);
+    url.searchParams.append("lang", this.lang);
+    url.searchParams.append("includePrePost", "true");
+    url.searchParams.append("interval", "1d");
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+    const data = await response.json();
+    const metadata = data?.chart?.result?.[0]?.meta as SymbolMeta;
+    if (!metadata) throw new Error();
+    return metadata;
+  }
 
   async getLatestQuote(symbol: string) {
     const url: URL = new URL(`${this.baseUrl}${symbol}`);
@@ -69,3 +86,65 @@ class YahooQuote {
 }
 
 export default YahooQuote;
+
+export interface SymbolMeta {
+  currency: string;
+  symbol: string;
+  exchangeName: string;
+  fullExchangeName: string;
+  instrumentType: string;
+  firstTradeDate: number;
+  regularMarketTime: number;
+  hasPrePostMarketData: boolean;
+  gmtoffset: number;
+  timezone: string;
+  exchangeTimezoneName: string;
+  regularMarketPrice: number;
+  fiftyTwoWeekHigh: number;
+  fiftyTwoWeekLow: number;
+  regularMarketDayHigh: number;
+  regularMarketDayLow: number;
+  regularMarketVolume: number;
+  chartPreviousClose: number;
+  priceHint: number;
+  currentTradingPeriod: CurrentTradingPeriod;
+  // dataGranularity: string;
+  range: QuoteRange;
+  validRanges: QuoteRange[];
+}
+
+export interface CurrentTradingPeriod {
+  pre: TradingPeriod;
+  regular: TradingPeriod;
+  post: TradingPeriod;
+}
+
+export interface TradingPeriod {
+  timezone: string;
+  end: number;
+  start: number;
+  gmtoffset: number;
+}
+
+export interface Quote {
+  open: number[];
+  high: number[];
+  low: number[];
+  close: number[];
+}
+
+export type QuoteRange = "1mo" | "3mo" | "6mo" | "1y" | "2y" | "5y" | "10y" | "ytd";
+
+export const RangeConstruction: Record<
+  QuoteRange,
+  { value: number; unit: ManipulateType }
+> = {
+  "1mo": { value: 1, unit: "month" },
+  "3mo": { value: 3, unit: "month" },
+  "6mo": { value: 6, unit: "month" },
+  "1y": { value: 1, unit: "year" },
+  "2y": { value: 2, unit: "year" },
+  "5y": { value: 5, unit: "year" },
+  "10y": { value: 10, unit: "year" },
+  ytd: { value: 1, unit: "year" },
+};

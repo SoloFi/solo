@@ -1,4 +1,5 @@
-import type { CandlestickData, QuoteRange } from "@/api/types";
+import type { QuoteRange } from "@/api/YahooQuote";
+import type { CandlestickData } from "@/api/types";
 import type { SearchItem } from "@/api/YahooSearch";
 import { axios } from "./axios";
 

@@ -5,6 +5,7 @@ import { HTTPException } from "hono/http-exception";
 import { Resource } from "sst";
 import { Portfolio, PortfolioHolding, PortfolioTransaction, User } from "./types";
 import { currencies } from "@/lib/utils";
+import YahooQuote from "./YahooQuote";
 
 const USERS_TABLE = Resource.Users.name;
 
@@ -43,7 +44,7 @@ export const getUserByEmail = async (email: string) => {
   if (!user) {
     throw new HTTPException(401, { message: "Unauthorized" });
   }
-  return user;
+  return user as User;
 };
 
 export const getPortfolioById = async (email: string, id: string) => {
@@ -161,6 +162,18 @@ export const addPortfolioHolding = async (
   if (!portfolio.holdings) {
     portfolio.holdings = [];
   }
+  const existingHolding = portfolio.holdings.find(
+    (h: PortfolioHolding) => h.symbol === holding.symbol,
+  );
+  if (existingHolding) {
+    throw new HTTPException(400, {
+      message: "Holding with the same symbol already exists.",
+    });
+  }
+  // query holding's currency
+  const YQ = new YahooQuote();
+  const metadata = await YQ.getSymbolDetails(holding.symbol);
+  holding.currency = metadata.currency;
   portfolio.holdings.push(holding);
   await db.update({
     TableName: USERS_TABLE,

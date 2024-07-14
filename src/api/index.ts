@@ -11,8 +11,8 @@ import {
   portfolioHoldingSchema,
   portfolioSchema,
   portfolioTransactionSchema,
-  type QuoteRange,
 } from "./types";
+import type { QuoteRange } from "@/api/YahooQuote";
 import bcrypt from "bcryptjs";
 import isEmail from "validator/lib/isEmail";
 import isStrongPassword from "validator/lib/isStrongPassword";

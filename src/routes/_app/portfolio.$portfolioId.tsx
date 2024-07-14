@@ -1,4 +1,4 @@
-import { CandlestickData } from "@/api/types";
+import type { CandlestickData } from "@/api/types";
 import { ChartTypeToggle } from "@/components/charts/chart-type-toggle";
 import { PortfolioChart } from "@/components/charts/portfolio-chart";
 import { PortfolioTable } from "@/components/portfolio/portfolio-table";
@@ -77,6 +77,7 @@ function MyPortfolio() {
         symbol: item.symbol,
         shortName: item.shortName,
         type: item.quoteType,
+        currency: "USD", // placeholder, should be fetched from quote in API
         transactions: [],
       };
       await portfolioAddHoldingMutation.mutateAsync({ portfolioId, newHolding });

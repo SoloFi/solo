@@ -203,7 +203,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableHeaderGroup headerGroup={headerGroup} />
+              <TableHeaderGroup headerGroup={headerGroup} key={headerGroup.id} />
             ))}
           </TableHeader>
           <TableBody>
