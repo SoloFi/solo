@@ -1,4 +1,4 @@
-import { CandlestickData, PortfolioHolding } from "@/api/types";
+import { CandlestickData } from "@/api/types";
 import { ChartTypeToggle } from "@/components/charts/chart-type-toggle";
 import { PortfolioChart } from "@/components/charts/portfolio-chart";
 import { PortfolioTable } from "@/components/portfolio/portfolio-table";
@@ -26,6 +26,7 @@ function MyPortfolio() {
   const { portfolioId } = Route.useParams();
   const [chartType, setChartType] = useState<"area" | "candlestick">("area");
   const [symbolSearchOpen, setSymbolSearchOpen] = useState(false);
+  const { portfolioAddHoldingMutation } = usePortfolioMutation();
 
   const { data: portfolio } = useQuery({
     queryKey: ["portfolio", portfolioId],
@@ -61,8 +62,6 @@ function MyPortfolio() {
         : [],
   });
 
-  const portfolioMutation = usePortfolioMutation();
-
   const portfolioSymbolsData = useMemo(() => {
     return hasTransactions && portfolio
       ? portfolio.holdings
@@ -78,24 +77,15 @@ function MyPortfolio() {
 
   const addHolding = useCallback(
     async (item: SearchItem) => {
-      if (!portfolio) {
-        return;
-      }
-      const newHoldings: PortfolioHolding[] = [...portfolio.holdings];
-      // make sure the holding is not already in the list
-      if (newHoldings.find((holding) => holding.symbol === item.symbol)) {
-        return;
-      }
-      newHoldings.push({
+      const newHolding = {
         symbol: item.symbol,
         shortName: item.shortName,
         type: item.quoteType,
         transactions: [],
-      });
-      const newPortfolio = { ...portfolio, holdings: newHoldings };
-      portfolioMutation.mutate(newPortfolio);
+      };
+      await portfolioAddHoldingMutation.mutateAsync({ portfolioId, newHolding });
     },
-    [portfolio, portfolioMutation],
+    [portfolioAddHoldingMutation, portfolioId],
   );
 
   const { portfolioData, costBasisData } = usePortfolioChartData({

@@ -63,20 +63,16 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
     symbol: string;
   } | null>(null);
 
-  const portfolioMutation = usePortfolioMutation();
+  const { portfolioAddTxMutation } = usePortfolioMutation();
 
   const handleAddTransaction = useCallback(
     async (tx: { symbol: string; body: PortfolioTransaction }) => {
-      const newPortfolio = { ...portfolio };
-      const holding = newPortfolio.holdings.find(
-        (holding) => holding.symbol === tx.symbol,
-      );
-      if (!holding) {
-        return;
-      }
-      holding.transactions.push(tx.body);
       try {
-        await portfolioMutation.mutateAsync(newPortfolio);
+        await portfolioAddTxMutation.mutateAsync({
+          portfolioId: portfolio.id,
+          symbol: tx.symbol,
+          tx: tx.body,
+        });
         toast.success(`Transaction added successfully for ${tx.symbol}`);
       } catch (error) {
         toast.error((error as Error).message);
@@ -84,7 +80,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
       setTransaction(null);
       return;
     },
-    [portfolio, portfolioMutation],
+    [portfolio.id, portfolioAddTxMutation],
   );
 
   const holdingsMap = useMemo(() => {
