@@ -65,11 +65,10 @@ export const deleteTransaction = async (
 export const updateTransaction = async (
   portfolioId: string,
   symbol: string,
-  transactionId: string,
   transaction: PortfolioTransaction,
 ) => {
   const { data } = await axios.post(
-    `/api/portfolio/${portfolioId}/holding/${symbol}/tx/${transactionId}`,
+    `/api/portfolio/${portfolioId}/holding/${symbol}/tx/${transaction.id}`,
     transaction,
   );
   return data.message;
