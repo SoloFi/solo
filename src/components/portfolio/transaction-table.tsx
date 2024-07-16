@@ -18,6 +18,8 @@ import {
   TableRow,
 } from "../ui/table";
 import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Edit, Trash } from "lucide-react";
 
 const transactionColumnHelper = createColumnHelper<PortfolioTransaction>();
 
@@ -66,8 +68,27 @@ export const TransactionsTable = (props: {
           currency(cell.row.original.price * cell.row.original.quantity, txCurrency),
         enableSorting: false,
       }),
+      transactionColumnHelper.display({
+        id: "actions",
+        cell: () => {
+          return (
+            <div className="hidden group-hover:flex justify-end space-x-2">
+              <Button size="icon" variant="outline" className="h-7 w-7">
+                <Edit width={14} height={14} />
+              </Button>
+              <Button size="icon" variant="outline" className="h-7 w-7">
+                <Trash width={14} height={14} />
+              </Button>
+            </div>
+          );
+        },
+        meta: {
+          className: "w-[120px]",
+        },
+        enableSorting: false,
+      }),
     ];
-  }, []);
+  }, [txCurrency]);
 
   const table = useReactTable({
     data: transactions,
@@ -89,7 +110,7 @@ export const TransactionsTable = (props: {
       </TableHeader>
       <TableBody>
         {table.getRowModel().rows.map((row) => (
-          <TableRow key={row.id}>
+          <TableRow key={row.id} className="group h-12">
             {row.getVisibleCells().map((cell) => (
               <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
