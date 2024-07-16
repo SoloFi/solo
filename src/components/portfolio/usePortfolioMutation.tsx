@@ -1,10 +1,15 @@
 import { useMutation } from "@tanstack/react-query";
 import { Portfolio, PortfolioHolding, PortfolioTransaction } from "@/api/types";
 import { queryClient } from "@/main";
-import { addHolding, addTransaction, updatePortfolio } from "@/query/portfolio";
+import {
+  addHolding,
+  addTransaction,
+  deleteHolding,
+  updatePortfolio,
+} from "@/query/portfolio";
 
 export const usePortfolioMutation = () => {
-  const portfolioAttributesMutation = useMutation({
+  const attributesMutation = useMutation({
     mutationFn: async (params: {
       portfolioId: string;
       name: string;
@@ -40,7 +45,7 @@ export const usePortfolioMutation = () => {
     },
   });
 
-  const portfolioAddHoldingMutation = useMutation({
+  const addHoldingMutation = useMutation({
     mutationFn: async (params: { portfolioId: string; newHolding: PortfolioHolding }) => {
       const { portfolioId, newHolding } = params;
       return addHolding(portfolioId, newHolding);
@@ -71,7 +76,40 @@ export const usePortfolioMutation = () => {
     },
   });
 
-  const portfolioAddTxMutation = useMutation({
+  const deleteHoldingMutation = useMutation({
+    mutationFn: async (params: { portfolioId: string; symbol: string }) => {
+      const { portfolioId, symbol } = params;
+      return deleteHolding(portfolioId, symbol);
+    },
+    onMutate: async (params: { portfolioId: string; symbol: string }) => {
+      const { portfolioId, symbol } = params;
+      await queryClient.cancelQueries({ queryKey: ["portfolio", portfolioId] });
+      const previousPortfolio = queryClient.getQueryData(["portfolio", portfolioId]) as
+        | Portfolio
+        | undefined;
+      const newPortfolio = previousPortfolio?.holdings && {
+        ...previousPortfolio,
+        holdings: previousPortfolio.holdings.filter(
+          (holding) => holding.symbol !== symbol,
+        ),
+      };
+      queryClient.setQueryData(["portfolio", portfolioId], newPortfolio);
+      return { previousPortfolio, newPortfolio };
+    },
+    onError: (_, __, context) => {
+      queryClient.setQueryData(
+        ["portfolio", context?.previousPortfolio?.id],
+        context?.previousPortfolio,
+      );
+    },
+    onSuccess: (_, __, context) => {
+      queryClient.invalidateQueries({
+        queryKey: ["portfolio", context?.previousPortfolio?.id],
+      });
+    },
+  });
+
+  const addTxMutation = useMutation({
     mutationFn: async (params: {
       portfolioId: string;
       symbol: string;
@@ -119,8 +157,9 @@ export const usePortfolioMutation = () => {
   });
 
   return {
-    portfolioAttributesMutation,
-    portfolioAddHoldingMutation,
-    portfolioAddTxMutation,
+    attributesMutation,
+    addHoldingMutation,
+    deleteHoldingMutation,
+    addTxMutation,
   };
 };

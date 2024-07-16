@@ -18,7 +18,7 @@ import {
 } from "@tanstack/react-table";
 import { currency } from "@/lib/utils";
 import ValueChange from "@/components/value-change";
-import { ChevronDownIcon, Plus } from "lucide-react";
+import { ChevronDownIcon, Plus, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePortfolioTableData } from "./usePortfolioTableData";
 import { Accordion, AccordionContent, AccordionItem } from "../ui/accordion";
@@ -27,6 +27,7 @@ import { TransactionDialog } from "./transaction-dialog";
 import { usePortfolioMutation } from "./usePortfolioMutation";
 import { toast } from "sonner";
 import { TransactionsTable } from "./transaction-table";
+import { DeleteDialog } from "./delete-dialog";
 
 type PortfolioTableData = {
   symbol: string;
@@ -63,13 +64,14 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
     body: Partial<PortfolioTransaction>;
     symbol: string;
   } | null>(null);
+  const [holdingToDelete, setHoldingToDelete] = useState<string | null>(null);
 
-  const { portfolioAddTxMutation } = usePortfolioMutation();
+  const { deleteHoldingMutation, addTxMutation } = usePortfolioMutation();
 
   const handleAddTransaction = useCallback(
     async (tx: { symbol: string; body: PortfolioTransaction }) => {
       try {
-        await portfolioAddTxMutation.mutateAsync({
+        await addTxMutation.mutateAsync({
           portfolioId: portfolio.id,
           symbol: tx.symbol,
           tx: tx.body,
@@ -81,7 +83,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
       setTransaction(null);
       return;
     },
-    [portfolio.id, portfolioAddTxMutation],
+    [portfolio.id, addTxMutation],
   );
 
   const holdingsMap = useMemo(() => {
@@ -173,6 +175,24 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
           </div>;
         },
         enableSorting: false,
+      }),
+      columnHelper.display({
+        id: "actions",
+        header: "",
+        cell: ({ row }) => (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              setHoldingToDelete(row.original.symbol);
+            }}
+          >
+            <Trash width={16} height={16} />
+          </Button>
+        ),
+        enableSorting: false,
+        size: 20,
       }),
     ];
   }, []);
@@ -277,7 +297,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
           <p>No holdings added yet.</p>
         </div>
       )}
-      {!!transaction && (
+      {transaction && (
         <TransactionDialog
           symbol={transaction.symbol}
           transaction={transaction.body}
@@ -286,6 +306,22 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
           onSave={async (txBody) =>
             handleAddTransaction({ ...transaction, body: txBody })
           }
+        />
+      )}
+      {holdingToDelete && (
+        <DeleteDialog
+          title={`Delete ${holdingToDelete} holding`}
+          description="Are you sure you want to delete this holding? This action cannot be undone."
+          isOpen={!!holdingToDelete}
+          onOpenChange={() => setHoldingToDelete(null)}
+          onDelete={async () => {
+            await deleteHoldingMutation.mutateAsync({
+              portfolioId: portfolio.id,
+              symbol: holdingToDelete,
+            });
+            setHoldingToDelete(null);
+            return;
+          }}
         />
       )}
     </div>

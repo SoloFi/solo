@@ -26,7 +26,7 @@ function MyPortfolio() {
   const { portfolioId } = Route.useParams();
   const [chartType, setChartType] = useState<"area" | "candlestick">("area");
   const [symbolSearchOpen, setSymbolSearchOpen] = useState(false);
-  const { portfolioAddHoldingMutation } = usePortfolioMutation();
+  const { addHoldingMutation } = usePortfolioMutation();
 
   const { data: portfolio } = useQuery({
     queryKey: ["portfolio", portfolioId],
@@ -80,9 +80,9 @@ function MyPortfolio() {
         currency: "USD", // placeholder, should be fetched from quote in API
         transactions: [],
       };
-      await portfolioAddHoldingMutation.mutateAsync({ portfolioId, newHolding });
+      await addHoldingMutation.mutateAsync({ portfolioId, newHolding });
     },
-    [portfolioAddHoldingMutation, portfolioId],
+    [addHoldingMutation, portfolioId],
   );
 
   const { portfolioChartData, costBasisChartData } = usePortfolioChartData({

@@ -11,7 +11,7 @@ import { queryClient } from "@/main";
 import { Plus } from "lucide-react";
 import { mustBeAuthenticated } from "../-utils";
 import { CreatePortfolioDialog } from "@/components/portfolio/create-portfolio-dialog";
-import { DeletePortfolioDialog } from "@/components/portfolio/delete-portfolio-dialog";
+import { DeleteDialog } from "@/components/portfolio/delete-dialog";
 
 export const Route = createFileRoute("/_app/portfolios")({
   component: Portfolios,
@@ -171,14 +171,12 @@ function Portfolios() {
         />
       )}
       {portfolioIdToDelete && (
-        <DeletePortfolioDialog
+        <DeleteDialog
+          title="Delete portfolio"
+          description="Are you sure you want to delete this portfolio? This action cannot be undone."
           isOpen={!!portfolioIdToDelete}
           onOpenChange={() => setPortfolioIdToDelete(null)}
-          onDelete={async () => {
-            return new Promise((resolve) => {
-              deleteMutation.mutate(portfolioIdToDelete, { onSettled: () => resolve() });
-            });
-          }}
+          onDelete={() => deleteMutation.mutateAsync(portfolioIdToDelete)}
         />
       )}
     </div>
