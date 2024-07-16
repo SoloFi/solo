@@ -196,22 +196,26 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
         id: "actions",
         header: "",
         cell: ({ row }) => (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              setHoldingToDelete(row.original.symbol);
-            }}
-          >
-            <Trash width={16} height={16} />
-          </Button>
+          <div className="hidden group-hover:block">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                setHoldingToDelete(row.original.symbol);
+              }}
+            >
+              <Trash width={16} height={16} />
+            </Button>
+          </div>
         ),
         enableSorting: false,
-        size: 20,
+        meta: {
+          className: "w-[60px]",
+        },
       }),
     ];
-  }, []);
+  }, [holdingsMap]);
 
   const table = useReactTable({
     columns,
@@ -247,7 +251,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
               <AccordionItem key={row.id} value={row.original.symbol} asChild>
                 <>
                   <TableRow
-                    className="h-[64px] cursor-pointer hover:bg-muted data-[state=open]:rounded-b-none data-[state=open]:bg-muted border-0"
+                    className="group h-[64px] cursor-pointer hover:bg-muted data-[state=open]:rounded-b-none data-[state=open]:bg-muted border-0"
                     onClick={() =>
                       setExpanded(
                         expanded === row.original.symbol ? "" : row.original.symbol,
