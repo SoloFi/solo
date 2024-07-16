@@ -37,6 +37,14 @@ export const currencies = [
   { symbol: "NZD", name: "New Zealand Dollar" },
 ];
 
+export function currency(value: number, currency = "USD", decimals = 2) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency,
+    maximumFractionDigits: decimals,
+  }).format(value);
+}
+
 export function hexTransp(hexColor: string, alpha: number) {
   const map = (value: number, oldRange: [number, number], newRange: [number, number]) => {
     const newValue =
@@ -102,14 +110,6 @@ export function hexToRgb(hex: string) {
 
 export function calculateLuminance(rgb: { r: number; g: number; b: number }) {
   return (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
-}
-
-export function currency(value: number, currency = "USD", decimals = 2) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency,
-    maximumFractionDigits: decimals,
-  }).format(value);
 }
 
 export function dayjsRange(params: {

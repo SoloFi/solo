@@ -21,40 +21,49 @@ import { Badge } from "../ui/badge";
 
 const transactionColumnHelper = createColumnHelper<PortfolioTransaction>();
 
-export const TransactionsTable = (props: { transactions: PortfolioTransaction[] }) => {
-  const { transactions } = props;
+export const TransactionsTable = (props: {
+  txCurrency: string;
+  transactions: PortfolioTransaction[];
+}) => {
+  const { txCurrency, transactions } = props;
   const [sorting, setSorting] = useState<SortingState>([{ id: "time", desc: true }]);
 
   const transactionColumns = useMemo(() => {
     return [
       transactionColumnHelper.accessor("time", {
         header: "Date",
-        cell: (row) => dayjs(row.getValue() * 1000).format("MMMM DD, YYYY"),
+        cell: (cell) => dayjs(cell.getValue() * 1000).format("MMMM DD, YYYY"),
         enableSorting: true,
       }),
       transactionColumnHelper.accessor("type", {
         header: "Transaction Type",
-        cell: (row) => (
+        cell: (cell) => (
           <Badge
             className={
-              row.getValue() === TransactionType.BUY
+              cell.getValue() === TransactionType.BUY
                 ? "bg-green-600 text-white"
                 : "bg-red-600 text-white"
             }
           >
-            {row.getValue()}
+            {cell.getValue()}
           </Badge>
         ),
         enableSorting: false,
       }),
       transactionColumnHelper.accessor("price", {
         header: "Marktet Price",
-        cell: (row) => currency(row.getValue()),
+        cell: (cell) => currency(cell.getValue(), txCurrency),
         enableSorting: false,
       }),
       transactionColumnHelper.accessor("quantity", {
         header: "Shares",
-        cell: (row) => row.getValue(),
+        cell: (cell) => cell.getValue(),
+        enableSorting: false,
+      }),
+      transactionColumnHelper.display({
+        header: "Total Cost",
+        cell: (cell) =>
+          currency(cell.row.original.price * cell.row.original.quantity, txCurrency),
         enableSorting: false,
       }),
     ];

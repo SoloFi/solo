@@ -28,6 +28,8 @@ import { usePortfolioMutation } from "./usePortfolioMutation";
 import { toast } from "sonner";
 import { TransactionsTable } from "./transaction-table";
 import { DeleteDialog } from "./delete-dialog";
+import colors from "tailwindcss/colors";
+import { ThumbnailChart } from "../charts/thumbnail-chart";
 
 type PortfolioTableData = {
   symbol: string;
@@ -117,40 +119,55 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
       }),
       columnHelper.accessor("symbol", {
         header: "Asset",
-        cell: (row) => <p className="font-semibold">{row.getValue()}</p>,
+        cell: (cell) => <p className="font-semibold">{cell.getValue()}</p>,
         enableSorting: false,
       }),
       columnHelper.accessor("price", {
         header: "Marktet Price",
-        cell: (row) => currency(row.getValue()),
+        cell: (cell) =>
+          currency(
+            cell.getValue(),
+            holdingsMap.get(cell.row.original.symbol)?.currency || "USD",
+          ),
         enableSorting: false,
       }),
       columnHelper.accessor("quantity", {
         header: "Shares",
-        cell: (row) => row.getValue(),
+        cell: (cell) => cell.getValue(),
         enableSorting: false,
       }),
       columnHelper.accessor("costBasis", {
         header: "Cost Basis",
-        cell: (row) => currency(row.getValue()),
+        cell: (cell) =>
+          currency(
+            cell.getValue(),
+            holdingsMap.get(cell.row.original.symbol)?.currency || "USD",
+          ),
         enableSorting: false,
       }),
       columnHelper.accessor("value", {
         header: "Portfolio Value",
-        cell: (row) => currency(row.getValue()),
+        cell: (cell) =>
+          currency(
+            cell.getValue(),
+            holdingsMap.get(cell.row.original.symbol)?.currency || "USD",
+          ),
         enableSorting: true,
         enableMultiSort: false,
       }),
       columnHelper.accessor("change", {
         header: "Total Change",
-        cell: (row) => (
+        cell: (cell) => (
           <div>
-            <ValueChange change={row.getValue().percentChange}>
-              {currency(row.getValue().value)}
+            <ValueChange change={cell.getValue().percentChange}>
+              {currency(
+                cell.getValue().value,
+                holdingsMap.get(cell.row.original.symbol)?.currency || "USD",
+              )}
             </ValueChange>
-            <ValueChange change={row.getValue().percentChange}>
-              ({row.getValue().percentChange >= 0 ? "+" : ""}
-              {row.getValue().percentChange.toFixed(2)}%)
+            <ValueChange change={cell.getValue().percentChange}>
+              ({cell.getValue().percentChange >= 0 ? "+" : ""}
+              {cell.getValue().percentChange.toFixed(2)}%)
             </ValueChange>
           </div>
         ),
@@ -159,20 +176,19 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
       }),
       columnHelper.accessor("last30Days", {
         header: "Last 30 Days",
-        cell: (row) => {
-          <div>
-            {JSON.stringify(row.getValue())}
-            {/* <ThumbnailChart
-              data={row.getValue()}
+        cell: (cell) => {
+          const data = cell.row.original.last30Days;
+          return (
+            <ThumbnailChart
+              data={data}
               height={50}
               color={
-                row.getValue()?.[0]?.value <
-                row.getValue()[row.getValue().length - 1].value
+                data?.[0]?.value < data[data.length - 1].value
                   ? colors.green[600]
                   : colors.red[600]
               }
-            /> */}
-          </div>;
+            />
+          );
         },
         enableSorting: false,
       }),
@@ -276,6 +292,9 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
                             0) > 0 && (
                             <CardContent>
                               <TransactionsTable
+                                txCurrency={
+                                  holdingsMap.get(row.original.symbol)?.currency ?? "USD"
+                                }
                                 transactions={
                                   holdingsMap.get(row.original.symbol)?.transactions ?? []
                                 }
