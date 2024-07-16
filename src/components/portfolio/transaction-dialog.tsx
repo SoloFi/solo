@@ -28,6 +28,7 @@ export const TransactionDialog = (props: {
 }) => {
   const { transaction = {}, symbol, isOpen, onOpenChange, onSave } = props;
   const [calendarMonth, setCalendarMonth] = useState(dayjs().toDate());
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -112,15 +113,15 @@ export const TransactionDialog = (props: {
                   <Label htmlFor="date" className="text-right">
                     Date
                   </Label>
-                  <Popover>
+                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                     <PopoverTrigger asChild>
                       <Button
-                        variant={"outline"}
+                        variant="outline"
                         className="col-span-3 justify-start text-left font-normal"
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {state.value
-                          ? dayjs.unix(state.value).format("YYYY-MM-DD")
+                          ? dayjs.unix(state.value).format("MMMM DD, YYYY")
                           : "Select date"}
                       </Button>
                     </PopoverTrigger>
@@ -128,7 +129,10 @@ export const TransactionDialog = (props: {
                       <Calendar
                         mode="single"
                         selected={dayjs.unix(state.value).toDate()}
-                        onSelect={(date) => handleChange(dayjs(date).unix())}
+                        onSelect={(date) => {
+                          handleChange(dayjs(date).unix());
+                          setCalendarOpen(false);
+                        }}
                         month={calendarMonth}
                         onMonthChange={(date) => setCalendarMonth(date)}
                         initialFocus
