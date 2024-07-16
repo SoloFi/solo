@@ -111,6 +111,7 @@ app
     const token = await sign(payload, JWT_SECRET);
     return c.json({ token });
   })
+  // Get user portfolios
   .get("/api/portfolios", async (c) => {
     const email = getReqEmail(c);
     const user = await getUserByEmail(email);
@@ -119,12 +120,14 @@ app
     }
     return c.json(user.portfolios);
   })
+  // Get portfolio by id
   .get("/api/portfolio/:id", async (c) => {
     const email = getReqEmail(c);
     const { id } = c.req.param();
     const portfolio = await getPortfolioById(email, id);
     return c.json(portfolio);
   })
+  // Create portfolio
   .put("/api/portfolio", async (c) => {
     const email = getReqEmail(c);
     const data = await c.req.json();
@@ -138,12 +141,14 @@ app
     await createPortfolio(email, data);
     return c.json(data);
   })
+  // Delete portfolio
   .delete("/api/portfolio/:id", async (c) => {
     const email = getReqEmail(c);
     const { id } = c.req.param();
     await deletePortfolioById(email, id);
     return c.json({ message: "Portfolio deleted successfully." });
   })
+  // Update portfolio
   .post("/api/portfolio/:id", async (c) => {
     const email = getReqEmail(c);
     const { id } = c.req.param();
@@ -152,6 +157,7 @@ app
     await updatePortfolioById(email, id, { name, currency });
     return c.json({ message: "Portfolio updated successfully." });
   })
+  // Create holding
   .put("/api/portfolio/:id/holding", async (c) => {
     const email = getReqEmail(c);
     const { id } = c.req.param();
@@ -165,13 +171,15 @@ app
     await addPortfolioHolding(email, id, data);
     return c.json({ message: "Added holding successfully." });
   })
-  .delete("/api/portfolio/:id/:symbol", async (c) => {
+  // Delete holding
+  .delete("/api/portfolio/:id/holding/:symbol", async (c) => {
     const email = getReqEmail(c);
     const { id, symbol } = c.req.param();
     await deletePortfolioHolding(email, id, symbol);
     return c.json({ message: "Holding deleted successfully." });
   })
-  .put("/api/portfolio/:id/:symbol/tx", async (c) => {
+  // Create transaction
+  .put("/api/portfolio/:id/holding/:symbol/tx", async (c) => {
     const email = getReqEmail(c);
     const { id, symbol } = c.req.param();
     const data = await c.req.json();
@@ -185,13 +193,15 @@ app
     await addPortfolioTransaction(email, id, symbol, data);
     return c.json({ message: "Transaction added successfully." });
   })
-  .delete("/api/portfolio/:id/:symbol/:txId", async (c) => {
+  // Delete transaction
+  .delete("/api/portfolio/:id/holding/:symbol/tx/:txId", async (c) => {
     const email = getReqEmail(c);
     const { id, symbol, txId } = c.req.param();
     await deletePortfolioTransaction(email, id, symbol, txId);
     return c.json({ message: "Transaction deleted successfully." });
   })
-  .post("/api/portfolio/:id/:symbol/tx/:txId", async (c) => {
+  // Update transaction
+  .post("/api/portfolio/:id/holding/:symbol/tx/:txId", async (c) => {
     const email = getReqEmail(c);
     const { id, symbol, txId } = c.req.param();
     const data = await c.req.json();
@@ -204,6 +214,7 @@ app
     await updatePortfolioTransaction(email, id, symbol, txId, data);
     return c.json({ message: "Transaction updated successfully." });
   })
+  // Get lastest quote
   .get("/api/quote/:symbol", async (c) => {
     const { symbol } = c.req.param();
     const YQ = new YahooQuote();
@@ -217,6 +228,7 @@ app
     const quote = await YQ.getLatestQuote(`${symbol.toUpperCase()}=X`);
     return c.json(quote.close);
   })
+  // Get historical quote
   .post("/api/chart/:symbol", async (c) => {
     const { symbol } = c.req.param();
     const { from, to, range, interval } = await c.req.json();
@@ -230,6 +242,7 @@ app
     });
     return c.json(candlestickData);
   })
+  // Search symbols
   .get("/api/search/:query", async (c) => {
     const YS = new YahooSearch();
     const { query } = c.req.param();

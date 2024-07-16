@@ -3,22 +3,22 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../ui/dia
 import { Button } from "../ui/button";
 import { DialogHeader, DialogFooter } from "../ui/dialog";
 
-export const DeletePortfolioDialog = (props: {
+export const DeleteDialog = (props: {
+  title: string;
+  description: string;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onDelete: () => Promise<void>;
 }) => {
-  const { isOpen, onOpenChange, onDelete } = props;
+  const { title, description, isOpen, onOpenChange, onDelete } = props;
   const [isLoading, setIsLoading] = useState(false);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete portfolio</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete this portfolio? This action cannot be undone.
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button

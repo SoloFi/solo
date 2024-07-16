@@ -195,13 +195,13 @@ export const deletePortfolioHolding = async (
 ) => {
   const user = await getUserByEmail(email);
   const portfolio = user.portfolios.find((p: Portfolio) => p.id === portfolioId);
-  if (!user.portfolios || !portfolio) {
+  if (!portfolio) {
     throw new HTTPException(404, { message: "Portfolio not found." });
   }
   if (!portfolio.holdings) {
     throw new HTTPException(404, { message: "Holding not found." });
   }
-  const updatedHoldings = portfolio.holdings.filter(
+  portfolio.holdings = portfolio.holdings.filter(
     (holding: PortfolioHolding) => holding.symbol !== symbol,
   );
   await db.update({
@@ -214,7 +214,7 @@ export const deletePortfolioHolding = async (
       ":portfolios": user.portfolios,
     },
   });
-  return updatedHoldings;
+  return;
 };
 
 export const addPortfolioTransaction = async (
