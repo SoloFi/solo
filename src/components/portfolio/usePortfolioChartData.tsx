@@ -118,6 +118,5 @@ export const usePortfolioChartData = (props: {
 
 const startOfDay = (time: number) =>
   dayjs(time * 1000)
-    .utc()
     .startOf("day")
     .unix() as UTCTimestamp;
