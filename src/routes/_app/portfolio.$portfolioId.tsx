@@ -124,7 +124,7 @@ function MyPortfolio() {
                 <span className="p-1 rounded-sm bg-emerald-600 text-white mr-2">
                   <DollarSign className="w-4 h-4" />
                 </span>
-                Add Cash Balance
+                Add Cash Transaction
               </Button>
             </div>
             {portfolio && <PortfolioTable portfolio={portfolio} />}

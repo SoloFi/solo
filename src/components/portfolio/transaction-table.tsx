@@ -1,5 +1,5 @@
 import { PortfolioTransaction, TransactionType } from "@/api/types";
-import { currency, dayjs } from "@/lib/utils";
+import { currency as formatCurrency, dayjs } from "@/lib/utils";
 import {
   createColumnHelper,
   flexRender,
@@ -20,15 +20,24 @@ import {
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Edit, Trash } from "lucide-react";
+import { TransactionDialog } from "./transaction-dialog";
+import { DeleteDialog } from "./delete-dialog";
+import { usePortfolioMutation } from "./usePortfolioMutation";
 
 const transactionColumnHelper = createColumnHelper<PortfolioTransaction>();
 
 export const TransactionsTable = (props: {
-  txCurrency: string;
   transactions: PortfolioTransaction[];
+  symbol: string;
+  portfolioId: string;
+  currency: string;
 }) => {
-  const { txCurrency, transactions } = props;
+  const { transactions, symbol, portfolioId, currency } = props;
   const [sorting, setSorting] = useState<SortingState>([{ id: "time", desc: true }]);
+  const [txToEdit, setTxToEdit] = useState<PortfolioTransaction | null>(null);
+  const [txToDelete, setTxToDelete] = useState<PortfolioTransaction | null>(null);
+
+  const { editTxMutation, deleteTxMutation } = usePortfolioMutation();
 
   const transactionColumns = useMemo(() => {
     return [
@@ -54,7 +63,7 @@ export const TransactionsTable = (props: {
       }),
       transactionColumnHelper.accessor("price", {
         header: "Marktet Price",
-        cell: (cell) => currency(cell.getValue(), txCurrency),
+        cell: (cell) => formatCurrency(cell.getValue(), currency),
         enableSorting: false,
       }),
       transactionColumnHelper.accessor("quantity", {
@@ -65,18 +74,28 @@ export const TransactionsTable = (props: {
       transactionColumnHelper.display({
         header: "Total Cost",
         cell: (cell) =>
-          currency(cell.row.original.price * cell.row.original.quantity, txCurrency),
+          formatCurrency(cell.row.original.price * cell.row.original.quantity, currency),
         enableSorting: false,
       }),
       transactionColumnHelper.display({
         id: "actions",
-        cell: () => {
+        cell: (cell) => {
           return (
             <div className="hidden group-hover:flex justify-end space-x-2">
-              <Button size="icon" variant="outline" className="h-7 w-7">
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-7 w-7"
+                onClick={() => setTxToEdit(cell.row.original)}
+              >
                 <Edit width={14} height={14} />
               </Button>
-              <Button size="icon" variant="outline" className="h-7 w-7">
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-7 w-7"
+                onClick={() => setTxToDelete(cell.row.original)}
+              >
                 <Trash width={14} height={14} />
               </Button>
             </div>
@@ -88,7 +107,7 @@ export const TransactionsTable = (props: {
         enableSorting: false,
       }),
     ];
-  }, [txCurrency]);
+  }, [currency]);
 
   const table = useReactTable({
     data: transactions,
@@ -102,23 +121,60 @@ export const TransactionsTable = (props: {
   });
 
   return (
-    <Table>
-      <TableHeader>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <TableHeaderGroup headerGroup={headerGroup} key={headerGroup.id} />
-        ))}
-      </TableHeader>
-      <TableBody>
-        {table.getRowModel().rows.map((row) => (
-          <TableRow key={row.id} className="group h-12">
-            {row.getVisibleCells().map((cell) => (
-              <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </TableCell>
-            ))}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <>
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableHeaderGroup headerGroup={headerGroup} key={headerGroup.id} />
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows.map((row) => (
+            <TableRow key={row.id} className="group h-12">
+              {row.getVisibleCells().map((cell) => (
+                <TableCell
+                  key={cell.id}
+                  className={cell.column.columnDef.meta?.className}
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      {txToEdit && (
+        <TransactionDialog
+          symbol={symbol}
+          transaction={txToEdit}
+          isOpen={!!txToEdit}
+          onOpenChange={(isOpen) => setTxToEdit((prev) => (isOpen ? prev : null))}
+          onSave={async (tx) => {
+            await editTxMutation.mutateAsync({
+              portfolioId,
+              symbol,
+              tx,
+            });
+            setTxToEdit(null);
+          }}
+        />
+      )}
+      {txToDelete && (
+        <DeleteDialog
+          title={`Delete ${symbol} transaction`}
+          description="Are you sure you want to delete this transaction? This action cannot be undone."
+          isOpen={!!txToDelete}
+          onOpenChange={() => setTxToDelete((prev) => (prev ? null : prev))}
+          onDelete={async () => {
+            await deleteTxMutation.mutateAsync({
+              portfolioId,
+              symbol,
+              txId: txToDelete.id,
+            });
+            setTxToDelete(null);
+          }}
+        />
+      )}
+    </>
   );
 };

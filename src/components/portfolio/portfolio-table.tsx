@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Portfolio, PortfolioHolding, PortfolioTransaction } from "@/api/types";
 import type { UTCTimestamp } from "lightweight-charts";
 import {
@@ -25,7 +25,6 @@ import { Accordion, AccordionContent, AccordionItem } from "../ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { TransactionDialog } from "./transaction-dialog";
 import { usePortfolioMutation } from "./usePortfolioMutation";
-import { toast } from "sonner";
 import { TransactionsTable } from "./transaction-table";
 import { DeleteDialog } from "./delete-dialog";
 import colors from "tailwindcss/colors";
@@ -69,24 +68,6 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
   const [holdingToDelete, setHoldingToDelete] = useState<string | null>(null);
 
   const { deleteHoldingMutation, addTxMutation } = usePortfolioMutation();
-
-  const handleAddTransaction = useCallback(
-    async (tx: { symbol: string; body: PortfolioTransaction }) => {
-      try {
-        await addTxMutation.mutateAsync({
-          portfolioId: portfolio.id,
-          symbol: tx.symbol,
-          tx: tx.body,
-        });
-        toast.success(`Transaction added successfully for ${tx.symbol}`);
-      } catch (error) {
-        toast.error((error as Error).message);
-      }
-      setTransaction(null);
-      return;
-    },
-    [portfolio.id, addTxMutation],
-  );
 
   const holdingsMap = useMemo(() => {
     const map = new Map<string, PortfolioHolding>();
@@ -296,11 +277,13 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
                             0) > 0 && (
                             <CardContent>
                               <TransactionsTable
-                                txCurrency={
-                                  holdingsMap.get(row.original.symbol)?.currency ?? "USD"
-                                }
                                 transactions={
                                   holdingsMap.get(row.original.symbol)?.transactions ?? []
+                                }
+                                portfolioId={portfolio.id}
+                                symbol={row.original.symbol}
+                                currency={
+                                  holdingsMap.get(row.original.symbol)?.currency ?? "USD"
                                 }
                               />
                             </CardContent>
@@ -326,9 +309,14 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
           transaction={transaction.body}
           isOpen={!!transaction}
           onOpenChange={(isOpen) => setTransaction((prev) => (isOpen ? prev : null))}
-          onSave={async (txBody) =>
-            handleAddTransaction({ ...transaction, body: txBody })
-          }
+          onSave={async (tx) => {
+            await addTxMutation.mutateAsync({
+              portfolioId: portfolio.id,
+              symbol: transaction.symbol,
+              tx,
+            });
+            setTransaction(null);
+          }}
         />
       )}
       {holdingToDelete && (
@@ -343,7 +331,6 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
               symbol: holdingToDelete,
             });
             setHoldingToDelete(null);
-            return;
           }}
         />
       )}

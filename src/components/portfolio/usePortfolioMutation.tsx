@@ -151,9 +151,12 @@ export const usePortfolioMutation = () => {
         context?.previousPortfolio,
       );
     },
-    onSuccess: (_, __, context) => {
+    onSuccess: (_, { symbol }, context) => {
       queryClient.invalidateQueries({
         queryKey: ["portfolio", context?.previousPortfolio?.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [symbol],
       });
     },
   });
@@ -203,9 +206,12 @@ export const usePortfolioMutation = () => {
         context?.previousPortfolio,
       );
     },
-    onSuccess: (_, __, context) => {
+    onSuccess: (_, { symbol }, context) => {
       queryClient.invalidateQueries({
         queryKey: ["portfolio", context?.previousPortfolio?.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [symbol],
       });
     },
   });
@@ -244,9 +250,12 @@ export const usePortfolioMutation = () => {
         context?.previousPortfolio,
       );
     },
-    onSuccess: (_, __, context) => {
+    onSuccess: (_, { symbol }, context) => {
       queryClient.invalidateQueries({
         queryKey: ["portfolio", context?.previousPortfolio?.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [symbol],
       });
     },
   });
