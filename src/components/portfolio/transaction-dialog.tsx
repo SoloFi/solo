@@ -27,14 +27,16 @@ export const TransactionDialog = (props: {
   onSave: (transation: PortfolioTransaction) => Promise<void>;
 }) => {
   const { transaction = {}, symbol, isOpen, onOpenChange, onSave } = props;
-  const [calendarMonth, setCalendarMonth] = useState(dayjs().toDate());
+  const [calendarMonth, setCalendarMonth] = useState(
+    transaction.time ? dayjs.unix(transaction.time).toDate() : dayjs().toDate(),
+  );
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   const form = useForm({
     defaultValues: {
       id: "",
       type: TransactionType.BUY,
-      time: dayjs().unix(),
+      time: transaction.time || dayjs().unix(),
       ...transaction,
       price: transaction.price ? `${transaction.price}` : "0",
       quantity: transaction.quantity ? `${transaction.quantity}` : "0",
@@ -120,9 +122,7 @@ export const TransactionDialog = (props: {
                         className="col-span-3 justify-start text-left font-normal"
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {state.value
-                          ? dayjs.unix(state.value).format("MMMM DD, YYYY")
-                          : "Select date"}
+                        {dayjs.unix(state.value).format("MMMM DD, YYYY")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
