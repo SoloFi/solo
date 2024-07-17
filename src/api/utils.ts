@@ -291,28 +291,32 @@ export const updatePortfolioTransaction = async (
   data: PortfolioTransaction,
 ) => {
   const user = await getUserByEmail(email);
-  const portfolio = user.portfolios.find((p: Portfolio) => p.id === portfolioId);
-  if (!user.portfolios || !portfolio) {
+  const portfolioIndex = user.portfolios.findIndex(
+    (p: Portfolio) => p.id === portfolioId,
+  );
+  if (portfolioIndex === -1) {
     throw new HTTPException(404, { message: "Portfolio not found." });
   }
-  const holding = portfolio.holdings.find((h: PortfolioHolding) => h.symbol === symbol);
-  if (!portfolio.holdings || !holding) {
+  const holdingIndex = user.portfolios[portfolioIndex].holdings.findIndex(
+    (h: PortfolioHolding) => h.symbol === symbol,
+  );
+  if (holdingIndex === -1) {
     throw new HTTPException(404, { message: "Holding not found." });
   }
-  if (!holding.transactions) {
-    throw new HTTPException(404, { message: "Transaction not found." });
-  }
-  const updatedTransactions = holding.transactions.map(
-    (transaction: PortfolioTransaction) => {
-      if (transaction.id === transactionId) {
-        return {
-          ...transaction,
-          ...data,
-        };
-      }
-      return transaction;
-    },
-  );
+  user.portfolios[portfolioIndex].holdings[holdingIndex].transactions = user.portfolios[
+    portfolioIndex
+  ].holdings[holdingIndex].transactions.map((transaction: PortfolioTransaction) => {
+    if (transaction.id === transactionId) {
+      return {
+        id: transaction.id,
+        time: data.time ?? transaction.time,
+        quantity: data.quantity ?? transaction.quantity,
+        type: data.type ?? transaction.type,
+        price: data.price ?? transaction.price,
+      } satisfies PortfolioTransaction;
+    }
+    return transaction;
+  });
   await db.update({
     TableName: USERS_TABLE,
     Key: {
@@ -323,5 +327,4 @@ export const updatePortfolioTransaction = async (
       ":portfolios": user.portfolios,
     },
   });
-  return updatedTransactions;
 };
