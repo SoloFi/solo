@@ -29,6 +29,7 @@ import { TransactionsTable } from "./transaction-table";
 import { DeleteDialog } from "./delete-dialog";
 import colors from "tailwindcss/colors";
 import { ThumbnailChart } from "../charts/thumbnail-chart";
+import { useUser } from "../user";
 
 type PortfolioTableData = {
   symbol: string;
@@ -50,6 +51,8 @@ const columnHelper = createColumnHelper<PortfolioTableData>();
 
 export const PortfolioTable = (props: { portfolio: Portfolio }) => {
   const { portfolio } = props;
+  const { currency: userCurrency } = useUser();
+
   const [sorting, setSorting] = useState([
     {
       id: "value",
@@ -105,11 +108,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
       }),
       columnHelper.accessor("price", {
         header: "Marktet Price",
-        cell: (cell) =>
-          currency(
-            cell.getValue(),
-            holdingsMap.get(cell.row.original.symbol)?.currency || "USD",
-          ),
+        cell: (cell) => currency(cell.getValue(), userCurrency),
         enableSorting: false,
       }),
       columnHelper.accessor("quantity", {
@@ -119,20 +118,12 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
       }),
       columnHelper.accessor("costBasis", {
         header: "Cost Basis",
-        cell: (cell) =>
-          currency(
-            cell.getValue(),
-            holdingsMap.get(cell.row.original.symbol)?.currency || "USD",
-          ),
+        cell: (cell) => currency(cell.getValue(), userCurrency),
         enableSorting: false,
       }),
       columnHelper.accessor("value", {
         header: "Portfolio Value",
-        cell: (cell) =>
-          currency(
-            cell.getValue(),
-            holdingsMap.get(cell.row.original.symbol)?.currency || "USD",
-          ),
+        cell: (cell) => currency(cell.getValue(), userCurrency),
         enableSorting: true,
         enableMultiSort: false,
       }),
@@ -141,10 +132,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
         cell: (cell) => (
           <div>
             <ValueChange change={cell.getValue().percentChange}>
-              {currency(
-                cell.getValue().value,
-                holdingsMap.get(cell.row.original.symbol)?.currency || "USD",
-              )}
+              {currency(cell.getValue().value, userCurrency)}
             </ValueChange>
             <ValueChange change={cell.getValue().percentChange}>
               ({cell.getValue().percentChange >= 0 ? "+" : ""}
@@ -196,7 +184,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
         },
       }),
     ];
-  }, [holdingsMap]);
+  }, [userCurrency]);
 
   const table = useReactTable({
     columns,
@@ -282,9 +270,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
                                 }
                                 portfolioId={portfolio.id}
                                 symbol={row.original.symbol}
-                                currency={
-                                  holdingsMap.get(row.original.symbol)?.currency ?? "USD"
-                                }
+                                currency={userCurrency}
                               />
                             </CardContent>
                           )}

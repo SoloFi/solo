@@ -1,4 +1,4 @@
-import type { CandlestickData } from "@/api/types";
+import type { CandlestickData, PortfolioHolding } from "@/api/types";
 import { ChartTypeToggle } from "@/components/charts/chart-type-toggle";
 import { PortfolioChart } from "@/components/charts/portfolio-chart";
 import { PortfolioTable } from "@/components/portfolio/portfolio-table";
@@ -16,6 +16,11 @@ import { SearchItem } from "@/api/YahooSearch";
 import { Button } from "@/components/ui/button";
 import { Activity, DollarSign } from "lucide-react";
 import { usePortfolioMutation } from "@/components/portfolio/usePortfolioMutation";
+import { useUser } from "@/components/user";
+import {
+  convertCandlestickDataCurrency,
+  convertHoldingCurrency,
+} from "@/components/portfolio/utils";
 
 export const Route = createFileRoute("/_app/portfolio/$portfolioId")({
   component: MyPortfolio,
@@ -24,23 +29,38 @@ export const Route = createFileRoute("/_app/portfolio/$portfolioId")({
 
 function MyPortfolio() {
   const { portfolioId } = Route.useParams();
+  const { currency } = useUser();
   const [chartType, setChartType] = useState<"area" | "candlestick">("area");
   const [symbolSearchOpen, setSymbolSearchOpen] = useState(false);
   const { addHoldingMutation } = usePortfolioMutation();
 
   const { data: portfolio } = useQuery({
-    queryKey: ["portfolio", portfolioId],
+    queryKey: ["portfolio", portfolioId, currency],
     staleTime: Infinity,
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
-    queryFn: async () => getPortfolio(portfolioId),
+    queryFn: async () =>
+      getPortfolio(portfolioId).then(async (portfolio) => {
+        const conversionQueries: Promise<PortfolioHolding>[] = [];
+        portfolio.holdings.forEach((holding) => {
+          conversionQueries.push(
+            convertHoldingCurrency({
+              holding,
+              toCurrency: currency,
+            }),
+          );
+        });
+        return Promise.all(conversionQueries).then((holdings) => ({
+          ...portfolio,
+          holdings,
+        }));
+      }),
   });
 
   const holdingsWithTransactions = useMemo(
     () => portfolio?.holdings?.filter((holding) => holding.transactions.length > 0) ?? [],
     [portfolio],
   );
-  const hasTransactions = holdingsWithTransactions.length > 0;
 
   const symbolQueries = useQueries({
     queries: holdingsWithTransactions.map((entry) => {
@@ -48,13 +68,19 @@ function MyPortfolio() {
       const from = entry.transactions?.sort((a, b) => a.time - b.time)[0].time;
       const to = dayjs().utc().unix();
       return {
-        queryKey: [symbol],
+        queryKey: [symbol, currency],
         queryFn: async () =>
           getSymbolChart({
             symbol,
             from,
             to,
-          }),
+          }).then((data) =>
+            convertCandlestickDataCurrency({
+              data,
+              fromCurrency: entry.currency,
+              toCurrency: currency,
+            }),
+          ),
         refetchOnWindowFocus: false,
       };
     }),
@@ -89,6 +115,8 @@ function MyPortfolio() {
     portfolio: portfolio ?? null,
     symbolDataMap: portfolioSymbolsData,
   });
+
+  const hasTransactions = holdingsWithTransactions.length > 0;
 
   return (
     <div className="w-full h-full">

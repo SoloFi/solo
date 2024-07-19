@@ -1,4 +1,6 @@
-import { TransactionType, type PortfolioHolding } from "@/api/types";
+import { CandlestickData, TransactionType, type PortfolioHolding } from "@/api/types";
+import { queryClient } from "@/main";
+import { getFXRate } from "@/query/currency";
 import { UTCTimestamp } from "lightweight-charts";
 
 export function getCostBasisAtTime(holding: PortfolioHolding, time: UTCTimestamp) {
@@ -24,4 +26,44 @@ export function getCostBasisAtTime(holding: PortfolioHolding, time: UTCTimestamp
     totalQuantity -= sell.quantity;
   });
   return totalCostBasis;
+}
+
+export async function convertHoldingCurrency(params: {
+  holding: PortfolioHolding;
+  toCurrency: string;
+}) {
+  const { holding, toCurrency } = params;
+  if (holding.currency === toCurrency) return holding;
+  const currency = holding.currency;
+  const exchangeRate = await queryClient.fetchQuery({
+    queryKey: ["fx", currency, toCurrency],
+    queryFn: () => getFXRate(currency, toCurrency),
+  });
+  if (!exchangeRate || typeof exchangeRate !== "number") return holding;
+  holding.transactions = holding.transactions.map((tx) => {
+    tx.price = tx.price * exchangeRate;
+    return tx;
+  });
+  return holding;
+}
+
+export async function convertCandlestickDataCurrency(params: {
+  data: CandlestickData[];
+  fromCurrency: string;
+  toCurrency: string;
+}) {
+  const { data, fromCurrency, toCurrency } = params;
+  if (fromCurrency === toCurrency) return data;
+  const exchangeRate = await queryClient.fetchQuery({
+    queryKey: ["fx", fromCurrency, toCurrency],
+    queryFn: () => getFXRate(fromCurrency, toCurrency),
+  });
+  if (!exchangeRate || typeof exchangeRate !== "number") return data;
+  return data.map((candle) => {
+    candle.open = candle.open * exchangeRate;
+    candle.high = candle.high * exchangeRate;
+    candle.low = candle.low * exchangeRate;
+    candle.close = candle.close * exchangeRate;
+    return candle;
+  });
 }

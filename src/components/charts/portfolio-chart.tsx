@@ -21,6 +21,7 @@ import { dayjs, hexTransp, percentChange, currency } from "@/lib/utils";
 import type { CandlestickData } from "@/api/types";
 import ChartWrapper from "./chart-wrapper";
 import ToggleAxisMode from "./toggle-axis-mode";
+import { useUser } from "../user";
 
 export const PortfolioChart = (props: {
   data: CandlestickData[];
@@ -30,6 +31,8 @@ export const PortfolioChart = (props: {
 }) => {
   const { data, costBasisData, height, type = "area" } = props;
   const { theme } = useTheme();
+  const { currency: userCurrency } = useUser();
+
   const [tooltip, setTooltip] = useState<{
     time: UTCTimestamp;
     value: number;
@@ -185,7 +188,7 @@ export const PortfolioChart = (props: {
           time={dayjs(tooltip.time * 1000)
             .utc()
             .format("MMMM D, YYYY")}
-          value={currency(tooltip.value)}
+          value={currency(tooltip.value, userCurrency)}
           percentChange={tooltip.percentChange}
         />
       )}

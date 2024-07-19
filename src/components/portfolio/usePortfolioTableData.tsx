@@ -1,26 +1,34 @@
 import { CandlestickData, PortfolioHolding, TransactionType } from "@/api/types";
 import { useMemo } from "react";
-import { getCostBasisAtTime } from "./utils";
+import { convertCandlestickDataCurrency, getCostBasisAtTime } from "./utils";
 import { dayjs, percentChange } from "@/lib/utils";
 import { UTCTimestamp } from "lightweight-charts";
 import { useQueries } from "@tanstack/react-query";
 import { getSymbolChart } from "@/query/symbol";
 import isNil from "lodash/isNil";
+import { useUser } from "../user";
 
 export const usePortfolioTableData = (props: { holdings: PortfolioHolding[] }) => {
   const holdings = useMemo(() => props.holdings, [props.holdings]);
+  const { currency } = useUser();
 
   const { data: symbolsData, isPending } = useQueries({
     queries:
       holdings?.map((entry) => {
         const symbol = entry.symbol;
         return {
-          queryKey: [symbol, "chart", "1mo"],
+          queryKey: [symbol, "chart", "1mo", currency],
           queryFn: async () =>
             getSymbolChart({
               symbol,
               range: "1mo",
-            }),
+            }).then((data) =>
+              convertCandlestickDataCurrency({
+                data,
+                fromCurrency: entry.currency,
+                toCurrency: currency,
+              }),
+            ),
           refetchOnWindowFocus: false,
           staleTime: 1000 * 60 * 5, // 5 minutes
         };
