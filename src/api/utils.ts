@@ -40,15 +40,15 @@ export const getUserByEmail = async (email: string) => {
       email,
     },
   });
-  const user = userItem.Item;
-  if (!user) {
-    throw new HTTPException(401, { message: "Unauthorized" });
-  }
-  return user as User;
+  const user = userItem?.Item;
+  return user as User | undefined;
 };
 
 export const getPortfolioById = async (email: string, id: string) => {
   const user = await getUserByEmail(email);
+  if (!user) {
+    throw new HTTPException(404, { message: "User not found." });
+  }
   const portfolio = user.portfolios.find((portfolio: Portfolio) => portfolio.id === id);
   if (!user.portfolios || !portfolio) {
     throw new HTTPException(404, { message: "Portfolio not found." });
@@ -58,6 +58,9 @@ export const getPortfolioById = async (email: string, id: string) => {
 
 export const deletePortfolioById = async (email: string, id: string) => {
   const user = await getUserByEmail(email);
+  if (!user) {
+    throw new HTTPException(404, { message: "User not found." });
+  }
   if (!user.portfolios) {
     throw new HTTPException(404, { message: "Portfolio not found." });
   }
@@ -84,6 +87,9 @@ export const updatePortfolioById = async (
   data: Pick<Portfolio, "name" | "currency">,
 ) => {
   const user = await getUserByEmail(email);
+  if (!user) {
+    throw new HTTPException(404, { message: "User not found." });
+  }
   const portfolioToUpdate = user.portfolios.find((p: Portfolio) => p.id === id);
   if (!user.portfolios || !portfolioToUpdate) {
     throw new HTTPException(404, { message: "Portfolio not found." });
@@ -126,6 +132,9 @@ export const updatePortfolioById = async (
 
 export const createPortfolio = async (email: string, data: Portfolio) => {
   const user = await getUserByEmail(email);
+  if (!user) {
+    throw new HTTPException(404, { message: "User not found." });
+  }
   if (!user.portfolios) {
     user.portfolios = [];
   }
@@ -155,6 +164,9 @@ export const addPortfolioHolding = async (
   holding: PortfolioHolding,
 ) => {
   const user = await getUserByEmail(email);
+  if (!user) {
+    throw new HTTPException(404, { message: "User not found." });
+  }
   const portfolio = user.portfolios.find((p: Portfolio) => p.id === portfolioId);
   if (!user.portfolios || !portfolio) {
     throw new HTTPException(404, { message: "Portfolio not found." });
@@ -194,6 +206,9 @@ export const deletePortfolioHolding = async (
   symbol: string,
 ) => {
   const user = await getUserByEmail(email);
+  if (!user) {
+    throw new HTTPException(404, { message: "User not found." });
+  }
   const portfolio = user.portfolios.find((p: Portfolio) => p.id === portfolioId);
   if (!portfolio) {
     throw new HTTPException(404, { message: "Portfolio not found." });
@@ -224,6 +239,9 @@ export const addPortfolioTransaction = async (
   transaction: PortfolioTransaction,
 ) => {
   const user = await getUserByEmail(email);
+  if (!user) {
+    throw new HTTPException(404, { message: "User not found." });
+  }
   const portfolio = user.portfolios.find((p: Portfolio) => p.id === portfolioId);
   if (!user.portfolios || !portfolio) {
     throw new HTTPException(404, { message: "Portfolio not found." });
@@ -256,6 +274,9 @@ export const deletePortfolioTransaction = async (
   transactionId: string,
 ) => {
   const user = await getUserByEmail(email);
+  if (!user) {
+    throw new HTTPException(404, { message: "User not found." });
+  }
   const portfolio = user.portfolios.find((p: Portfolio) => p.id === portfolioId);
   if (!user.portfolios || !portfolio) {
     throw new HTTPException(404, { message: "Portfolio not found." });
@@ -291,6 +312,9 @@ export const updatePortfolioTransaction = async (
   data: PortfolioTransaction,
 ) => {
   const user = await getUserByEmail(email);
+  if (!user) {
+    throw new HTTPException(404, { message: "User not found." });
+  }
   const portfolioIndex = user.portfolios.findIndex(
     (p: Portfolio) => p.id === portfolioId,
   );
