@@ -7,5 +7,5 @@ import { axios } from "./axios";
 */
 export const getFXRate = async (fromSymbol: string, toSymbol: string) => {
   const { data } = await axios.get(`/api/fx/${fromSymbol}${toSymbol}`);
-  return data;
+  return data as number | undefined;
 };

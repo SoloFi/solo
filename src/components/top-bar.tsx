@@ -20,7 +20,7 @@ import { useNavigate } from "@tanstack/react-router";
 
 const TopBar = () => {
   const [isSymbolSearchOpen, setIsSymbolSearchOpen] = useState(false);
-  const { signOut, switchCurrency } = useUser();
+  const { signOut, currency, switchCurrency } = useUser();
   const navigate = useNavigate();
 
   const handleSignOut = useCallback(() => {
@@ -48,7 +48,11 @@ const TopBar = () => {
         />
       </Command>
       <div className="flex-1 w-full" />
-      <CurrencySelect onSelect={({ symbol }) => switchCurrency(symbol)} variant="ghost" />
+      <CurrencySelect
+        defaultValue={currency}
+        onSelect={({ symbol }) => switchCurrency(symbol)}
+        variant="ghost"
+      />
       <ModeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
