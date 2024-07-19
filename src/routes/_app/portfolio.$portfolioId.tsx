@@ -71,6 +71,7 @@ function MyPortfolio() {
       const to = dayjs().utc().unix();
       return {
         queryKey: holdingQueryKey(portfolioId, symbol, currency),
+        placeholderData: keepPreviousData,
         queryFn: async () =>
           getSymbolChart({
             symbol,
@@ -93,10 +94,10 @@ function MyPortfolio() {
       .map(({ symbol }, index) => ({
         [symbol]: symbolQueries[index].data,
       }))
-      .reduce(
-        (acc, curr) => ({ ...acc, ...curr }),
-        {} as Record<string, CandlestickData[]>,
-      );
+      .reduce((acc, curr) => ({ ...acc, ...curr }), {}) as Record<
+      string,
+      CandlestickData[]
+    >;
   }, [holdingsWithTransactions, symbolQueries]);
 
   const addHolding = useCallback(
