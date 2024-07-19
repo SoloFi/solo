@@ -5,12 +5,10 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { ThemeProvider } from "@/components/theme-provider";
 import { routeTree } from "./routeTree.gen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useAuth } from "./components/auth";
-import AuthProvider from "./components/auth-provider";
+import UserProvider from "./components/user-provider";
 
 const router = createRouter({
   routeTree,
-  context: { auth: undefined! },
 });
 export const queryClient = new QueryClient();
 
@@ -21,10 +19,9 @@ declare module "@tanstack/react-router" {
 }
 
 function InnerApp() {
-  const auth = useAuth();
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} context={{ auth }} />
+      <RouterProvider router={router} />
     </QueryClientProvider>
   );
 }
@@ -32,9 +29,9 @@ function InnerApp() {
 export function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <AuthProvider>
+      <UserProvider>
         <InnerApp />
-      </AuthProvider>
+      </UserProvider>
     </ThemeProvider>
   );
 }

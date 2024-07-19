@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/components/auth";
+import { useUser } from "@/components/user";
 import { useForm } from "@tanstack/react-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_auth/signIn")({
 });
 
 function SignIn() {
-  const { signIn } = useAuth();
+  const { signIn } = useUser();
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
