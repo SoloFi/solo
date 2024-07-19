@@ -101,12 +101,14 @@ function Portfolios() {
   return (
     <div className="w-full h-full">
       <Card className="flex flex-col min-h-full">
-        {!isPending && portfolios && portfolios.length > 0 && (
-          <CardHeader>
-            <h1 className="text-2xl font-semibold">My portfolios</h1>
-          </CardHeader>
-        )}
-        <CardContent className="flex flex-1">
+        <CardHeader
+          className={!isPending && portfolios && portfolios.length > 0 ? "" : "pb-0"}
+        >
+          <h1 className="text-2xl font-semibold">
+            {!isPending && portfolios && portfolios.length > 0 && "My portfolios"}
+          </h1>
+        </CardHeader>
+        <CardContent className="flex flex-1 justify-center items-center">
           {isPending && <Spinner className="w-10 h-10" />}
           {!isPending &&
             (portfolios && portfolios.length > 0 ? (

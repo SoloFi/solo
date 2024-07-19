@@ -20,6 +20,8 @@ import { useUser } from "@/components/user";
 import {
   convertCandlestickDataCurrency,
   convertHoldingCurrency,
+  holdingQueryKey,
+  portfolioQueryKey,
 } from "@/components/portfolio/utils";
 
 export const Route = createFileRoute("/_app/portfolio/$portfolioId")({
@@ -35,7 +37,7 @@ function MyPortfolio() {
   const { addHoldingMutation } = usePortfolioMutation();
 
   const { data: portfolio } = useQuery({
-    queryKey: ["portfolio", portfolioId, currency],
+    queryKey: portfolioQueryKey(portfolioId, currency),
     staleTime: Infinity,
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
@@ -68,7 +70,7 @@ function MyPortfolio() {
       const from = entry.transactions?.sort((a, b) => a.time - b.time)[0].time;
       const to = dayjs().utc().unix();
       return {
-        queryKey: [symbol, currency],
+        queryKey: holdingQueryKey(portfolioId, symbol, currency),
         queryFn: async () =>
           getSymbolChart({
             symbol,

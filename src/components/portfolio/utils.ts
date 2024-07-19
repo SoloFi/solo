@@ -67,3 +67,15 @@ export async function convertCandlestickDataCurrency(params: {
     return candle;
   });
 }
+
+export const portfolioQueryKey = (portfolioId: string, userCurrency: string) => [
+  "portfolio",
+  portfolioId,
+  userCurrency,
+];
+
+export const holdingQueryKey = (
+  portfolioId: string,
+  symbol: string,
+  userCurrency: string,
+) => [portfolioId, symbol, userCurrency];
