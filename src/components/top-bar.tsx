@@ -15,12 +15,12 @@ import { Command, CommandInput } from "./ui/command";
 import { useCallback, useState } from "react";
 import { Nav } from "./nav";
 import { CurrencySelect } from "./currency-select";
-import { useAuth } from "./auth";
+import { useUser } from "./user";
 import { useNavigate } from "@tanstack/react-router";
 
 const TopBar = () => {
   const [isSymbolSearchOpen, setIsSymbolSearchOpen] = useState(false);
-  const { signOut } = useAuth();
+  const { signOut, switchCurrency } = useUser();
   const navigate = useNavigate();
 
   const handleSignOut = useCallback(() => {
@@ -48,7 +48,7 @@ const TopBar = () => {
         />
       </Command>
       <div className="flex-1 w-full" />
-      <CurrencySelect onSelect={console.log} variant="ghost" />
+      <CurrencySelect onSelect={({ symbol }) => switchCurrency(symbol)} variant="ghost" />
       <ModeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

@@ -10,16 +10,21 @@ import {
   type ReactNode,
 } from "react";
 
-export interface AuthContextType {
+export interface UserContextType {
   token: string | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, accessKey: string) => Promise<void>;
   signOut: () => void;
+  currency: string;
+  switchCurrency: (currency: string) => void;
 }
-export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+export const UserContext = createContext<UserContextType>({} as UserContextType);
 
-const AuthProvider = ({ children }: { children: ReactNode }) => {
+const UserProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
+  const [currency, setCurrency] = useState<string>(
+    localStorage.getItem("currency") ?? "USD",
+  );
 
   const signIn = useCallback(async (email: string, password: string) => {
     try {
@@ -75,17 +80,24 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [token]);
 
+  const switchCurrency = useCallback((currency: string) => {
+    setCurrency(currency);
+    localStorage.setItem("currency", currency);
+  }, []);
+
   const contextValue = useMemo(
     () => ({
       token,
       signIn,
       signUp,
       signOut,
+      currency,
+      switchCurrency,
     }),
-    [signIn, signOut, signUp, token],
+    [currency, signIn, signOut, signUp, switchCurrency, token],
   );
 
-  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
+  return <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>;
 };
 
-export default AuthProvider;
+export default UserProvider;
