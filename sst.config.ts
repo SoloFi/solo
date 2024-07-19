@@ -10,8 +10,8 @@ export default $config({
     };
   },
   async run() {
-    const jwtSecret = new sst.Secret("JWTSecret");
     const apiToken = new sst.Secret("APIToken");
+    const jwtSecret = new sst.Secret("JWTSecret");
 
     const usersTable = new sst.aws.Dynamo("Users", {
       fields: {
