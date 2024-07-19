@@ -50,7 +50,7 @@
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.0",
     "sonner": "^1.5.0",
-    "sst": "^0.0.527",
+    "sst": "ion",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
     "usehooks-ts": "^3.1.0",
