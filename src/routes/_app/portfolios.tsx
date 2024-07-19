@@ -1,11 +1,10 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { createPortfolio, deletePortfolio, getPortfolios } from "@/query/portfolio";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Portfolio } from "@/api/types";
 import { toast } from "sonner";
 import { queryClient } from "@/main";
 import { Plus } from "lucide-react";
@@ -24,71 +23,33 @@ function Portfolios() {
   const { data: portfolios, isPending } = useQuery({
     queryKey: ["portfolios"],
     queryFn: getPortfolios,
+    placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
     staleTime: Infinity,
   });
 
-  const handleCreatePortfolio = useCallback(
-    async (portfolioDetails: { name: string; currency: string }) => {
-      const newPortfolio: Portfolio = {
-        id: "",
-        name: portfolioDetails.name,
-        currency: portfolioDetails.currency,
-        holdings: [],
-      };
-      try {
-        const portfolio = await createPortfolio(newPortfolio);
-        toast.success(`Portfolio "${portfolio.name}" created successfully`);
-      } catch (error) {
-        toast.error((error as Error).message);
-      }
-      setIsCreateDialogOpen(false);
-    },
-    [],
-  );
-
   const createMutation = useMutation({
-    mutationFn: handleCreatePortfolio,
-    // When mutate is called:
-    onMutate: async (newPortfolio) => {
-      await queryClient.cancelQueries({ queryKey: ["portfolios"] });
-      const previousPortfolios = queryClient.getQueryData(["portfolios"]);
-      queryClient.setQueryData(["portfolios"], (old: Portfolio[]) => [
-        ...old,
-        newPortfolio,
-      ]);
-      return { previousPortfolios };
+    mutationFn: async (portfolioDetails: { name: string; currency: string }) =>
+      await createPortfolio({ id: "", holdings: [], ...portfolioDetails }),
+    onSuccess: (_, { name }) => {
+      toast.success(`Portfolio "${name}" created successfully`);
     },
-    onError: (_, __, context) => {
-      queryClient.setQueryData(["portfolios"], context?.previousPortfolios ?? []);
+    onError: (error) => {
+      toast.error((error as Error).message);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["portfolios"] });
     },
   });
 
-  const handleDeletePortfolio = useCallback(async (portfolioId: string) => {
-    try {
-      await deletePortfolio(portfolioId);
-      toast.success("Portfolio deleted successfully");
-    } catch (error) {
-      toast.error((error as Error).message);
-    }
-    setPortfolioIdToDelete(null);
-  }, []);
-
   const deleteMutation = useMutation({
-    mutationFn: handleDeletePortfolio,
-    onMutate: async (deletedPortfolioId: string) => {
-      await queryClient.cancelQueries({ queryKey: ["portfolios"] });
-      const previousPortfolios = queryClient.getQueryData(["portfolios"]);
-      queryClient.setQueryData(["portfolios"], (old: Portfolio[]) =>
-        old.filter((p) => p.id !== deletedPortfolioId),
-      );
-      return { previousPortfolios };
+    mutationFn: async (portfolioId: string) => await deletePortfolio(portfolioId),
+    onError: (error) => {
+      toast.error((error as Error).message);
     },
-    onError: (_, __, context) => {
-      queryClient.setQueryData(["portfolios"], context?.previousPortfolios ?? []);
+    onSuccess: () => {
+      toast.success("Portfolio deleted successfully");
+      setPortfolioIdToDelete(null);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["portfolios"] });
