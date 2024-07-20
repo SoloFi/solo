@@ -10,105 +10,105 @@
 
 // Import Routes
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as AuthImport } from './routes/_auth'
-import { Route as AppImport } from './routes/_app'
-import { Route as AppIndexImport } from './routes/_app/index'
-import { Route as AuthSignUpImport } from './routes/_auth/signUp'
-import { Route as AuthSignInImport } from './routes/_auth/signIn'
-import { Route as AppPortfoliosImport } from './routes/_app/portfolios'
-import { Route as AppPortfolioPortfolioIdImport } from './routes/_app/portfolio.$portfolioId'
+import { Route as rootRoute } from "./routes/__root";
+import { Route as AuthImport } from "./routes/_auth";
+import { Route as AppImport } from "./routes/_app";
+import { Route as AppIndexImport } from "./routes/_app/index";
+import { Route as AuthSignUpImport } from "./routes/_auth/signUp";
+import { Route as AuthSignInImport } from "./routes/_auth/signIn";
+import { Route as AppPortfoliosImport } from "./routes/_app/portfolios";
+import { Route as AppPortfolioPortfolioIdImport } from "./routes/_app/portfolio.$portfolioId";
 
 // Create/Update Routes
 
 const AuthRoute = AuthImport.update({
-  id: '/_auth',
+  id: "/_auth",
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const AppRoute = AppImport.update({
-  id: '/_app',
+  id: "/_app",
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const AppIndexRoute = AppIndexImport.update({
-  path: '/',
+  path: "/",
   getParentRoute: () => AppRoute,
-} as any)
+} as any);
 
 const AuthSignUpRoute = AuthSignUpImport.update({
-  path: '/signUp',
+  path: "/signUp",
   getParentRoute: () => AuthRoute,
-} as any)
+} as any);
 
 const AuthSignInRoute = AuthSignInImport.update({
-  path: '/signIn',
+  path: "/signIn",
   getParentRoute: () => AuthRoute,
-} as any)
+} as any);
 
 const AppPortfoliosRoute = AppPortfoliosImport.update({
-  path: '/portfolios',
+  path: "/portfolios",
   getParentRoute: () => AppRoute,
-} as any)
+} as any);
 
 const AppPortfolioPortfolioIdRoute = AppPortfolioPortfolioIdImport.update({
-  path: '/portfolio/$portfolioId',
+  path: "/portfolio/$portfolioId",
   getParentRoute: () => AppRoute,
-} as any)
+} as any);
 
 // Populate the FileRoutesByPath interface
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/_app': {
-      id: '/_app'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AppImport
-      parentRoute: typeof rootRoute
-    }
-    '/_auth': {
-      id: '/_auth'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthImport
-      parentRoute: typeof rootRoute
-    }
-    '/_app/portfolios': {
-      id: '/_app/portfolios'
-      path: '/portfolios'
-      fullPath: '/portfolios'
-      preLoaderRoute: typeof AppPortfoliosImport
-      parentRoute: typeof AppImport
-    }
-    '/_auth/signIn': {
-      id: '/_auth/signIn'
-      path: '/signIn'
-      fullPath: '/signIn'
-      preLoaderRoute: typeof AuthSignInImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/signUp': {
-      id: '/_auth/signUp'
-      path: '/signUp'
-      fullPath: '/signUp'
-      preLoaderRoute: typeof AuthSignUpImport
-      parentRoute: typeof AuthImport
-    }
-    '/_app/': {
-      id: '/_app/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AppIndexImport
-      parentRoute: typeof AppImport
-    }
-    '/_app/portfolio/$portfolioId': {
-      id: '/_app/portfolio/$portfolioId'
-      path: '/portfolio/$portfolioId'
-      fullPath: '/portfolio/$portfolioId'
-      preLoaderRoute: typeof AppPortfolioPortfolioIdImport
-      parentRoute: typeof AppImport
-    }
+    "/_app": {
+      id: "/_app";
+      path: "";
+      fullPath: "";
+      preLoaderRoute: typeof AppImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/_auth": {
+      id: "/_auth";
+      path: "";
+      fullPath: "";
+      preLoaderRoute: typeof AuthImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/_app/portfolios": {
+      id: "/_app/portfolios";
+      path: "/portfolios";
+      fullPath: "/portfolios";
+      preLoaderRoute: typeof AppPortfoliosImport;
+      parentRoute: typeof AppImport;
+    };
+    "/_auth/signIn": {
+      id: "/_auth/signIn";
+      path: "/signIn";
+      fullPath: "/signIn";
+      preLoaderRoute: typeof AuthSignInImport;
+      parentRoute: typeof AuthImport;
+    };
+    "/_auth/signUp": {
+      id: "/_auth/signUp";
+      path: "/signUp";
+      fullPath: "/signUp";
+      preLoaderRoute: typeof AuthSignUpImport;
+      parentRoute: typeof AuthImport;
+    };
+    "/_app/": {
+      id: "/_app/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof AppIndexImport;
+      parentRoute: typeof AppImport;
+    };
+    "/_app/portfolio/$portfolioId": {
+      id: "/_app/portfolio/$portfolioId";
+      path: "/portfolio/$portfolioId";
+      fullPath: "/portfolio/$portfolioId";
+      preLoaderRoute: typeof AppPortfolioPortfolioIdImport;
+      parentRoute: typeof AppImport;
+    };
   }
 }
 
@@ -121,7 +121,7 @@ export const routeTree = rootRoute.addChildren({
     AppPortfolioPortfolioIdRoute,
   }),
   AuthRoute: AuthRoute.addChildren({ AuthSignInRoute, AuthSignUpRoute }),
-})
+});
 
 /* prettier-ignore-end */
 
