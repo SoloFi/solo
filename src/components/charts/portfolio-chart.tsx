@@ -1,6 +1,6 @@
 import type { CandlestickData } from "@/api/types";
 import { useTheme, type Theme } from "@/components/theme-provider";
-import { currency, dayjs, hexTransp, percentChange } from "@/lib/utils";
+import { dayjs, formatCurrency, hexTransp, percentChange } from "@/lib/utils";
 import {
   AreaData,
   createChart,
@@ -191,7 +191,7 @@ export const PortfolioChart = (props: {
           time={dayjs(tooltip.time * 1000)
             .utc()
             .format("MMMM D, YYYY")}
-          value={currency(tooltip.value, userCurrency)}
+          value={formatCurrency(tooltip.value, userCurrency)}
           percentChange={tooltip.percentChange}
         />
       )}

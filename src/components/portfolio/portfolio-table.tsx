@@ -1,14 +1,15 @@
-import { useMemo, useState } from "react";
 import type { Portfolio, PortfolioHolding, PortfolioTransaction } from "@/api/types";
-import type { UTCTimestamp } from "lightweight-charts";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
   TableCell,
-  TableHeaderGroup,
   TableHeader,
+  TableHeaderGroup,
   TableRow,
 } from "@/components/ui/table";
+import ValueChange from "@/components/value-change";
+import { formatCurrency } from "@/lib/utils";
 import {
   createColumnHelper,
   flexRender,
@@ -16,20 +17,19 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { currency } from "@/lib/utils";
-import ValueChange from "@/components/value-change";
+import type { UTCTimestamp } from "lightweight-charts";
 import { ChevronDownIcon, Plus, Trash } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { usePortfolioTableData } from "./usePortfolioTableData";
-import { Accordion, AccordionContent, AccordionItem } from "../ui/accordion";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { TransactionDialog } from "./transaction-dialog";
-import { usePortfolioMutation } from "./usePortfolioMutation";
-import { TransactionsTable } from "./transaction-table";
-import { DeleteDialog } from "./delete-dialog";
+import { useMemo, useState } from "react";
 import colors from "tailwindcss/colors";
 import { ThumbnailChart } from "../charts/thumbnail-chart";
+import { Accordion, AccordionContent, AccordionItem } from "../ui/accordion";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useUser } from "../user";
+import { DeleteDialog } from "./delete-dialog";
+import { TransactionDialog } from "./transaction-dialog";
+import { TransactionsTable } from "./transaction-table";
+import { usePortfolioMutation } from "./usePortfolioMutation";
+import { usePortfolioTableData } from "./usePortfolioTableData";
 
 type PortfolioTableData = {
   symbol: string;
@@ -108,7 +108,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
       }),
       columnHelper.accessor("price", {
         header: "Marktet Price",
-        cell: (cell) => currency(cell.getValue(), userCurrency),
+        cell: (cell) => formatCurrency(cell.getValue(), userCurrency),
         enableSorting: false,
       }),
       columnHelper.accessor("quantity", {
@@ -118,12 +118,12 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
       }),
       columnHelper.accessor("costBasis", {
         header: "Cost Basis",
-        cell: (cell) => currency(cell.getValue(), userCurrency),
+        cell: (cell) => formatCurrency(cell.getValue(), userCurrency),
         enableSorting: false,
       }),
       columnHelper.accessor("value", {
         header: "Portfolio Value",
-        cell: (cell) => currency(cell.getValue(), userCurrency),
+        cell: (cell) => formatCurrency(cell.getValue(), userCurrency),
         enableSorting: true,
         enableMultiSort: false,
       }),
@@ -132,7 +132,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
         cell: (cell) => (
           <div>
             <ValueChange change={cell.getValue().percentChange}>
-              {currency(cell.getValue().value, userCurrency)}
+              {formatCurrency(cell.getValue().value, userCurrency)}
             </ValueChange>
             <ValueChange change={cell.getValue().percentChange}>
               ({cell.getValue().percentChange >= 0 ? "+" : ""}

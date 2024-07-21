@@ -1,5 +1,5 @@
 import { PortfolioTransaction, TransactionType } from "@/api/types";
-import { currency as formatCurrency, dayjs } from "@/lib/utils";
+import { dayjs, formatCurrency } from "@/lib/utils";
 import {
   createColumnHelper,
   flexRender,
@@ -8,7 +8,10 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
+import { Edit, Trash } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 import {
   Table,
   TableBody,
@@ -17,11 +20,8 @@ import {
   TableHeaderGroup,
   TableRow,
 } from "../ui/table";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Edit, Trash } from "lucide-react";
-import { TransactionDialog } from "./transaction-dialog";
 import { DeleteDialog } from "./delete-dialog";
+import { TransactionDialog } from "./transaction-dialog";
 import { usePortfolioMutation } from "./usePortfolioMutation";
 
 const transactionColumnHelper = createColumnHelper<PortfolioTransaction>();

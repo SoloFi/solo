@@ -37,7 +37,7 @@ export const currencies = [
   { symbol: "NZD", name: "New Zealand Dollar" },
 ];
 
-export function currency(value: number, currency = "USD", decimals = 2) {
+export function formatCurrency(value: number, currency = "USD", decimals = 2) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currency,
