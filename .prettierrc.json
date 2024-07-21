@@ -1,3 +1,14 @@
 {
-  "plugins": ["prettier-plugin-organize-imports"]
+  "bracketSpacing": true,
+  "insertPragma": false,
+  "printWidth": 90,
+  "proseWrap": "always",
+  "quoteProps": "as-needed",
+  "requirePragma": false,
+  "semi": true,
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "useTabs": false,
+  "plugins": ["prettier-plugin-organize-imports"],
+  "organizeImportsSkipDestructiveCodeActions": false
 }

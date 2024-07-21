@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
 import dayjs, { type Dayjs, type ManipulateType } from "dayjs";
 import utc from "dayjs/plugin/utc";
+import { twMerge } from "tailwind-merge";
 import colors from "tailwindcss/colors";
 
 dayjs.extend(utc);
@@ -115,15 +115,15 @@ export function calculateLuminance(rgb: { r: number; g: number; b: number }) {
 export function dayjsRange(params: {
   start: Dayjs;
   end: Dayjs;
-  value: number;
+  increment: number;
   unit: ManipulateType;
 }) {
-  const { start, end, value, unit } = params;
+  const { start, end, increment, unit } = params;
   const range = [];
   let current = start;
   while (!current.isAfter(end)) {
     range.push(current);
-    current = current.add(value, unit);
+    current = current.add(increment, unit);
   }
   return range;
 }
