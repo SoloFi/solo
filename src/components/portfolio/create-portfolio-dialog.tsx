@@ -15,7 +15,7 @@ import { Label } from "../ui/label";
 export const CreatePortfolioDialog = (props: {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onCreate: (portfolioDetails: { name: string; currency: string }) => Promise<void>;
+  onCreate: (portfolioDetails: { name: string; currency: string }) => Promise<unknown>;
 }) => {
   const { isOpen, onOpenChange, onCreate } = props;
 

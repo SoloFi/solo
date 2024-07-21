@@ -4,13 +4,44 @@ import { queryClient } from "@/main";
 import {
   addHolding,
   addTransaction,
+  createPortfolio,
   deleteHolding,
+  deletePortfolio,
   deleteTransaction,
   updatePortfolio,
   updateTransaction,
 } from "@/query/portfolio";
+import { toast } from "sonner";
+import { useCallback } from "react";
 
 export const usePortfolioMutation = () => {
+  const errorToast = useCallback((error: Error) => {
+    toast.error(error.message);
+  }, []);
+
+  const newPortfolioMutation = useMutation({
+    mutationFn: (portfolioDetails: { name: string; currency: string }) =>
+      createPortfolio({ id: "", holdings: [], ...portfolioDetails }),
+    onSuccess: (_, { name }) => {
+      toast.success(`Portfolio "${name}" created successfully`);
+    },
+    onError: errorToast,
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["portfolios"] });
+    },
+  });
+
+  const deletePortfolioMutation = useMutation({
+    mutationFn: (portfolioId: string) => deletePortfolio(portfolioId),
+    onError: errorToast,
+    onSuccess: () => {
+      toast.success("Portfolio deleted successfully");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["portfolios"] });
+    },
+  });
+
   const attributesMutation = useMutation({
     mutationFn: async (params: {
       portfolioId: string;
@@ -20,6 +51,7 @@ export const usePortfolioMutation = () => {
       const { portfolioId, name, currency } = params;
       return updatePortfolio(portfolioId, { name, currency });
     },
+    onError: errorToast,
     onSettled: async (_, __, { portfolioId }) => {
       return await queryClient.invalidateQueries({
         predicate: (query) => query.queryKey.includes(portfolioId),
@@ -32,6 +64,7 @@ export const usePortfolioMutation = () => {
       const { portfolioId, newHolding } = params;
       return addHolding(portfolioId, newHolding);
     },
+    onError: errorToast,
     onSettled: async (_, __, { portfolioId }) => {
       return await queryClient.invalidateQueries({
         predicate: (query) => query.queryKey.includes(portfolioId),
@@ -44,6 +77,7 @@ export const usePortfolioMutation = () => {
       const { portfolioId, symbol } = params;
       return deleteHolding(portfolioId, symbol);
     },
+    onError: errorToast,
     onSettled: async (_, __, { portfolioId }) => {
       return await queryClient.invalidateQueries({
         predicate: (query) => query.queryKey.includes(portfolioId),
@@ -60,6 +94,7 @@ export const usePortfolioMutation = () => {
       const { portfolioId, symbol, tx } = params;
       return addTransaction(portfolioId, symbol, tx);
     },
+    onError: errorToast,
     onSettled: async (_, __, { portfolioId, symbol }) => {
       return await queryClient.invalidateQueries({
         predicate: (query) =>
@@ -77,6 +112,7 @@ export const usePortfolioMutation = () => {
       const { portfolioId, symbol, tx } = params;
       return updateTransaction(portfolioId, symbol, tx);
     },
+    onError: errorToast,
     onSettled: async (_, __, { portfolioId, symbol }) => {
       return await queryClient.invalidateQueries({
         predicate: (query) =>
@@ -90,6 +126,7 @@ export const usePortfolioMutation = () => {
       const { portfolioId, symbol, txId } = params;
       return deleteTransaction(portfolioId, symbol, txId);
     },
+    onError: errorToast,
     onSettled: async (_, __, { portfolioId, symbol }) => {
       return await queryClient.invalidateQueries({
         predicate: (query) =>
@@ -99,6 +136,8 @@ export const usePortfolioMutation = () => {
   });
 
   return {
+    newPortfolioMutation,
+    deletePortfolioMutation,
     attributesMutation,
     addHoldingMutation,
     deleteHoldingMutation,
