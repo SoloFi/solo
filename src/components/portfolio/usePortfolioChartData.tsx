@@ -1,5 +1,5 @@
-import { type Portfolio, type CandlestickData, TransactionType } from "@/api/types";
-import { dayjs } from "@/lib/utils";
+import { type CandlestickData, type Portfolio, TransactionType } from "@/api/types";
+import TimeSeries from "@/lib/TimeSeries";
 import type { LineData, UTCTimestamp } from "lightweight-charts";
 import { useMemo } from "react";
 import { getCostBasisAtTime } from "./utils";
@@ -7,7 +7,7 @@ import { getCostBasisAtTime } from "./utils";
 // Hook to transform portfolio holdings and symbol chart data into a format that can be used by the chart component
 export const usePortfolioChartData = (props: {
   portfolio: Portfolio | null;
-  symbolDataMap: Record<string, CandlestickData[] | undefined> | null;
+  symbolDataMap: Record<string, CandlestickData[]> | null;
 }): {
   portfolioChartData: CandlestickData[];
   costBasisChartData: LineData<UTCTimestamp>[];
@@ -23,13 +23,12 @@ export const usePortfolioChartData = (props: {
     if (!holdings || holdings.length === 0 || !symbolDataMap)
       return { portfolioChartData: [], costBasisChartData: [] };
 
-    const chartMaps = holdings.map(({ symbol, transactions }) => {
+    const timeSeries = holdings.map(({ symbol, transactions }) => {
       const buys = transactions?.filter((tx) => tx.type === TransactionType.BUY);
       const sells = transactions?.filter((tx) => tx.type === TransactionType.SELL);
       const symbolData = symbolDataMap[symbol];
-      if (!symbolData) return null;
       // compute the holding's chart over time based on the current price and shares held
-      const holdingChart: Record<UTCTimestamp, CandlestickData> = {};
+      const holdingChartData = [];
       for (const { time, open, high, low, close } of symbolData) {
         const buyShares = buys
           ?.filter((buy) => buy.time <= time)
@@ -38,85 +37,49 @@ export const usePortfolioChartData = (props: {
           ?.filter((sell) => sell.time <= time)
           .reduce((acc, sell) => acc + sell.quantity, 0);
         const shares = (buyShares ?? 0) - (sellShares ?? 0);
-        holdingChart[startOfDay(time)] = {
-          time: startOfDay(time),
+        holdingChartData.push({
+          time,
           open: open * shares,
           high: high * shares,
           low: low * shares,
           close: close * shares,
-        };
+        });
       }
-      return holdingChart;
+      return new TimeSeries({
+        data: holdingChartData,
+        valueKeys: ["open", "high", "low", "close"],
+      });
     });
 
-    const mergedTimeline = Array.from(
-      new Set(chartMaps.flatMap((chart) => Object.keys(chart ?? {})).map(Number)),
-    ).sort((a, b) => a - b) as UTCTimestamp[];
+    const mergedTimeSeries = TimeSeries.intersectSeries(timeSeries, TimeSeries.add);
 
-    // before computing totalChart, we need to fill the gaps and nullish candle data
-    // (open high low close) values with the corresponding last known non-null/non-zero candle data
-    for (const holdingChart of chartMaps) {
-      if (!holdingChart) continue;
-      let lastCandle: CandlestickData | null = null;
+    const portfolioChartData =
+      mergedTimeSeries.getValueAxis() as unknown as CandlestickData[]; // TODO: fix typing
+
+    const mergedTimeline = mergedTimeSeries.getTimeAxis();
+
+    const costBasisTimeSeries = holdings.map((holding) => {
+      const costBasis = [];
       for (const time of mergedTimeline) {
-        const candle = holdingChart[time];
-        if (candle?.open && candle?.high && candle?.low && candle?.close) {
-          lastCandle = candle;
-        } else if (lastCandle) {
-          holdingChart[time] = lastCandle;
-        }
-      }
-    }
-
-    const portfolioChart: Record<UTCTimestamp, CandlestickData> = {};
-    for (const holdingChart of chartMaps) {
-      if (!holdingChart) continue;
-      for (const [time, { open, high, low, close }] of Object.entries(holdingChart)) {
-        const _time = Number.parseInt(time) as UTCTimestamp;
-        portfolioChart[_time] = {
-          time: _time,
-          open: (portfolioChart[_time]?.open ?? 0) + open,
-          close: (portfolioChart[_time]?.close ?? 0) + close,
-          high: (portfolioChart[_time]?.high ?? 0) + high,
-          low: (portfolioChart[_time]?.low ?? 0) + low,
-        };
-      }
-    }
-    const portfolioChartData = Object.entries(portfolioChart)
-      .sort(([a], [b]) => Number.parseInt(a) - Number.parseInt(b))
-      .map(([, value]) => value);
-
-    // compute the cost basis of each holding over the merged timeline
-    // based on the total cost of buys minus sells for a given holding
-    const costBasisChart: Record<UTCTimestamp, LineData<UTCTimestamp>> = {};
-    for (let i = 0; i < holdings.length; i++) {
-      const holding = holdings[i];
-      if ((holding?.transactions?.length ?? -1) <= 0) continue;
-      // set buys and sells time to start of day
-      holding.transactions = holding.transactions.map((tx) => ({
-        ...tx,
-        time: startOfDay(tx.time),
-      }));
-      // compute average buy price over time
-      for (const time of mergedTimeline) {
-        const totalCostBasis = getCostBasisAtTime(holding, time);
-        costBasisChart[time] = {
+        costBasis.push({
           time,
-          value: totalCostBasis + (costBasisChart[time]?.value ?? 0),
-        };
+          value: getCostBasisAtTime(holding, time),
+        });
       }
-    }
-    const costBasisChartData = Object.entries(costBasisChart)
-      .sort(([a], [b]) => Number.parseInt(a) - Number.parseInt(b))
-      .map(([, value]) => value);
+      return new TimeSeries({
+        data: costBasis,
+        valueKeys: ["value"],
+      });
+    });
+    const mergedCostBasisTimeSeries = TimeSeries.intersectSeries(
+      costBasisTimeSeries,
+      TimeSeries.add,
+    );
+    const costBasisChartData =
+      mergedCostBasisTimeSeries.getValueAxis() as unknown as LineData<UTCTimestamp>[]; // TODO: fix typing
 
     return { portfolioChartData, costBasisChartData };
   }, [symbolDataMap, holdings]);
 
   return { portfolioChartData, costBasisChartData };
 };
-
-const startOfDay = (time: number) =>
-  dayjs(time * 1000)
-    .startOf("day")
-    .unix() as UTCTimestamp;

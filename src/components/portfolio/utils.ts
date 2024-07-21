@@ -1,9 +1,8 @@
 import { CandlestickData, TransactionType, type PortfolioHolding } from "@/api/types";
 import { queryClient } from "@/main";
 import { getFXRate } from "@/query/currency";
-import { UTCTimestamp } from "lightweight-charts";
 
-export function getCostBasisAtTime(holding: PortfolioHolding, time: UTCTimestamp) {
+export function getCostBasisAtTime(holding: PortfolioHolding, time: number) {
   let totalCostBasis = 0;
   let totalQuantity = 0;
   const buys =
@@ -68,14 +67,9 @@ export async function convertCandlestickDataCurrency(params: {
   });
 }
 
-export const portfolioQueryKey = (portfolioId: string, userCurrency: string) => [
-  "portfolio",
-  portfolioId,
-  userCurrency,
-];
+export const portfolioQueryKey = (portfolioId: string) => ["portfolio", portfolioId];
 
-export const holdingQueryKey = (
-  portfolioId: string,
-  symbol: string,
-  userCurrency: string,
-) => [portfolioId, symbol, userCurrency];
+export const holdingQueryKey = (portfolioId: string, symbol: string) => [
+  portfolioId,
+  symbol,
+];
