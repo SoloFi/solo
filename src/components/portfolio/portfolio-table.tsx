@@ -32,7 +32,10 @@ import { usePortfolioMutation } from "./usePortfolioMutation";
 import { usePortfolioTableData } from "./usePortfolioTableData";
 
 type PortfolioTableData = {
-  symbol: string;
+  holding: {
+    symbol: string;
+    name: string;
+  };
   price: number;
   quantity: number;
   value: number;
@@ -101,9 +104,14 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
           className: "[&[data-state=open]>svg]:rotate-180",
         },
       }),
-      columnHelper.accessor("symbol", {
+      columnHelper.accessor("holding", {
         header: "Asset",
-        cell: (cell) => <p className="font-semibold">{cell.getValue()}</p>,
+        cell: (cell) => (
+          <div>
+            <p className="font-semibold">{cell.getValue().name}</p>
+            <p className="text-sm text-muted-foreground">{cell.getValue().symbol}</p>
+          </div>
+        ),
         enableSorting: false,
       }),
       columnHelper.accessor("price", {
@@ -171,7 +179,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
               size="icon"
               onClick={(e) => {
                 e.stopPropagation();
-                setHoldingToDelete(row.original.symbol);
+                setHoldingToDelete(row.original.holding.symbol);
               }}
             >
               <Trash width={16} height={16} />
@@ -217,23 +225,29 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <AccordionItem key={row.id} value={row.original.symbol} asChild>
+              <AccordionItem key={row.id} value={row.original.holding.symbol} asChild>
                 <>
                   <TableRow
                     className="group h-[64px] cursor-pointer hover:bg-muted data-[state=open]:rounded-b-none data-[state=open]:bg-muted border-0"
                     onClick={() =>
                       setExpanded(
-                        expanded === row.original.symbol ? "" : row.original.symbol,
+                        expanded === row.original.holding.symbol
+                          ? ""
+                          : row.original.holding.symbol,
                       )
                     }
-                    data-state={expanded === row.original.symbol ? "open" : "closed"}
+                    data-state={
+                      expanded === row.original.holding.symbol ? "open" : "closed"
+                    }
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
                         className={cell.column.columnDef.meta?.className}
                         data-state={
-                          cell.row.original.symbol === expanded ? "open" : "closed"
+                          cell.row.original.holding.symbol === expanded
+                            ? "open"
+                            : "closed"
                         }
                       >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -252,7 +266,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
                               className="h-8 border-dashed hover:border-primary !text-primary"
                               onClick={() => {
                                 setTransaction({
-                                  symbol: row.original.symbol,
+                                  symbol: row.original.holding.symbol,
                                   body: {},
                                 });
                               }}
@@ -261,15 +275,16 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
                               Add Transaction
                             </Button>
                           </CardHeader>
-                          {(holdingsMap.get(row.original.symbol)?.transactions.length ??
-                            0) > 0 && (
+                          {(holdingsMap.get(row.original.holding.symbol)?.transactions
+                            .length ?? 0) > 0 && (
                             <CardContent>
                               <TransactionsTable
                                 transactions={
-                                  holdingsMap.get(row.original.symbol)?.transactions ?? []
+                                  holdingsMap.get(row.original.holding.symbol)
+                                    ?.transactions ?? []
                                 }
                                 portfolioId={portfolio.id}
-                                symbol={row.original.symbol}
+                                symbol={row.original.holding.symbol}
                                 currency={userCurrency}
                               />
                             </CardContent>

@@ -1,12 +1,12 @@
 import { CandlestickData, PortfolioHolding, TransactionType } from "@/api/types";
-import { useMemo } from "react";
-import { convertCandlestickDataCurrency, getCostBasisAtTime } from "./utils";
 import { dayjs, percentChange } from "@/lib/utils";
-import { UTCTimestamp } from "lightweight-charts";
-import { useQueries } from "@tanstack/react-query";
 import { getSymbolChart } from "@/query/symbol";
+import { useQueries } from "@tanstack/react-query";
+import { UTCTimestamp } from "lightweight-charts";
 import isNil from "lodash/isNil";
+import { useMemo } from "react";
 import { useUser } from "../user";
+import { convertCandlestickDataCurrency, getCostBasisAtTime } from "./utils";
 
 export const usePortfolioTableData = (props: { holdings: PortfolioHolding[] }) => {
   const holdings = useMemo(() => props.holdings, [props.holdings]);
@@ -17,7 +17,7 @@ export const usePortfolioTableData = (props: { holdings: PortfolioHolding[] }) =
       holdings?.map((entry) => {
         const symbol = entry.symbol;
         return {
-          queryKey: [symbol, "chart", "1mo", currency],
+          queryKey: [symbol, "chart", "1mo"],
           queryFn: async () =>
             getSymbolChart({
               symbol,
@@ -56,7 +56,10 @@ export const usePortfolioTableData = (props: { holdings: PortfolioHolding[] }) =
         })) ?? [];
       if (buys.length === 0) {
         return {
-          symbol,
+          holding: {
+            symbol,
+            name: entry.shortName,
+          },
           price: symbolsData[index]?.[symbolsData[index].length - 1]?.close ?? 0,
           quantity: 0,
           value: 0,
@@ -84,7 +87,10 @@ export const usePortfolioTableData = (props: { holdings: PortfolioHolding[] }) =
         }
       }
       return {
-        symbol,
+        holding: {
+          symbol,
+          name: entry.shortName,
+        },
         price,
         quantity,
         value,
