@@ -1,3 +1,6 @@
+import type { CandlestickData } from "@/api/types";
+import { useTheme, type Theme } from "@/components/theme-provider";
+import { currency, dayjs, hexTransp, percentChange } from "@/lib/utils";
 import {
   AreaData,
   createChart,
@@ -12,16 +15,13 @@ import {
   type TimeChartOptions,
   type UTCTimestamp,
 } from "lightweight-charts";
-import { useRef, useCallback, useEffect, useState } from "react";
-import useChartOptions from "./useChartOptions";
+import { useCallback, useEffect, useRef, useState } from "react";
 import colors from "tailwindcss/colors";
-import { useTheme, type Theme } from "@/components/theme-provider";
+import { useUser } from "../user";
 import ChartTooltip from "./chart-tooltip";
-import { dayjs, hexTransp, percentChange, currency } from "@/lib/utils";
-import type { CandlestickData } from "@/api/types";
 import ChartWrapper from "./chart-wrapper";
 import ToggleAxisMode from "./toggle-axis-mode";
-import { useUser } from "../user";
+import useChartOptions from "./useChartOptions";
 
 export const PortfolioChart = (props: {
   data: CandlestickData[];
@@ -45,7 +45,9 @@ export const PortfolioChart = (props: {
   const costBasisSeriesRef = useRef<ISeriesApi<"Line", Time>>();
   const [axisMode] = useState<PriceScaleMode>(PriceScaleMode.Logarithmic);
 
-  const options = useChartOptions({ rightPriceScale: { mode: axisMode } });
+  const options = useChartOptions({
+    rightPriceScale: { mode: axisMode },
+  });
 
   const getLastTooltipValue = useCallback(() => {
     const lastData = data[data.length - 1];
@@ -124,6 +126,7 @@ export const PortfolioChart = (props: {
         color: colors.gray[500],
         lineWidth: 2,
         lineStyle: LineStyle.Dashed,
+        priceLineVisible: false,
         autoscaleInfoProvider() {
           // prevent autoscale from including cost basis line
           return null;

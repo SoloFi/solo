@@ -4,10 +4,10 @@ import {
   PriceScaleMode,
   TimeChartOptions,
 } from "lightweight-charts";
-import { useMemo, useState } from "react";
-import { useTheme } from "../theme-provider";
-import colors from "tailwindcss/colors";
 import merge from "lodash/merge";
+import { useMemo, useState } from "react";
+import colors from "tailwindcss/colors";
+import { useTheme } from "../theme-provider";
 
 export default function useChartOptions(options?: DeepPartial<TimeChartOptions>) {
   const { theme } = useTheme();
@@ -30,6 +30,11 @@ export default function useChartOptions(options?: DeepPartial<TimeChartOptions>)
       },
       rightPriceScale: {
         mode: PriceScaleMode.Logarithmic,
+      },
+      timeScale: {
+        lockVisibleTimeRangeOnResize: false,
+        fixLeftEdge: true,
+        fixRightEdge: true,
       },
       autoSize: true,
       height: 400,
