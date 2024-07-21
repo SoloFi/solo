@@ -1,28 +1,22 @@
-import type { CandlestickData, PortfolioHolding } from "@/api/types";
+import type { CandlestickData } from "@/api/types";
+import { SearchItem } from "@/api/YahooSearch";
 import { ChartTypeToggle } from "@/components/charts/chart-type-toggle";
 import { PortfolioChart } from "@/components/charts/portfolio-chart";
 import { PortfolioTable } from "@/components/portfolio/portfolio-table";
 import { usePortfolioChartData } from "@/components/portfolio/usePortfolioChartData";
+import { usePortfolioMutation } from "@/components/portfolio/usePortfolioMutation";
+import { holdingQueryKey, portfolioQueryKey } from "@/components/portfolio/utils";
+import SymbolSearchDialog from "@/components/symbol-search-dialog";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { dayjs } from "@/lib/utils";
 import { getPortfolio } from "@/query/portfolio";
 import { getSymbolChart } from "@/query/symbol";
 import { keepPreviousData, useQueries, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { Activity, DollarSign } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { mustBeAuthenticated } from "../-utils";
-import SymbolSearchDialog from "@/components/symbol-search-dialog";
-import { SearchItem } from "@/api/YahooSearch";
-import { Button } from "@/components/ui/button";
-import { Activity, DollarSign } from "lucide-react";
-import { usePortfolioMutation } from "@/components/portfolio/usePortfolioMutation";
-import { useUser } from "@/components/user";
-import {
-  convertCandlestickDataCurrency,
-  convertHoldingCurrency,
-  holdingQueryKey,
-  portfolioQueryKey,
-} from "@/components/portfolio/utils";
 
 export const Route = createFileRoute("/_app/portfolio/$portfolioId")({
   component: MyPortfolio,
@@ -31,65 +25,47 @@ export const Route = createFileRoute("/_app/portfolio/$portfolioId")({
 
 function MyPortfolio() {
   const { portfolioId } = Route.useParams();
-  const { currency } = useUser();
   const [chartType, setChartType] = useState<"area" | "candlestick">("area");
   const [symbolSearchOpen, setSymbolSearchOpen] = useState(false);
   const { addHoldingMutation } = usePortfolioMutation();
 
   const { data: portfolio } = useQuery({
-    queryKey: portfolioQueryKey(portfolioId, currency),
+    queryKey: portfolioQueryKey(portfolioId),
     staleTime: Infinity,
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
-    queryFn: async () =>
-      getPortfolio(portfolioId).then(async (portfolio) => {
-        const conversionQueries: Promise<PortfolioHolding>[] = [];
-        portfolio.holdings.forEach((holding) => {
-          conversionQueries.push(
-            convertHoldingCurrency({
-              holding,
-              toCurrency: currency,
-            }),
-          );
-        });
-        return Promise.all(conversionQueries).then((holdings) => ({
-          ...portfolio,
-          holdings,
-        }));
-      }),
+    queryFn: async () => getPortfolio(portfolioId),
   });
 
   const holdingsWithTransactions = useMemo(
-    () => portfolio?.holdings?.filter((holding) => holding.transactions.length > 0) ?? [],
+    () =>
+      portfolio?.holdings?.filter((holding) => holding?.transactions?.length > 0) ?? [],
     [portfolio],
   );
 
   const symbolQueries = useQueries({
     queries: holdingsWithTransactions.map((entry) => {
       const symbol = entry.symbol;
-      const from = entry.transactions?.sort((a, b) => a.time - b.time)[0].time;
+      const from = entry.transactions.sort((a, b) => a.time - b.time)[0].time;
       const to = dayjs().utc().unix();
       return {
-        queryKey: holdingQueryKey(portfolioId, symbol, currency),
+        queryKey: holdingQueryKey(portfolioId, symbol),
         placeholderData: keepPreviousData,
         queryFn: async () =>
           getSymbolChart({
             symbol,
             from,
             to,
-          }).then((data) =>
-            convertCandlestickDataCurrency({
-              data,
-              fromCurrency: entry.currency,
-              toCurrency: currency,
-            }),
-          ),
+          }),
         refetchOnWindowFocus: false,
       };
     }),
   });
 
   const portfolioSymbolsData = useMemo(() => {
+    if (symbolQueries.some((query) => query.isPending)) {
+      return null;
+    }
     return holdingsWithTransactions
       .map(({ symbol }, index) => ({
         [symbol]: symbolQueries[index].data,

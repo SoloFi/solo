@@ -1,16 +1,15 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
-import { createPortfolio, deletePortfolio, getPortfolios } from "@/query/portfolio";
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { toast } from "sonner";
-import { queryClient } from "@/main";
-import { Plus } from "lucide-react";
-import { mustBeAuthenticated } from "../-utils";
 import { CreatePortfolioDialog } from "@/components/portfolio/create-portfolio-dialog";
 import { DeleteDialog } from "@/components/portfolio/delete-dialog";
+import { usePortfolioMutation } from "@/components/portfolio/usePortfolioMutation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
+import { getPortfolios } from "@/query/portfolio";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
+import { useState } from "react";
+import { mustBeAuthenticated } from "../-utils";
 
 export const Route = createFileRoute("/_app/portfolios")({
   component: Portfolios,
@@ -28,33 +27,7 @@ function Portfolios() {
     staleTime: Infinity,
   });
 
-  const createMutation = useMutation({
-    mutationFn: async (portfolioDetails: { name: string; currency: string }) =>
-      await createPortfolio({ id: "", holdings: [], ...portfolioDetails }),
-    onSuccess: (_, { name }) => {
-      toast.success(`Portfolio "${name}" created successfully`);
-    },
-    onError: (error) => {
-      toast.error((error as Error).message);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["portfolios"] });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (portfolioId: string) => await deletePortfolio(portfolioId),
-    onError: (error) => {
-      toast.error((error as Error).message);
-    },
-    onSuccess: () => {
-      toast.success("Portfolio deleted successfully");
-      setPortfolioIdToDelete(null);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["portfolios"] });
-    },
-  });
+  const { newPortfolioMutation, deletePortfolioMutation } = usePortfolioMutation();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [portfolioIdToDelete, setPortfolioIdToDelete] = useState<string | null>(null);
@@ -124,11 +97,12 @@ function Portfolios() {
       </Card>
       {isCreateDialogOpen && (
         <CreatePortfolioDialog
-          onCreate={async ({ name, currency }) => {
-            return new Promise((resolve) => {
-              createMutation.mutate({ name, currency }, { onSettled: () => resolve() });
-            });
-          }}
+          onCreate={({ name, currency }) =>
+            newPortfolioMutation.mutateAsync(
+              { name, currency },
+              { onSuccess: () => setIsCreateDialogOpen(false) },
+            )
+          }
           isOpen={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
         />
@@ -139,7 +113,11 @@ function Portfolios() {
           description="Are you sure you want to delete this portfolio? This action cannot be undone."
           isOpen={!!portfolioIdToDelete}
           onOpenChange={() => setPortfolioIdToDelete(null)}
-          onDelete={() => deleteMutation.mutateAsync(portfolioIdToDelete)}
+          onDelete={() =>
+            deletePortfolioMutation.mutateAsync(portfolioIdToDelete, {
+              onSuccess: () => setPortfolioIdToDelete(null),
+            })
+          }
         />
       )}
     </div>
