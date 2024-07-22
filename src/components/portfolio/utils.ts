@@ -1,6 +1,4 @@
-import { CandlestickData, TransactionType, type PortfolioHolding } from "@/api/types";
-import { queryClient } from "@/main";
-import { getFXRate } from "@/query/currency";
+import { TransactionType, type PortfolioHolding } from "@/api/types";
 
 export function getCostBasisAtTime(holding: PortfolioHolding, time: number) {
   let totalCostBasis = 0;
@@ -27,44 +25,12 @@ export function getCostBasisAtTime(holding: PortfolioHolding, time: number) {
   return totalCostBasis;
 }
 
-// TODO: Refactor
-export async function convertHoldingCurrency(params: {
-  holding: PortfolioHolding;
-  toCurrency: string;
-}) {
-  const { holding, toCurrency } = params;
-  if (holding.currency === toCurrency) return holding;
-  const exchangeRate = await queryClient.fetchQuery({
-    queryKey: ["fx", holding.currency, toCurrency],
-    queryFn: () => getFXRate(holding.currency, toCurrency),
-  });
-  if (!exchangeRate || typeof exchangeRate !== "number") return holding;
-  holding.transactions = holding.transactions.map((tx) => {
-    tx.price = tx.price * exchangeRate;
-    return tx;
-  });
-  return holding;
+export function getCurrenciesToFetch(holdings: PortfolioHolding[], userCurrency: string) {
+  return Array.from(new Set(holdings.filter(({ currency }) => currency !== userCurrency).map(({ currency }) => currency)).values());
 }
 
-export async function convertCandlestickDataCurrency(params: {
-  data: CandlestickData[];
-  fromCurrency: string;
-  toCurrency: string;
-}) {
-  const { data, fromCurrency, toCurrency } = params;
-  if (fromCurrency === toCurrency) return data;
-  const exchangeRate = await queryClient.fetchQuery({
-    queryKey: ["fx", fromCurrency, toCurrency],
-    queryFn: () => getFXRate(fromCurrency, toCurrency),
-  });
-  if (!exchangeRate || typeof exchangeRate !== "number") return data;
-  return data.map((candle) => {
-    candle.open = candle.open * exchangeRate;
-    candle.high = candle.high * exchangeRate;
-    candle.low = candle.low * exchangeRate;
-    candle.close = candle.close * exchangeRate;
-    return candle;
-  });
+export function getHoldingsWithTransactions(holdings?: PortfolioHolding[]) {
+  return holdings?.filter((holding) => holding?.transactions?.length > 0) ?? []
 }
 
 export const portfolioQueryKey = (portfolioId: string) => ["portfolio", portfolioId];
@@ -72,4 +38,10 @@ export const portfolioQueryKey = (portfolioId: string) => ["portfolio", portfoli
 export const holdingQueryKey = (portfolioId: string, symbol: string) => [
   portfolioId,
   symbol,
+];
+
+export const portfolioCurrencyQueryKey = (portfolioId: string, fromCurrency: string, toCurrency: string) => [
+  portfolioId,
+  fromCurrency,
+  toCurrency,
 ];

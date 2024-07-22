@@ -11,13 +11,13 @@ export const getSymbolChart = async (params: {
 }) => {
   const { symbol, from, to, range } = params;
   const payload = { from, to, range };
-  const { data } = await axios.post(`/api/chart/${symbol}`, payload);
+  const { data } = await axios.post(`/api/chart/${symbol.toUpperCase()}`, payload);
   if (!data) throw new Error("Failed to fetch symbol chart");
   return data as CandlestickData[];
 };
 
 export const getSymbolQuote = async (symbol: string) => {
-  const { data } = await axios.get(`/api/quote/${symbol}`);
+  const { data } = await axios.get(`/api/quote/${symbol.toUpperCase()}`);
   if (!data) throw new Error("Failed to fetch symbol quote");
   return data as CandlestickData;
 };

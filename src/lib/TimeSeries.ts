@@ -24,7 +24,6 @@ class TimeSeries<T extends TimeSeriesValue> {
     for (const value of data) {
       this.tsMap.set(value.time, value);
     }
-
     this.fillNullishValues();
     this.normalizeTicks(this.granularityUnit());
   }
@@ -41,9 +40,7 @@ class TimeSeries<T extends TimeSeriesValue> {
     const data = this.getTimeAxis();
     let lowestDiff = Infinity;
     for (let i = 0; i < data.length - 1; i++) {
-      const at = dayjs.unix(data[i]);
-      const bt = dayjs.unix(data[i + 1]);
-      const diff = at.diff(bt);
+      const diff = Math.abs(data[i] - data[i + 1]);
       if (diff < lowestDiff) lowestDiff = diff;
     }
     return lowestDiff;
@@ -70,7 +67,7 @@ class TimeSeries<T extends TimeSeriesValue> {
     const newTsMap = new Map();
     for (const [time, value] of this.tsMap) {
       const newTime = dayjs.unix(time).startOf(unit).unix();
-      newTsMap.set(newTime, value);
+      newTsMap.set(newTime, { ...value, time: newTime });
     }
     this.tsMap = newTsMap;
   }
@@ -78,7 +75,7 @@ class TimeSeries<T extends TimeSeriesValue> {
   fillNullishValues() {
     let lastKnownValue: T = {} as T;
     for (const [time, tsMapValue] of this.tsMap) {
-      if (Object.values(tsMapValue).some(isNil)) this.tsMap.set(time, lastKnownValue);
+      if (Object.values(tsMapValue).some(isNil)) this.tsMap.set(time, { ...lastKnownValue, time });
       else lastKnownValue = tsMapValue;
     }
   }
@@ -113,20 +110,21 @@ class TimeSeries<T extends TimeSeriesValue> {
     ) => TimeSeriesValue,
   ) {
     const newTsMap: TimeSeriesMap<TimeSeriesValue> = new Map();
+    const commonKeys = intesection(a.valueKeys, b.valueKeys);
     for (const [time, value] of a.tsMap) {
       const otherValue = b.tsMap.get(time);
       if (otherValue) {
         const newValue = operation(
           value,
           otherValue,
-          intesection(a.valueKeys, b.valueKeys),
+          commonKeys,
         );
-        newTsMap.set(time, newValue);
+        newTsMap.set(time, { ...newValue, time });
       }
     }
     return new TimeSeries({
       data: TimeSeriesValuesFromTimeSeriesMap(newTsMap),
-      valueKeys: a.valueKeys,
+      valueKeys: commonKeys,
     });
   }
 
@@ -138,6 +136,8 @@ class TimeSeries<T extends TimeSeriesValue> {
       keys: TimeSeriesValueKey[],
     ) => TimeSeriesValue,
   ) {
+    // sort series by latest first time
+    series.sort((a, b) => b.getTimeAxis()[0] - a.getTimeAxis()[0]);
     let result = series[0];
     for (let i = 1; i < series.length; i++) {
       result = TimeSeries.intersection(result, series[i], operation);

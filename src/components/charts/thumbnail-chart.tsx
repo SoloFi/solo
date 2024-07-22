@@ -36,7 +36,6 @@ export const ThumbnailChart = (props: {
     time: d.time,
     value: d.close,
   }));
-  console.log("chartData", data);
 
   useEffect(() => {
     if (!chartContainerRef.current || data.length === 0) return;

@@ -49,7 +49,7 @@ export function hexTransp(hexColor: string, alpha: number) {
   const map = (value: number, oldRange: [number, number], newRange: [number, number]) => {
     const newValue =
       ((value - oldRange[0]) * (newRange[1] - newRange[0])) /
-        (oldRange[1] - oldRange[0]) +
+      (oldRange[1] - oldRange[0]) +
       newRange[0];
     return Math.round(Math.min(Math.max(newValue, newRange[0]), newRange[1]));
   };
@@ -73,7 +73,6 @@ export function stringToColor(str: string) {
   ];
   const hash = hashString(str);
   const index = hash % themeColors.length;
-  console.log("index", hash, index);
   return themeColors[index];
 }
 
@@ -101,10 +100,10 @@ export function hexToRgb(hex: string) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16),
+    }
     : null;
 }
 

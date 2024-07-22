@@ -1,6 +1,5 @@
 import type {
   CandlestickData,
-  Portfolio,
   PortfolioHolding,
   PortfolioTransaction,
 } from "@/api/types";
@@ -34,6 +33,7 @@ import { TransactionDialog } from "./transaction-dialog";
 import { TransactionsTable } from "./transaction-table";
 import { usePortfolioMutation } from "./usePortfolioMutation";
 import { usePortfolioTableData } from "./usePortfolioTableData";
+// import { usePortfolioCurrencyQueries } from "./usePortfolioCurrencyQueries";
 
 type PortfolioTableData = {
   holding: {
@@ -53,8 +53,8 @@ type PortfolioTableData = {
 
 const columnHelper = createColumnHelper<PortfolioTableData>();
 
-export const PortfolioTable = (props: { portfolio: Portfolio }) => {
-  const { portfolio } = props;
+export const PortfolioTable = (props: { holdings: PortfolioHolding[]; portfolioId: string }) => {
+  const { holdings, portfolioId } = props;
   const { currency: userCurrency } = useUser();
 
   const [sorting, setSorting] = useState([
@@ -78,15 +78,21 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
 
   const holdingsMap = useMemo(() => {
     const map = new Map<string, PortfolioHolding>();
-    portfolio.holdings.forEach((holding) => {
+    holdings.forEach((holding) => {
       map.set(holding.symbol, holding);
     });
     return map;
-  }, [portfolio.holdings]);
+  }, [holdings]);
 
   const data = usePortfolioTableData({
-    holdings: portfolio.holdings,
+    portfolioId,
+    holdings,
   });
+
+  // const { dataMap: currencyDataMap, isPending: currencyPending } = usePortfolioCurrencyQueries({
+  //   portfolioId,
+  //   holdings,
+  // });
 
   const columns = useMemo(() => {
     return [
@@ -229,7 +235,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
               <AccordionItem key={row.id} value={row.original.holding.symbol} asChild>
                 <>
                   <TableRow
-                    className="group h-[64px] cursor-pointer hover:bg-muted data-[state=open]:rounded-b-none data-[state=open]:bg-muted border-0"
+                    className="group h-[64px] cursor-pointer data-[state=open]:bg-muted border-0"
                     onClick={() =>
                       setExpanded(
                         expanded === row.original.holding.symbol
@@ -255,7 +261,9 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
                       </TableCell>
                     ))}
                   </TableRow>
-                  <TableRow className="!bg-muted">
+                  <TableRow className="bg-muted/50 data-[state=open]:bg-muted" data-state={
+                    expanded === row.original.holding.symbol ? "open" : "closed"
+                  }>
                     <TableCell colSpan={columns.length} className="!p-0">
                       <AccordionContent className="flex p-2 justify-center">
                         <Card className="w-full rounded-none">
@@ -278,18 +286,17 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
                           </CardHeader>
                           {(holdingsMap.get(row.original.holding.symbol)?.transactions
                             .length ?? 0) > 0 && (
-                            <CardContent>
-                              <TransactionsTable
-                                transactions={
-                                  holdingsMap.get(row.original.holding.symbol)
-                                    ?.transactions ?? []
-                                }
-                                portfolioId={portfolio.id}
-                                symbol={row.original.holding.symbol}
-                                currency={userCurrency}
-                              />
-                            </CardContent>
-                          )}
+                              <CardContent>
+                                <TransactionsTable
+                                  transactions={
+                                    holdingsMap.get(row.original.holding.symbol)
+                                      ?.transactions ?? []
+                                  }
+                                  portfolioId={portfolioId}
+                                  symbol={row.original.holding.symbol}
+                                />
+                              </CardContent>
+                            )}
                         </Card>
                       </AccordionContent>
                     </TableCell>
@@ -313,7 +320,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
           onOpenChange={(isOpen) => setTransaction((prev) => (isOpen ? prev : null))}
           onSave={async (tx) => {
             await addTxMutation.mutateAsync({
-              portfolioId: portfolio.id,
+              portfolioId,
               symbol: transaction.symbol,
               tx,
             });
@@ -329,7 +336,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
           onOpenChange={() => setHoldingToDelete(null)}
           onDelete={async () => {
             await deleteHoldingMutation.mutateAsync({
-              portfolioId: portfolio.id,
+              portfolioId,
               symbol: holdingToDelete,
             });
             setHoldingToDelete(null);
