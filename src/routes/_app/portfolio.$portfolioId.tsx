@@ -4,7 +4,7 @@ import { PortfolioChart } from "@/components/charts/portfolio-chart";
 import { PortfolioTable } from "@/components/portfolio/portfolio-table";
 import { usePortfolioChartData } from "@/components/portfolio/usePortfolioChartData";
 import { usePortfolioMutation } from "@/components/portfolio/usePortfolioMutation";
-import { portfolioQueryKey } from "@/components/portfolio/utils";
+import { getHoldingsWithTransactions, portfolioQueryKey } from "@/components/portfolio/utils";
 import SymbolSearchDialog from "@/components/symbol-search-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -57,7 +57,7 @@ function MyPortfolio() {
 
   const holdingsWithTransactions = useMemo(
     () =>
-      portfolio?.holdings?.filter((holding) => holding?.transactions?.length > 0) ?? [],
+      getHoldingsWithTransactions(portfolio?.holdings),
     [portfolio?.holdings],
   );
 
@@ -100,7 +100,7 @@ function MyPortfolio() {
                 Add Cash Transaction
               </Button>
             </div>
-            {portfolio && <PortfolioTable portfolio={portfolio} />}
+            {portfolio && <PortfolioTable holdings={holdingsWithTransactions} portfolioId={portfolio.id} />}
           </div>
         </CardContent>
       </Card>
