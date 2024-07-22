@@ -23,6 +23,7 @@ import {
 import { DeleteDialog } from "./delete-dialog";
 import { TransactionDialog } from "./transaction-dialog";
 import { usePortfolioMutation } from "./usePortfolioMutation";
+import { useUser } from "../user";
 
 const transactionColumnHelper = createColumnHelper<PortfolioTransaction>();
 
@@ -30,9 +31,9 @@ export const TransactionsTable = (props: {
   transactions: PortfolioTransaction[];
   symbol: string;
   portfolioId: string;
-  currency: string;
 }) => {
-  const { transactions, symbol, portfolioId, currency } = props;
+  const { transactions, symbol, portfolioId } = props;
+  const { currency } = useUser();
   const [sorting, setSorting] = useState<SortingState>([{ id: "time", desc: true }]);
   const [txToEdit, setTxToEdit] = useState<PortfolioTransaction | null>(null);
   const [txToDelete, setTxToDelete] = useState<PortfolioTransaction | null>(null);

@@ -2,14 +2,14 @@ import { CandlestickData, PortfolioHolding, TransactionType } from "@/api/types"
 import TimeSeries from "@/lib/TimeSeries";
 import { dayjs, percentChange } from "@/lib/utils";
 import { getSymbolChart } from "@/query/symbol";
-import { keepPreviousData, useQueries, UseQueryOptions } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { getCostBasisAtTime, getCurrenciesToFetch } from "./utils";
+import { getCostBasisAtTime } from "./utils";
 import { useUser } from "../user";
-import { getFxChart } from "@/query/currency";
+import { usePortfolioCurrencyQueries } from "./usePortfolioCurrencyQueries";
 
-export const usePortfolioTableData = (props: { holdings: PortfolioHolding[] }) => {
-  const { holdings } = props;
+export const usePortfolioTableData = (props: { portfolioId: string; holdings: PortfolioHolding[] }) => {
+  const { portfolioId, holdings } = props;
   const { currency: userCurrency } = useUser();
 
   const { dataMap: symbolsDataMap, isPending: symbolsPending } = useQueries({
@@ -39,32 +39,9 @@ export const usePortfolioTableData = (props: { holdings: PortfolioHolding[] }) =
     },
   });
 
-  const { dataMap: currencyDataMap, isPending: currencyPending } = useQueries({
-    queries: getCurrenciesToFetch(holdings, userCurrency).map(currency => {
-      return {
-        queryKey: [currency, userCurrency, "chart", "1mo"],
-        placeholderData: keepPreviousData,
-        refetchOnWindowFocus: false,
-        queryFn: async () => {
-          const chartData = await getFxChart({
-            fromCurrency: currency,
-            toCurrency: userCurrency,
-            range: "1mo",
-          });
-          return { chartData, fromCurrency: currency };
-        },
-      } satisfies UseQueryOptions;
-    }),
-    combine: (queries) => {
-      const dataMap = queries.reduce((acc, curr) => {
-        const data = curr.data as { chartData: CandlestickData[]; fromCurrency: string; };
-        if (data) {
-          acc[data.fromCurrency] = data.chartData;
-        }
-        return acc;
-      }, {} as Record<string, CandlestickData[]>);
-      return { dataMap, isPending: queries.some((query) => query.isPending) }
-    },
+  const { dataMap: currencyDataMap, isPending: currencyPending } = usePortfolioCurrencyQueries({
+    portfolioId,
+    holdings,
   });
 
   const tableData = useMemo(() => {
