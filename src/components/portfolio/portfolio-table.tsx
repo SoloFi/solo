@@ -229,7 +229,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
               <AccordionItem key={row.id} value={row.original.holding.symbol} asChild>
                 <>
                   <TableRow
-                    className="group h-[64px] cursor-pointer hover:bg-muted data-[state=open]:rounded-b-none data-[state=open]:bg-muted border-0"
+                    className="group h-[64px] cursor-pointer data-[state=open]:rounded-b-none data-[state=open]:bg-muted border-0"
                     onClick={() =>
                       setExpanded(
                         expanded === row.original.holding.symbol
@@ -278,18 +278,18 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
                           </CardHeader>
                           {(holdingsMap.get(row.original.holding.symbol)?.transactions
                             .length ?? 0) > 0 && (
-                            <CardContent>
-                              <TransactionsTable
-                                transactions={
-                                  holdingsMap.get(row.original.holding.symbol)
-                                    ?.transactions ?? []
-                                }
-                                portfolioId={portfolio.id}
-                                symbol={row.original.holding.symbol}
-                                currency={userCurrency}
-                              />
-                            </CardContent>
-                          )}
+                              <CardContent>
+                                <TransactionsTable
+                                  transactions={
+                                    holdingsMap.get(row.original.holding.symbol)
+                                      ?.transactions ?? []
+                                  }
+                                  portfolioId={portfolio.id}
+                                  symbol={row.original.holding.symbol}
+                                  currency={userCurrency}
+                                />
+                              </CardContent>
+                            )}
                         </Card>
                       </AccordionContent>
                     </TableCell>

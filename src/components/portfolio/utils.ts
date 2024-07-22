@@ -25,6 +25,10 @@ export function getCostBasisAtTime(holding: PortfolioHolding, time: number) {
   return totalCostBasis;
 }
 
+export function getCurrenciesToFetch(holdings: PortfolioHolding[], userCurrency: string) {
+  return Array.from(new Set(holdings.filter(({ currency }) => currency !== userCurrency).map(({ currency }) => currency)).values());
+}
+
 export const portfolioQueryKey = (portfolioId: string) => ["portfolio", portfolioId];
 
 export const holdingQueryKey = (portfolioId: string, symbol: string) => [
@@ -32,7 +36,7 @@ export const holdingQueryKey = (portfolioId: string, symbol: string) => [
   symbol,
 ];
 
-export const holdingCurrencyQueryKey = (portfolioId: string, fromCurrency: string, toCurrency: string) => [
+export const portfolioCurrencyQueryKey = (portfolioId: string, fromCurrency: string, toCurrency: string) => [
   portfolioId,
   fromCurrency,
   toCurrency,

@@ -5,7 +5,7 @@ import { getSymbolChart } from "@/query/symbol";
 import { keepPreviousData, useQueries, UseQueryOptions } from "@tanstack/react-query";
 import type { LineData, UTCTimestamp } from "lightweight-charts";
 import { useMemo } from "react";
-import { getCostBasisAtTime, holdingCurrencyQueryKey, holdingQueryKey } from "./utils";
+import { getCostBasisAtTime, getCurrenciesToFetch, portfolioCurrencyQueryKey, holdingQueryKey } from "./utils";
 import { getFxChart } from "@/query/currency";
 import { useUser } from "../user";
 
@@ -57,7 +57,7 @@ export const usePortfolioChartData = (props: {
   });
 
   const { dataMap: currencyDataMap, isPending: currencyPending } = useQueries({
-    queries: Array.from(new Set(holdingsWithTransactions.filter(({ currency }) => currency !== userCurrency).map(({ currency }) => currency)).values()).map(currency => {
+    queries: getCurrenciesToFetch(holdingsWithTransactions, userCurrency).map(currency => {
       // Get the earliest transaction time for the currency
       const from = holdingsWithTransactions
         .filter(({ currency: holdingCurrency }) => holdingCurrency === currency)
@@ -66,7 +66,7 @@ export const usePortfolioChartData = (props: {
         .sort((a, b) => a.time - b.time)[0].time;
       const to = dayjs().utc().unix();
       return {
-        queryKey: holdingCurrencyQueryKey(portfolioId, currency, userCurrency),
+        queryKey: portfolioCurrencyQueryKey(portfolioId, currency, userCurrency),
         placeholderData: keepPreviousData,
         refetchOnWindowFocus: false,
         queryFn: async () => {
