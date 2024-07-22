@@ -1,6 +1,6 @@
+import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { Badge } from "../ui/badge";
-import { cn } from "@/lib/utils";
 
 export default function ChartTooltip(props: {
   time?: ReactNode;
@@ -15,7 +15,7 @@ export default function ChartTooltip(props: {
         <Badge
           className={cn(
             "h-6 px-1 text-md text-white",
-            percentChange <= 0 ? "!bg-red-600" : "!bg-green-600",
+            percentChange <= 0 ? "!bg-red-700" : "!bg-green-700",
           )}
         >
           {percentChange.toFixed(2)}%
