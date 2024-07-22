@@ -15,7 +15,8 @@ import {
   type TimeChartOptions,
   type UTCTimestamp,
 } from "lightweight-charts";
-import { useCallback, useEffect, useRef, useState } from "react";
+import isNil from "lodash/isNil";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import colors from "tailwindcss/colors";
 import { useUser } from "../user";
 import ChartTooltip from "./chart-tooltip";
@@ -29,9 +30,13 @@ export const PortfolioChart = (props: {
   height?: number;
   type?: "area" | "candlestick";
 }) => {
-  const { data, costBasisData, height, type = "area" } = props;
+  const { data: _data, costBasisData, height, type = "area" } = props;
   const { theme } = useTheme();
   const { currency: userCurrency } = useUser();
+
+  const data = useMemo(() => {
+    return _data.filter((d) => !isNil(d.close)).map((d) => ({ ...d, value: d.close }));
+  }, [_data]);
 
   const [tooltip, setTooltip] = useState<{
     time: UTCTimestamp;
@@ -112,10 +117,10 @@ export const PortfolioChart = (props: {
         const areaSeries = chart.addAreaSeries({
           lastPriceAnimation: LastPriceAnimationMode.Continuous,
           lineColor: colors.blue[500],
-          topColor: hexTransp(colors.blue[500], 60),
+          topColor: hexTransp(colors.blue[500], 40),
           bottomColor: hexTransp(colors.blue[500], 10),
         });
-        areaSeries.setData(data.map((d) => ({ value: d.close, ...d })));
+        areaSeries.setData(data);
         areaSeriesRef.current = areaSeries;
       } else {
         const candlestickSeries = chart.addCandlestickSeries();
@@ -143,6 +148,7 @@ export const PortfolioChart = (props: {
     (node: HTMLDivElement) => {
       if (!node) return;
       chartContainerRef.current = node;
+      if (data.length === 0) return;
       handleCreateChart({ data, costBasisData, options, theme, type });
     },
     [costBasisData, data, handleCreateChart, options, theme, type],
@@ -188,9 +194,7 @@ export const PortfolioChart = (props: {
     <ChartWrapper height={height ?? 400}>
       {!!tooltip && (
         <ChartTooltip
-          time={dayjs(tooltip.time * 1000)
-            .utc()
-            .format("MMMM D, YYYY")}
+          time={dayjs.unix(tooltip.time).utc().format("MMMM D, YYYY")}
           value={formatCurrency(tooltip.value, userCurrency)}
           percentChange={tooltip.percentChange}
         />

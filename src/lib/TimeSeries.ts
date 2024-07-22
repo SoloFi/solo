@@ -4,7 +4,7 @@ import isNil from "lodash/isNil";
 import { dayjs } from "./utils";
 
 export type TimeSeriesValueKey = string;
-export type TimeSeriesValue = { time: number } & { [key: string]: string | number };
+export type TimeSeriesValue = { time: number } & Record<TimeSeriesValueKey, unknown>;
 export type TimeSeriesMap<T extends TimeSeriesValue> = Map<number, T>;
 
 function TimeSeriesValuesFromTimeSeriesMap<T extends TimeSeriesValue>(
@@ -30,11 +30,11 @@ class TimeSeries<T extends TimeSeriesValue> {
   }
 
   getTimeAxis() {
-    return Array.from(this.tsMap.keys());
+    return Array.from(this.tsMap.keys()).sort();
   }
 
   getValueAxis() {
-    return Array.from(this.tsMap.values());
+    return Array.from(this.tsMap.values()).sort((a, b) => a.time - b.time);
   }
 
   granularity() {
@@ -86,8 +86,9 @@ class TimeSeries<T extends TimeSeriesValue> {
   static add(a: TimeSeriesValue, b: TimeSeriesValue, keys: TimeSeriesValueKey[]) {
     const newValue: TimeSeriesValue = {} as TimeSeriesValue;
     for (const key of keys) {
-      if (typeof a[key] === "string" || typeof b[key] === "string") continue;
-      newValue[key] = a[key] + b[key];
+      if (typeof a[key] === "number" && typeof b[key] === "number") {
+        newValue[key] = a[key] + b[key];
+      }
     }
     return newValue;
   }
@@ -95,8 +96,9 @@ class TimeSeries<T extends TimeSeriesValue> {
   static multiply(a: TimeSeriesValue, b: TimeSeriesValue, keys: TimeSeriesValueKey[]) {
     const newValue: TimeSeriesValue = {} as TimeSeriesValue;
     for (const key of keys) {
-      if (typeof a[key] === "string" || typeof b[key] === "string") continue;
-      newValue[key] = a[key] * b[key];
+      if (typeof a[key] === "number" && typeof b[key] === "number") {
+        newValue[key] = a[key] * b[key];
+      }
     }
     return newValue;
   }

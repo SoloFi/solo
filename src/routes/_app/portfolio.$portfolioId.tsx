@@ -1,18 +1,15 @@
-import type { CandlestickData } from "@/api/types";
 import { SearchItem } from "@/api/YahooSearch";
 import { ChartTypeToggle } from "@/components/charts/chart-type-toggle";
 import { PortfolioChart } from "@/components/charts/portfolio-chart";
 import { PortfolioTable } from "@/components/portfolio/portfolio-table";
 import { usePortfolioChartData } from "@/components/portfolio/usePortfolioChartData";
 import { usePortfolioMutation } from "@/components/portfolio/usePortfolioMutation";
-import { holdingQueryKey, portfolioQueryKey } from "@/components/portfolio/utils";
+import { portfolioQueryKey } from "@/components/portfolio/utils";
 import SymbolSearchDialog from "@/components/symbol-search-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { dayjs } from "@/lib/utils";
 import { getPortfolio } from "@/query/portfolio";
-import { getSymbolChart } from "@/query/symbol";
-import { keepPreviousData, useQueries, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Activity, DollarSign } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -37,63 +34,32 @@ function MyPortfolio() {
     queryFn: async () => getPortfolio(portfolioId),
   });
 
-  const holdingsWithTransactions = useMemo(
-    () =>
-      portfolio?.holdings?.filter((holding) => holding?.transactions?.length > 0) ?? [],
-    [portfolio],
-  );
-
-  const symbolQueries = useQueries({
-    queries: holdingsWithTransactions.map((entry) => {
-      const symbol = entry.symbol;
-      const from = entry.transactions.sort((a, b) => a.time - b.time)[0].time;
-      const to = dayjs().utc().unix();
-      return {
-        queryKey: holdingQueryKey(portfolioId, symbol),
-        placeholderData: keepPreviousData,
-        queryFn: async () =>
-          getSymbolChart({
-            symbol,
-            from,
-            to,
-          }),
-        refetchOnWindowFocus: false,
-      };
-    }),
+  const { portfolioChartData, costBasisChartData } = usePortfolioChartData({
+    portfolioId: portfolioId,
+    holdings: portfolio?.holdings ?? [],
   });
-
-  const portfolioSymbolsData = useMemo(() => {
-    if (symbolQueries.some((query) => query.isPending)) {
-      return null;
-    }
-    return holdingsWithTransactions
-      .map(({ symbol }, index) => ({
-        [symbol]: symbolQueries[index].data,
-      }))
-      .reduce((acc, curr) => ({ ...acc, ...curr }), {}) as Record<
-      string,
-      CandlestickData[]
-    >;
-  }, [holdingsWithTransactions, symbolQueries]);
 
   const addHolding = useCallback(
     async (item: SearchItem) => {
-      const newHolding = {
-        symbol: item.symbol,
-        shortName: item.shortName,
-        type: item.quoteType,
-        currency: "USD", // placeholder, should be fetched from quote in API
-        transactions: [],
-      };
-      await addHoldingMutation.mutateAsync({ portfolioId, newHolding });
+      await addHoldingMutation.mutateAsync({
+        portfolioId,
+        newHolding: {
+          symbol: item.symbol,
+          shortName: item.shortName,
+          type: item.quoteType,
+          currency: "USD", // placeholder, should be fetched from quote in API
+          transactions: [],
+        },
+      });
     },
     [addHoldingMutation, portfolioId],
   );
 
-  const { portfolioChartData, costBasisChartData } = usePortfolioChartData({
-    portfolio: portfolio ?? null,
-    symbolDataMap: portfolioSymbolsData,
-  });
+  const holdingsWithTransactions = useMemo(
+    () =>
+      portfolio?.holdings?.filter((holding) => holding?.transactions?.length > 0) ?? [],
+    [portfolio?.holdings],
+  );
 
   const hasTransactions = holdingsWithTransactions.length > 0;
 

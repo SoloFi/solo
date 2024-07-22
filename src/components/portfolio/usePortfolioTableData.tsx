@@ -1,38 +1,28 @@
 import { CandlestickData, PortfolioHolding, TransactionType } from "@/api/types";
+import TimeSeries from "@/lib/TimeSeries";
 import { dayjs, percentChange } from "@/lib/utils";
 import { getSymbolChart } from "@/query/symbol";
 import { useQueries } from "@tanstack/react-query";
-import { UTCTimestamp } from "lightweight-charts";
 import isNil from "lodash/isNil";
 import { useMemo } from "react";
-import { useUser } from "../user";
-import { convertCandlestickDataCurrency, getCostBasisAtTime } from "./utils";
+import { getCostBasisAtTime } from "./utils";
 
 export const usePortfolioTableData = (props: { holdings: PortfolioHolding[] }) => {
   const holdings = useMemo(() => props.holdings, [props.holdings]);
-  const { currency } = useUser();
 
   const { data: symbolsData, isPending } = useQueries({
-    queries:
-      holdings?.map((entry) => {
-        const symbol = entry.symbol;
-        return {
-          queryKey: [symbol, "chart", "1mo"],
-          queryFn: async () =>
-            getSymbolChart({
-              symbol,
-              range: "1mo",
-            }).then((data) =>
-              convertCandlestickDataCurrency({
-                data,
-                fromCurrency: entry.currency,
-                toCurrency: currency,
-              }),
-            ),
-          refetchOnWindowFocus: false,
-          staleTime: 1000 * 60 * 5, // 5 minutes
-        };
-      }) ?? [],
+    queries: holdings.map((entry) => {
+      const symbol = entry.symbol;
+      return {
+        queryKey: [symbol, "chart", "1mo"],
+        queryFn: async () =>
+          getSymbolChart({
+            symbol,
+            range: "1mo",
+          }),
+        refetchOnWindowFocus: false,
+      };
+    }),
     combine: (results) => {
       return {
         data: results
@@ -49,11 +39,7 @@ export const usePortfolioTableData = (props: { holdings: PortfolioHolding[] }) =
       const symbol = entry.symbol;
       const buys = entry.transactions.filter((t) => t.type === TransactionType.BUY);
       const chartData = symbolsData[index];
-      const last30Days =
-        chartData?.slice(-30).map((data) => ({
-          time: data.time as UTCTimestamp,
-          value: data.close,
-        })) ?? [];
+      const last30Days = chartData?.slice(-30) ?? [];
       if (buys.length === 0) {
         return {
           holding: {
@@ -76,16 +62,7 @@ export const usePortfolioTableData = (props: { holdings: PortfolioHolding[] }) =
       const price = lastData?.close ?? lastBuy.price;
       const quantity = buys.reduce((acc, buy) => acc + buy.quantity, 0);
       const value = price * quantity;
-      const costBasis = getCostBasisAtTime(entry, dayjs().utc().unix() as UTCTimestamp);
-      // fill in null values with last known non-null value
-      let lastKnownValue = 0;
-      for (let i = 0; i < last30Days.length; i++) {
-        if (last30Days[i].value === null) {
-          last30Days[i].value = lastKnownValue;
-        } else {
-          lastKnownValue = last30Days[i].value;
-        }
-      }
+      const costBasis = getCostBasisAtTime(entry, dayjs().utc().unix());
       return {
         holding: {
           symbol,
@@ -99,7 +76,10 @@ export const usePortfolioTableData = (props: { holdings: PortfolioHolding[] }) =
           value: value - costBasis,
           percentChange: percentChange(costBasis, value),
         },
-        last30Days,
+        last30Days: new TimeSeries({
+          data: last30Days,
+          valueKeys: ["close"],
+        }).getValueAxis(),
       };
     });
   }, [holdings, isPending, symbolsData]);

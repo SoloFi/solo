@@ -155,7 +155,7 @@ export const isTokenExpired = (token: string | null) => {
   try {
     const parsedToken = parseJwt(token);
     const expiration = parsedToken.exp;
-    const expired = dayjs().isAfter(dayjs(expiration * 1000));
+    const expired = dayjs().isAfter(dayjs.unix(expiration));
     return expired;
   } catch (error) {
     return true;

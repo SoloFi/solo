@@ -43,7 +43,7 @@ export const TransactionsTable = (props: {
     return [
       transactionColumnHelper.accessor("time", {
         header: "Date",
-        cell: (cell) => dayjs(cell.getValue() * 1000).format("MMMM DD, YYYY"),
+        cell: (cell) => dayjs.unix(cell.getValue()).format("MMMM DD, YYYY"),
         enableSorting: true,
       }),
       transactionColumnHelper.accessor("type", {

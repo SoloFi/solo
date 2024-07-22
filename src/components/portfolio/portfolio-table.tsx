@@ -1,4 +1,9 @@
-import type { Portfolio, PortfolioHolding, PortfolioTransaction } from "@/api/types";
+import type {
+  CandlestickData,
+  Portfolio,
+  PortfolioHolding,
+  PortfolioTransaction,
+} from "@/api/types";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -17,7 +22,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import type { UTCTimestamp } from "lightweight-charts";
 import { ChevronDownIcon, Plus, Trash } from "lucide-react";
 import { useMemo, useState } from "react";
 import colors from "tailwindcss/colors";
@@ -44,10 +48,7 @@ type PortfolioTableData = {
     value: number;
     percentChange: number;
   };
-  last30Days: {
-    time: UTCTimestamp;
-    value: number;
-  }[];
+  last30Days: CandlestickData[];
 };
 
 const columnHelper = createColumnHelper<PortfolioTableData>();
@@ -160,7 +161,7 @@ export const PortfolioTable = (props: { portfolio: Portfolio }) => {
               data={data}
               height={50}
               color={
-                data?.[0]?.value < data[data.length - 1].value
+                data?.[0]?.close < data[data.length - 1].close
                   ? colors.green[600]
                   : colors.red[600]
               }

@@ -38,7 +38,7 @@ export interface User {
   portfolios: Portfolio[];
 }
 
-export interface CandlestickData {
+export interface CandlestickData extends Record<string, unknown> {
   time: UTCTimestamp;
   open: number;
   high: number;

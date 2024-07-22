@@ -1,22 +1,18 @@
+import { CandlestickData } from "@/api/types";
 import { hexTransp } from "@/lib/utils";
-import {
-  CrosshairMode,
-  IChartApi,
-  createChart,
-  type AreaData,
-  type UTCTimestamp,
-} from "lightweight-charts";
-import { useCallback, useEffect, useRef } from "react";
+import { CrosshairMode, IChartApi, createChart } from "lightweight-charts";
+import isNil from "lodash/isNil";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import colors from "tailwindcss/colors";
-import useChartOptions from "./useChartOptions";
 import ChartWrapper from "./chart-wrapper";
+import useChartOptions from "./useChartOptions";
 
 export const ThumbnailChart = (props: {
-  data: AreaData<UTCTimestamp>[];
+  data: CandlestickData[];
   color?: string;
   height?: number;
 }) => {
-  const { data, color = colors.blue[500], height = 150 } = props;
+  const { data: _data, color = colors.blue[500], height = 150 } = props;
 
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -36,8 +32,14 @@ export const ThumbnailChart = (props: {
     chartRef.current.timeScale().fitContent();
   }, []);
 
+  const data = useMemo(() => _data.filter((d) => !isNil(d.close)), [_data]).map((d) => ({
+    time: d.time,
+    value: d.close,
+  }));
+  console.log("chartData", data);
+
   useEffect(() => {
-    if (!chartContainerRef.current) return;
+    if (!chartContainerRef.current || data.length === 0) return;
     const chart = createChart(chartContainerRef.current, options);
     chartRef.current = chart;
     const areaSeries = chart.addAreaSeries({

@@ -27,16 +27,16 @@ export function getCostBasisAtTime(holding: PortfolioHolding, time: number) {
   return totalCostBasis;
 }
 
+// TODO: Refactor
 export async function convertHoldingCurrency(params: {
   holding: PortfolioHolding;
   toCurrency: string;
 }) {
   const { holding, toCurrency } = params;
   if (holding.currency === toCurrency) return holding;
-  const currency = holding.currency;
   const exchangeRate = await queryClient.fetchQuery({
-    queryKey: ["fx", currency, toCurrency],
-    queryFn: () => getFXRate(currency, toCurrency),
+    queryKey: ["fx", holding.currency, toCurrency],
+    queryFn: () => getFXRate(holding.currency, toCurrency),
   });
   if (!exchangeRate || typeof exchangeRate !== "number") return holding;
   holding.transactions = holding.transactions.map((tx) => {
