@@ -100,7 +100,6 @@ export const PortfolioTable = (props: {
               ? curr
               : prev,
           ).close;
-          console.log(exchangeRate, tx.price, tx.price * exchangeRate);
           return {
             ...tx,
             price: tx.price * exchangeRate,

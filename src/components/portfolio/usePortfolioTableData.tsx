@@ -3,7 +3,7 @@ import {
   PortfolioHolding,
   TransactionType,
 } from "@/api/types";
-import TimeSeries from "@/lib/TimeSeries";
+import { CandlestickTimeSeries } from "@/lib/TimeSeries";
 import { dayjs, percentChange } from "@/lib/utils";
 import { getSymbolChart } from "@/query/symbol";
 import { useQueries } from "@tanstack/react-query";
@@ -63,21 +63,22 @@ export const usePortfolioTableData = (props: {
         (t) => t.type === TransactionType.BUY,
       );
       let chartData: CandlestickData[] = [];
-      const symbolData = new TimeSeries({
-        data: symbolsDataMap[entry.symbol],
-        valueKeys: ["close"],
-      });
-      if (entry.currency === userCurrency || !currencyDataMap[entry.currency])
-        chartData = symbolData.getValueAxis();
-      else {
-        const currencyTimeSeries = new TimeSeries({
-          data: currencyDataMap[entry.currency],
-          valueKeys: ["close"],
-        });
-        chartData = TimeSeries.intersectSeries(
-          [symbolData, currencyTimeSeries],
-          TimeSeries.multiply,
-        ).getValueAxis() as unknown as CandlestickData[]; // TODO: Fix typing
+      const symbolTimeSeries = new CandlestickTimeSeries(
+        symbolsDataMap[entry.symbol],
+      );
+      console.log("symbolTimeSeries", symbolTimeSeries.getValueAxis());
+      if (entry.currency === userCurrency || !currencyDataMap[entry.currency]) {
+        chartData = symbolTimeSeries.getValueAxis();
+        console.log("chartData", chartData);
+      } else {
+        const currencyTimeSeries = new CandlestickTimeSeries(
+          currencyDataMap[entry.currency],
+        );
+        console.log("currencyTimeSeries", currencyTimeSeries.getValueAxis());
+        chartData = symbolTimeSeries
+          .multiply(currencyTimeSeries)
+          .getValueAxis();
+        console.log("chartData", chartData);
       }
       const price = chartData.slice(-1)[0].close;
       const last30Days = chartData?.slice(-30) ?? [];
@@ -119,10 +120,7 @@ export const usePortfolioTableData = (props: {
           value: value - costBasis,
           percentChange: percentChange(costBasis, value),
         },
-        last30Days: new TimeSeries({
-          data: last30Days,
-          valueKeys: ["close"],
-        }).getValueAxis(),
+        last30Days: new CandlestickTimeSeries(last30Days).getValueAxis(),
       };
     });
   }, [

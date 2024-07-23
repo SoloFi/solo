@@ -1,4 +1,3 @@
-import { useMutation } from "@tanstack/react-query";
 import { PortfolioHolding, PortfolioTransaction } from "@/api/types";
 import { queryClient } from "@/main";
 import {
@@ -11,12 +10,14 @@ import {
   updatePortfolio,
   updateTransaction,
 } from "@/query/portfolio";
-import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import { useCallback } from "react";
+import { toast } from "sonner";
 
 export const usePortfolioMutation = () => {
-  const errorToast = useCallback((error: Error) => {
-    toast.error(error.message);
+  const errorToast = useCallback((error: AxiosError) => {
+    toast.error((error.response?.data as string) ?? error.message);
   }, []);
 
   const newPortfolioMutation = useMutation({
@@ -60,7 +61,10 @@ export const usePortfolioMutation = () => {
   });
 
   const addHoldingMutation = useMutation({
-    mutationFn: async (params: { portfolioId: string; newHolding: PortfolioHolding }) => {
+    mutationFn: async (params: {
+      portfolioId: string;
+      newHolding: PortfolioHolding;
+    }) => {
       const { portfolioId, newHolding } = params;
       return addHolding(portfolioId, newHolding);
     },
@@ -98,7 +102,8 @@ export const usePortfolioMutation = () => {
     onSettled: async (_, __, { portfolioId, symbol }) => {
       return await queryClient.invalidateQueries({
         predicate: (query) =>
-          query.queryKey.includes(portfolioId) || query.queryKey.includes(symbol),
+          query.queryKey.includes(portfolioId) ||
+          query.queryKey.includes(symbol),
       });
     },
   });
@@ -116,13 +121,18 @@ export const usePortfolioMutation = () => {
     onSettled: async (_, __, { portfolioId, symbol }) => {
       return await queryClient.invalidateQueries({
         predicate: (query) =>
-          query.queryKey.includes(portfolioId) || query.queryKey.includes(symbol),
+          query.queryKey.includes(portfolioId) ||
+          query.queryKey.includes(symbol),
       });
     },
   });
 
   const deleteTxMutation = useMutation({
-    mutationFn: async (params: { portfolioId: string; symbol: string; txId: string }) => {
+    mutationFn: async (params: {
+      portfolioId: string;
+      symbol: string;
+      txId: string;
+    }) => {
       const { portfolioId, symbol, txId } = params;
       return deleteTransaction(portfolioId, symbol, txId);
     },
@@ -130,7 +140,8 @@ export const usePortfolioMutation = () => {
     onSettled: async (_, __, { portfolioId, symbol }) => {
       return await queryClient.invalidateQueries({
         predicate: (query) =>
-          query.queryKey.includes(portfolioId) || query.queryKey.includes(symbol),
+          query.queryKey.includes(portfolioId) ||
+          query.queryKey.includes(symbol),
       });
     },
   });

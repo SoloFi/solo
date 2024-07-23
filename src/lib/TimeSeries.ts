@@ -1,46 +1,49 @@
+import { CandlestickData } from "@/api/types";
 import { OpUnitType } from "dayjs";
-import intesection from "lodash/intersection";
+import { UTCTimestamp } from "lightweight-charts";
 import isNil from "lodash/isNil";
 import { dayjs } from "./utils";
 
-export type TimeSeriesValueKey = string;
-export type TimeSeriesValue = { time: number } & Record<TimeSeriesValueKey, unknown>;
-export type TimeSeriesMap<T extends TimeSeriesValue> = Map<number, T>;
+abstract class TimeSeries<T extends { time: UTCTimestamp }> {
+  protected data: T[];
 
-function TimeSeriesValuesFromTimeSeriesMap<T extends TimeSeriesValue>(
-  tsMap: TimeSeriesMap<T>,
-): TimeSeriesValue[] {
-  return Array.from(tsMap.values());
-}
-
-class TimeSeries<T extends TimeSeriesValue> {
-  private tsMap: TimeSeriesMap<T>;
-  private valueKeys: TimeSeriesValueKey[];
-
-  constructor(params: { data: T[]; valueKeys: TimeSeriesValueKey[] }) {
-    const { data, valueKeys } = params;
-    this.valueKeys = valueKeys;
-    this.tsMap = new Map();
-    for (const value of data) {
-      this.tsMap.set(value.time, value);
-    }
-    this.fillNullishValues();
-    this.normalizeTicks(this.granularityUnit());
+  constructor(data: T[]) {
+    this.data = this.sortByTime(
+      data.filter((data) => Object.values(data).every((v) => !isNil(v))),
+    );
   }
 
-  getTimeAxis() {
-    return Array.from(this.tsMap.keys()).sort();
+  protected sortByTime(data: T[]): T[] {
+    return data.sort((a, b) => a.time - b.time);
   }
 
-  getValueAxis() {
-    return Array.from(this.tsMap.values()).sort((a, b) => a.time - b.time);
+  abstract combine(other: TimeSeries<T>, op: (a: T, b: T) => T): TimeSeries<T>;
+
+  protected abstract createEmpty(time: UTCTimestamp): T;
+
+  map(f: (value: T) => T): this {
+    return new (this.constructor as new (data: T[]) => this)(
+      this.sortByTime(this.data.map(f)),
+    );
   }
 
-  granularity() {
-    const data = this.getTimeAxis();
+  flatMap(f: (series: this) => this): this {
+    return f(this);
+  }
+
+  getTimeAxis(): UTCTimestamp[] {
+    return this.data.map((point) => point.time);
+  }
+
+  getValueAxis(): T[] {
+    return this.data;
+  }
+
+  granularity(): number {
+    const times = this.getTimeAxis();
     let lowestDiff = Infinity;
-    for (let i = 0; i < data.length - 1; i++) {
-      const diff = Math.abs(data[i] - data[i + 1]);
+    for (let i = 0; i < times.length - 1; i++) {
+      const diff = Math.abs(times[i] - times[i + 1]);
       if (diff < lowestDiff) lowestDiff = diff;
     }
     return lowestDiff;
@@ -48,102 +51,184 @@ class TimeSeries<T extends TimeSeriesValue> {
 
   granularityUnit(): OpUnitType {
     const g = this.granularity();
-    if (g >= 3600 * 24 * 365)
-      return "year"; // 1 YEAR
-    else if (g >= 3600 * 24 * 28)
-      return "month"; // 1 MONTH
-    else if (g >= 3600 * 24 * 5)
-      return "week"; // 1 WEEK
-    else if (g >= 3600 * 24)
-      return "day"; // 1 DAY
-    else if (g >= 3600)
-      return "hour"; // 1 HOUR
-    else if (g >= 60)
-      return "minute"; // 1 MINUTE
-    else return "second"; // 1 SECOND
+    if (g >= 3600 * 24 * 365) return "year";
+    else if (g >= 3600 * 24 * 28) return "month";
+    else if (g >= 3600 * 24 * 5) return "week";
+    else if (g >= 3600 * 24) return "day";
+    else if (g >= 3600) return "hour";
+    else if (g >= 60) return "minute";
+    else return "second";
   }
 
-  normalizeTicks(unit: OpUnitType) {
-    const newTsMap = new Map();
-    for (const [time, value] of this.tsMap) {
-      const newTime = dayjs.unix(time).startOf(unit).unix();
-      newTsMap.set(newTime, { ...value, time: newTime });
+  normalizeTicks(unit: OpUnitType): this {
+    return this.map((point) => ({
+      ...point,
+      time: dayjs.unix(point.time).startOf(unit).unix(),
+    }));
+  }
+
+  protected getValueAtTime(time: UTCTimestamp): T | undefined {
+    // Binary search for efficiency, since we know the data is sorted
+    let low = 0;
+    let high = this.data.length - 1;
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      if (this.data[mid].time === time) return this.data[mid];
+      if (this.data[mid].time < time) low = mid + 1;
+      else high = mid - 1;
     }
-    this.tsMap = newTsMap;
+
+    return undefined;
   }
 
-  fillNullishValues() {
-    let lastKnownValue: T = {} as T;
-    for (const [time, tsMapValue] of this.tsMap) {
-      if (Object.values(tsMapValue).some(isNil)) this.tsMap.set(time, { ...lastKnownValue, time });
-      else lastKnownValue = tsMapValue;
+  static addMultiple<T extends TimeSeries<{ time: UTCTimestamp }>>(
+    series: T[],
+  ): T {
+    if (series.length === 0) {
+      throw new Error("Cannot add an empty array of time series");
     }
+    return series.reduce((acc, curr) => acc.add(curr) as T);
   }
 
-  static add(a: TimeSeriesValue, b: TimeSeriesValue, keys: TimeSeriesValueKey[]) {
-    const newValue: TimeSeriesValue = {} as TimeSeriesValue;
-    for (const key of keys) {
-      if (typeof a[key] === "number" && typeof b[key] === "number") {
-        newValue[key] = a[key] + b[key];
+  abstract add(other: TimeSeries<T>): TimeSeries<T>;
+  abstract multiply(other: TimeSeries<T>): TimeSeries<T>;
+}
+
+export interface LineChartData {
+  time: UTCTimestamp;
+  value: number;
+}
+
+class LineTimeSeries extends TimeSeries<LineChartData> {
+  constructor(data: LineChartData[]) {
+    super(data);
+  }
+
+  combine(
+    other: LineTimeSeries,
+    op: (a: LineChartData, b: LineChartData) => LineChartData,
+  ): LineTimeSeries {
+    const allTimes = [
+      ...new Set([...this.getTimeAxis(), ...other.getTimeAxis()]),
+    ].sort((a, b) => a - b);
+    const newData: LineChartData[] = [];
+
+    let lastThis: LineChartData | null = null;
+    let lastOther: LineChartData | null = null;
+
+    for (const time of allTimes) {
+      const thisValue: LineChartData =
+        this.getValueAtTime(time) || lastThis || this.createEmpty(time);
+      const otherValue: LineChartData =
+        other.getValueAtTime(time) || lastOther || other.createEmpty(time);
+
+      const combinedValue = op(thisValue, otherValue);
+
+      if (
+        combinedValue.value !== 0 ||
+        (thisValue.value !== 0 && otherValue.value !== 0)
+      ) {
+        newData.push(combinedValue);
       }
+
+      lastThis = thisValue.value !== 0 ? thisValue : lastThis;
+      lastOther = otherValue.value !== 0 ? otherValue : lastOther;
     }
-    return newValue;
+
+    return new LineTimeSeries(newData);
   }
 
-  static multiply(a: TimeSeriesValue, b: TimeSeriesValue, keys: TimeSeriesValueKey[]) {
-    const newValue: TimeSeriesValue = {} as TimeSeriesValue;
-    for (const key of keys) {
-      if (typeof a[key] === "number" && typeof b[key] === "number") {
-        newValue[key] = a[key] * b[key];
-      }
-    }
-    return newValue;
+  protected createEmpty(time: UTCTimestamp): LineChartData {
+    return { time, value: 0 };
   }
 
-  static intersection(
-    a: TimeSeries<TimeSeriesValue>,
-    b: TimeSeries<TimeSeriesValue>,
-    operation: (
-      a: TimeSeriesValue,
-      b: TimeSeriesValue,
-      keys: TimeSeriesValueKey[],
-    ) => TimeSeriesValue,
-  ) {
-    const newTsMap: TimeSeriesMap<TimeSeriesValue> = new Map();
-    const commonKeys = intesection(a.valueKeys, b.valueKeys);
-    for (const [time, value] of a.tsMap) {
-      const otherValue = b.tsMap.get(time);
-      if (otherValue) {
-        const newValue = operation(
-          value,
-          otherValue,
-          commonKeys,
-        );
-        newTsMap.set(time, { ...newValue, time });
-      }
-    }
-    return new TimeSeries({
-      data: TimeSeriesValuesFromTimeSeriesMap(newTsMap),
-      valueKeys: commonKeys,
-    });
+  add(other: LineTimeSeries): LineTimeSeries {
+    return this.combine(other, (a, b) => ({
+      time: a.time,
+      value: a.value + b.value,
+    }));
   }
 
-  static intersectSeries(
-    series: TimeSeries<TimeSeriesValue>[],
-    operation: (
-      a: TimeSeriesValue,
-      b: TimeSeriesValue,
-      keys: TimeSeriesValueKey[],
-    ) => TimeSeriesValue,
-  ) {
-    // sort series by latest first time
-    series.sort((a, b) => b.getTimeAxis()[0] - a.getTimeAxis()[0]);
-    let result = series[0];
-    for (let i = 1; i < series.length; i++) {
-      result = TimeSeries.intersection(result, series[i], operation);
-    }
-    return result;
+  multiply(other: LineTimeSeries): LineTimeSeries {
+    return this.combine(other, (a, b) => ({
+      time: a.time,
+      value: a.value * b.value,
+    }));
   }
 }
 
-export default TimeSeries;
+class CandlestickTimeSeries extends TimeSeries<CandlestickData> {
+  constructor(data: CandlestickData[]) {
+    super(data);
+  }
+
+  combine(
+    other: CandlestickTimeSeries,
+    op: (a: CandlestickData, b: CandlestickData) => CandlestickData,
+  ): CandlestickTimeSeries {
+    const allTimes = [
+      ...new Set([...this.getTimeAxis(), ...other.getTimeAxis()]),
+    ].sort((a, b) => a - b);
+    const newData: CandlestickData[] = [];
+
+    let lastThis: CandlestickData | null = null;
+    let lastOther: CandlestickData | null = null;
+
+    for (const time of allTimes) {
+      const thisValue: CandlestickData =
+        this.getValueAtTime(time) || lastThis || this.createEmpty(time);
+      const otherValue: CandlestickData =
+        other.getValueAtTime(time) || lastOther || other.createEmpty(time);
+
+      const combinedValue = op(thisValue, otherValue);
+
+      if (
+        !this.isDefaultCandle(combinedValue) ||
+        (!this.isDefaultCandle(thisValue) && !this.isDefaultCandle(otherValue))
+      ) {
+        newData.push(combinedValue);
+      }
+
+      lastThis = !this.isDefaultCandle(thisValue) ? thisValue : lastThis;
+      lastOther = !this.isDefaultCandle(otherValue) ? otherValue : lastOther;
+    }
+
+    return new CandlestickTimeSeries(newData);
+  }
+
+  protected createEmpty(time: UTCTimestamp): CandlestickData {
+    return { time, open: 0, high: 0, low: 0, close: 0, volume: 0 };
+  }
+
+  private isDefaultCandle(candle: CandlestickData): boolean {
+    return (
+      candle.open === 0 &&
+      candle.high === 0 &&
+      candle.low === 0 &&
+      candle.close === 0
+    );
+  }
+
+  add(other: CandlestickTimeSeries): CandlestickTimeSeries {
+    return this.combine(other, (a, b) => ({
+      time: a.time,
+      open: a.open + b.open,
+      high: a.high + b.high,
+      low: a.low + b.low,
+      close: a.close + b.close,
+    }));
+  }
+
+  multiply(other: CandlestickTimeSeries): CandlestickTimeSeries {
+    return this.combine(other, (a, b) => ({
+      time: a.time,
+      open: a.open * (b.open || 1),
+      high: a.high * (b.high || 1),
+      low: a.low * (b.low || 1),
+      close: a.close * (b.close || 1),
+    }));
+  }
+}
+
+export { CandlestickTimeSeries, LineTimeSeries };

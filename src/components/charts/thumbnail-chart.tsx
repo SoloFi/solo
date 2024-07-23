@@ -32,10 +32,12 @@ export const ThumbnailChart = (props: {
     chartRef.current.timeScale().fitContent();
   }, []);
 
-  const data = useMemo(() => _data.filter((d) => !isNil(d.close)), [_data]).map((d) => ({
-    time: d.time,
-    value: d.close,
-  }));
+  const data = useMemo(() => _data.filter((d) => !isNil(d.close)), [_data]).map(
+    (d) => ({
+      time: d.time,
+      value: d.close,
+    }),
+  );
 
   useEffect(() => {
     if (!chartContainerRef.current || data.length === 0) return;
