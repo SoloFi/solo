@@ -1,5 +1,5 @@
 import type { CandlestickData } from "@/api/types";
-import { useTheme, type Theme } from "@/components/theme-provider";
+import { Theme, useTheme } from "@/components/theme/useTheme";
 import { dayjs, formatCurrency, hexTransp, percentChange } from "@/lib/utils";
 import {
   AreaData,
@@ -35,7 +35,9 @@ export const PortfolioChart = (props: {
   const { currency: userCurrency } = useUser();
 
   const data = useMemo(() => {
-    return _data.filter((d) => !isNil(d.close)).map((d) => ({ ...d, value: d.close }));
+    return _data
+      .filter((d) => !isNil(d.close))
+      .map((d) => ({ ...d, value: d.close }));
   }, [_data]);
 
   const [tooltip, setTooltip] = useState<{
@@ -61,7 +63,9 @@ export const PortfolioChart = (props: {
       time: lastData.time,
       value: lastData.close,
       percentChange:
-        lastData && costBasis ? percentChange(costBasis.value, lastData.close) : 0,
+        lastData && costBasis
+          ? percentChange(costBasis.value, lastData.close)
+          : 0,
     };
   }, [costBasisData, data]);
 

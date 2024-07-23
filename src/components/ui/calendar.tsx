@@ -1,9 +1,9 @@
-import * as React from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons";
+import * as React from "react";
 import { DayPicker } from "react-day-picker";
 
 import { cn, dayjs } from "@/lib/utils";
-import { buttonVariants } from "./button";
+import { buttonVariants } from "./button-variants";
 import {
   Select,
   SelectContent,
@@ -42,7 +42,8 @@ function Calendar({
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse space-y-1",
         head_row: "flex",
-        head_cell: "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
+        head_cell:
+          "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
         row: "flex w-full mt-2",
         cell: cn(
           "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected].day-range-end)]:rounded-r-md",
@@ -62,7 +63,8 @@ function Calendar({
         day_outside:
           "day-outside text-muted-foreground opacity-50  aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
         day_disabled: "text-muted-foreground opacity-50",
-        day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+        day_range_middle:
+          "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
         ...classNames,
       }}
@@ -122,7 +124,11 @@ function Calendar({
                   <SelectGroup className="flex flex-row max-w-[460px] flex-wrap">
                     {/* <SelectLabel>Month</SelectLabel> */}
                     {months.map((month) => (
-                      <SelectItem key={month} value={month} className="w-[115px]">
+                      <SelectItem
+                        key={month}
+                        value={month}
+                        className="w-[115px]"
+                      >
                         {month}
                       </SelectItem>
                     ))}
@@ -132,12 +138,17 @@ function Calendar({
               <Select
                 value={currentYear}
                 onValueChange={(year) => {
-                  const newYear = dayjs(displayMonth).year(Number(year)).toDate();
+                  const newYear = dayjs(displayMonth)
+                    .year(Number(year))
+                    .toDate();
                   onMonthChange?.(newYear);
                 }}
               >
                 <SelectTrigger
-                  className={cn(buttonVariants({ variant: "ghost" }), "w-[90px]")}
+                  className={cn(
+                    buttonVariants({ variant: "ghost" }),
+                    "w-[90px]",
+                  )}
                 >
                   <SelectValue />
                 </SelectTrigger>

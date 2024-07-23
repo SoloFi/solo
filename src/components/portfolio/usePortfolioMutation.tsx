@@ -1,5 +1,5 @@
 import { PortfolioHolding, PortfolioTransaction } from "@/api/types";
-import { queryClient } from "@/main";
+import { queryClient } from "@/QueryClient";
 import {
   addHolding,
   addTransaction,

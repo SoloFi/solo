@@ -1,3 +1,4 @@
+import { useTheme } from "@/components/theme/useTheme";
 import {
   ColorType,
   DeepPartial,
@@ -7,9 +8,10 @@ import {
 import merge from "lodash/merge";
 import { useMemo, useState } from "react";
 import colors from "tailwindcss/colors";
-import { useTheme } from "../theme-provider";
 
-export default function useChartOptions(options?: DeepPartial<TimeChartOptions>) {
+export default function useChartOptions(
+  options?: DeepPartial<TimeChartOptions>,
+) {
   const { theme } = useTheme();
   const [overrideOptions] = useState(options);
 

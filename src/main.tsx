@@ -1,16 +1,16 @@
-import "./index.css";
+import { ThemeProvider } from "@/components/theme/provider";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
-import { RouterProvider, createRouter } from "@tanstack/react-router";
-import { ThemeProvider } from "@/components/theme-provider";
-import { routeTree } from "./routeTree.gen";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import UserProvider from "./components/user-provider";
+import "./index.css";
+import { queryClient } from "./QueryClient";
+import { routeTree } from "./routeTree.gen";
 
 const router = createRouter({
   routeTree,
 });
-export const queryClient = new QueryClient();
 
 declare module "@tanstack/react-router" {
   interface Register {
