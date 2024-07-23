@@ -60,7 +60,18 @@ abstract class TimeSeries<T extends { time: UTCTimestamp }> {
   }
 
   protected getValueAtTime(time: UTCTimestamp): T | undefined {
-    return this.data.find((point) => point.time === time);
+    // Binary search since data is sorted
+    let low = 0;
+    let high = this.data.length - 1;
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      if (this.data[mid].time === time) return this.data[mid];
+      if (this.data[mid].time < time) low = mid + 1;
+      else high = mid - 1;
+    }
+
+    return undefined;
   }
 
   static addMany<T extends TimeSeries<{ time: UTCTimestamp }>>(
