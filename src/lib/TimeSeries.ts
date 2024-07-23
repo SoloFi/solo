@@ -63,13 +63,22 @@ abstract class TimeSeries<T extends { time: UTCTimestamp }> {
     return this.data.find((point) => point.time === time);
   }
 
-  static addMultiple<T extends TimeSeries<{ time: UTCTimestamp }>>(
+  static addMany<T extends TimeSeries<{ time: UTCTimestamp }>>(
     series: T[],
   ): T {
     if (series.length === 0) {
       throw new Error("Cannot add an empty array of time series");
     }
     return series.reduce((acc, curr) => acc.add(curr) as T);
+  }
+
+  static multiplyMany<T extends TimeSeries<{ time: UTCTimestamp }>>(
+    series: T[],
+  ): T {
+    if (series.length === 0) {
+      throw new Error("Cannot multiply an empty array of time series");
+    }
+    return series.reduce((acc, curr) => acc.multiply(curr) as T);
   }
 
   abstract add(other: TimeSeries<T>): TimeSeries<T>;

@@ -125,7 +125,7 @@ export const usePortfolioChartData = (props: {
       },
     );
     const mergedSymbolTimeSeries =
-      CandlestickTimeSeries.addMultiple(symbolTimeSeries);
+      CandlestickTimeSeries.addMany(symbolTimeSeries);
     const costBasisTimeSeries = holdingsWithTransactions.map((holding) => {
       const costBasis = [];
       const latestCurrencyRate =
@@ -141,7 +141,7 @@ export const usePortfolioChartData = (props: {
       return new LineTimeSeries(costBasis);
     });
     const mergedCostBasisTimeSeries =
-      LineTimeSeries.addMultiple(costBasisTimeSeries);
+      LineTimeSeries.addMany(costBasisTimeSeries);
 
     return {
       portfolioChartData:
