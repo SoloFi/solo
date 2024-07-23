@@ -1,14 +1,21 @@
-import { CandlestickData, PortfolioHolding, TransactionType } from "@/api/types";
+import {
+  CandlestickData,
+  PortfolioHolding,
+  TransactionType,
+} from "@/api/types";
 import TimeSeries from "@/lib/TimeSeries";
 import { dayjs, percentChange } from "@/lib/utils";
 import { getSymbolChart } from "@/query/symbol";
 import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { getCostBasisAtTime } from "./utils";
 import { useUser } from "../user";
 import { usePortfolioCurrencyQueries } from "./usePortfolioCurrencyQueries";
+import { getCostBasisAtTime } from "./utils";
 
-export const usePortfolioTableData = (props: { portfolioId: string; holdings: PortfolioHolding[] }) => {
+export const usePortfolioTableData = (props: {
+  portfolioId: string;
+  holdings: PortfolioHolding[];
+}) => {
   const { portfolioId, holdings } = props;
   const { currency: userCurrency } = useUser();
 
@@ -28,36 +35,49 @@ export const usePortfolioTableData = (props: { portfolioId: string; holdings: Po
       };
     }),
     combine: (queries) => {
-      const dataMap = queries.reduce((acc, curr) => {
-        const data = curr.data;
-        if (data) {
-          acc[data.symbol] = data.chartData;
-        }
-        return acc;
-      }, {} as Record<string, CandlestickData[]>);
-      return { dataMap, isPending: queries.some((query) => query.isPending) }
+      const dataMap = queries.reduce(
+        (acc, curr) => {
+          const data = curr.data;
+          if (data) {
+            acc[data.symbol] = data.chartData;
+          }
+          return acc;
+        },
+        {} as Record<string, CandlestickData[]>,
+      );
+      return { dataMap, isPending: queries.some((query) => query.isPending) };
     },
   });
 
-  const { dataMap: currencyDataMap, isPending: currencyPending } = usePortfolioCurrencyQueries({
-    portfolioId,
-    holdings,
-  });
+  const { dataMap: currencyDataMap, isPending: currencyPending } =
+    usePortfolioCurrencyQueries({
+      portfolioId,
+      holdings,
+    });
 
   const tableData = useMemo(() => {
     if (symbolsPending || currencyPending) return [];
     return holdings.map((entry) => {
       const symbol = entry.symbol;
-      const buys = entry.transactions.filter((t) => t.type === TransactionType.BUY);
+      const buys = entry.transactions.filter(
+        (t) => t.type === TransactionType.BUY,
+      );
       let chartData: CandlestickData[] = [];
-      const symbolData = new TimeSeries({ data: symbolsDataMap[entry.symbol], valueKeys: ["close"] });
-      if (entry.currency === userCurrency) chartData = symbolData.getValueAxis();
+      const symbolData = new TimeSeries({
+        data: symbolsDataMap[entry.symbol],
+        valueKeys: ["close"],
+      });
+      if (entry.currency === userCurrency || !currencyDataMap[entry.currency])
+        chartData = symbolData.getValueAxis();
       else {
-        const currencyTimeSeries = new TimeSeries({ data: currencyDataMap[entry.currency], valueKeys: ["close"] });
+        const currencyTimeSeries = new TimeSeries({
+          data: currencyDataMap[entry.currency],
+          valueKeys: ["close"],
+        });
         chartData = TimeSeries.intersectSeries(
           [symbolData, currencyTimeSeries],
-          TimeSeries.multiply)
-          .getValueAxis() as unknown as CandlestickData[]; // TODO: Fix typing
+          TimeSeries.multiply,
+        ).getValueAxis() as unknown as CandlestickData[]; // TODO: Fix typing
       }
       const price = chartData.slice(-1)[0].close;
       const last30Days = chartData?.slice(-30) ?? [];
@@ -78,10 +98,14 @@ export const usePortfolioTableData = (props: { portfolioId: string; holdings: Po
           last30Days,
         };
       }
-      const latestCurrencyRate = entry.currency === userCurrency ? 1 : currencyDataMap[entry.currency].slice(-1)[0].close;
+      const latestCurrencyRate =
+        entry.currency === userCurrency
+          ? 1
+          : currencyDataMap[entry.currency].slice(-1)[0].close;
       const quantity = buys.reduce((acc, buy) => acc + buy.quantity, 0);
       const value = price * quantity;
-      const costBasis = getCostBasisAtTime(entry, dayjs().utc().unix()) * latestCurrencyRate;
+      const costBasis =
+        getCostBasisAtTime(entry, dayjs().utc().unix()) * latestCurrencyRate;
       return {
         holding: {
           symbol,
@@ -101,7 +125,14 @@ export const usePortfolioTableData = (props: { portfolioId: string; holdings: Po
         }).getValueAxis(),
       };
     });
-  }, [currencyDataMap, currencyPending, holdings, symbolsDataMap, symbolsPending, userCurrency]);
+  }, [
+    currencyDataMap,
+    currencyPending,
+    holdings,
+    symbolsDataMap,
+    symbolsPending,
+    userCurrency,
+  ]);
 
   return tableData;
 };
