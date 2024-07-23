@@ -11,6 +11,7 @@ abstract class TimeSeries<T extends { time: UTCTimestamp }> {
     this.data = this.sortByTime(
       data.filter((data) => Object.values(data).every((v) => !isNil(v))),
     );
+    this.normalizeTicks(this.granularityUnit());
   }
 
   protected sortByTime(data: T[]): T[] {
@@ -20,16 +21,6 @@ abstract class TimeSeries<T extends { time: UTCTimestamp }> {
   abstract combine(other: TimeSeries<T>, op: (a: T, b: T) => T): TimeSeries<T>;
 
   protected abstract createEmpty(time: UTCTimestamp): T;
-
-  map(f: (value: T) => T): this {
-    return new (this.constructor as new (data: T[]) => this)(
-      this.sortByTime(this.data.map(f)),
-    );
-  }
-
-  flatMap(f: (series: this) => this): this {
-    return f(this);
-  }
 
   getTimeAxis(): UTCTimestamp[] {
     return this.data.map((point) => point.time);
@@ -61,25 +52,15 @@ abstract class TimeSeries<T extends { time: UTCTimestamp }> {
   }
 
   normalizeTicks(unit: OpUnitType): this {
-    return this.map((point) => ({
+    this.data = this.data.map((point) => ({
       ...point,
       time: dayjs.unix(point.time).startOf(unit).unix(),
     }));
+    return this;
   }
 
   protected getValueAtTime(time: UTCTimestamp): T | undefined {
-    // Binary search for efficiency, since we know the data is sorted
-    let low = 0;
-    let high = this.data.length - 1;
-
-    while (low <= high) {
-      const mid = Math.floor((low + high) / 2);
-      if (this.data[mid].time === time) return this.data[mid];
-      if (this.data[mid].time < time) low = mid + 1;
-      else high = mid - 1;
-    }
-
-    return undefined;
+    return this.data.find((point) => point.time === time);
   }
 
   static addMultiple<T extends TimeSeries<{ time: UTCTimestamp }>>(
@@ -120,8 +101,10 @@ class LineTimeSeries extends TimeSeries<LineChartData> {
     for (const time of allTimes) {
       const thisValue: LineChartData =
         this.getValueAtTime(time) || lastThis || this.createEmpty(time);
+      thisValue.time = time;
       const otherValue: LineChartData =
         other.getValueAtTime(time) || lastOther || other.createEmpty(time);
+      otherValue.time = time;
 
       const combinedValue = op(thisValue, otherValue);
 
@@ -132,8 +115,8 @@ class LineTimeSeries extends TimeSeries<LineChartData> {
         newData.push(combinedValue);
       }
 
-      lastThis = thisValue.value !== 0 ? thisValue : lastThis;
-      lastOther = otherValue.value !== 0 ? otherValue : lastOther;
+      lastThis = thisValue.value !== 0 ? { ...thisValue, time } : lastThis;
+      lastOther = otherValue.value !== 0 ? { ...otherValue, time } : lastOther;
     }
 
     return new LineTimeSeries(newData);
@@ -153,7 +136,7 @@ class LineTimeSeries extends TimeSeries<LineChartData> {
   multiply(other: LineTimeSeries): LineTimeSeries {
     return this.combine(other, (a, b) => ({
       time: a.time,
-      value: a.value * b.value,
+      value: (a.value || 1) * (b.value || 1),
     }));
   }
 }
@@ -178,8 +161,10 @@ class CandlestickTimeSeries extends TimeSeries<CandlestickData> {
     for (const time of allTimes) {
       const thisValue: CandlestickData =
         this.getValueAtTime(time) || lastThis || this.createEmpty(time);
+      thisValue.time = time;
       const otherValue: CandlestickData =
         other.getValueAtTime(time) || lastOther || other.createEmpty(time);
+      otherValue.time = time;
 
       const combinedValue = op(thisValue, otherValue);
 
@@ -189,7 +174,6 @@ class CandlestickTimeSeries extends TimeSeries<CandlestickData> {
       ) {
         newData.push(combinedValue);
       }
-
       lastThis = !this.isDefaultCandle(thisValue) ? thisValue : lastThis;
       lastOther = !this.isDefaultCandle(otherValue) ? otherValue : lastOther;
     }
@@ -223,10 +207,10 @@ class CandlestickTimeSeries extends TimeSeries<CandlestickData> {
   multiply(other: CandlestickTimeSeries): CandlestickTimeSeries {
     return this.combine(other, (a, b) => ({
       time: a.time,
-      open: a.open * (b.open || 1),
-      high: a.high * (b.high || 1),
-      low: a.low * (b.low || 1),
-      close: a.close * (b.close || 1),
+      open: (a.open || 1) * (b.open || 1),
+      high: (a.high || 1) * (b.high || 1),
+      low: (a.low || 1) * (b.low || 1),
+      close: (a.close || 1) * (b.close || 1),
     }));
   }
 }
