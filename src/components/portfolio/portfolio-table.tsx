@@ -31,9 +31,9 @@ import { useUser } from "../user";
 import { DeleteDialog } from "./delete-dialog";
 import { TransactionDialog } from "./transaction-dialog";
 import { TransactionsTable } from "./transaction-table";
+import { usePortfolioCurrencyQueries } from "./usePortfolioCurrencyQueries";
 import { usePortfolioMutation } from "./usePortfolioMutation";
 import { usePortfolioTableData } from "./usePortfolioTableData";
-// import { usePortfolioCurrencyQueries } from "./usePortfolioCurrencyQueries";
 
 type PortfolioTableData = {
   holding: {
@@ -53,7 +53,10 @@ type PortfolioTableData = {
 
 const columnHelper = createColumnHelper<PortfolioTableData>();
 
-export const PortfolioTable = (props: { holdings: PortfolioHolding[]; portfolioId: string }) => {
+export const PortfolioTable = (props: {
+  holdings: PortfolioHolding[];
+  portfolioId: string;
+}) => {
   const { holdings, portfolioId } = props;
   const { currency: userCurrency } = useUser();
 
@@ -76,23 +79,42 @@ export const PortfolioTable = (props: { holdings: PortfolioHolding[]; portfolioI
 
   const { deleteHoldingMutation, addTxMutation } = usePortfolioMutation();
 
+  const { dataMap: currencyDataMap, isPending: currencyPending } =
+    usePortfolioCurrencyQueries({
+      portfolioId,
+      holdings,
+    });
+
   const holdingsMap = useMemo(() => {
     const map = new Map<string, PortfolioHolding>();
+    if (currencyPending) return map;
     holdings.forEach((holding) => {
-      map.set(holding.symbol, holding);
+      const holdingInUserCurrency = { ...holding };
+      holdingInUserCurrency.transactions =
+        holdingInUserCurrency.transactions.map((tx) => {
+          const currencyData = currencyDataMap[holdingInUserCurrency.currency];
+          if (!currencyData) return tx;
+          // find closest currency data point to transaction date
+          const exchangeRate = currencyData.reduce((prev, curr) =>
+            Math.abs(curr.time - tx.time) < Math.abs(prev.time - tx.time)
+              ? curr
+              : prev,
+          ).close;
+          console.log(exchangeRate, tx.price, tx.price * exchangeRate);
+          return {
+            ...tx,
+            price: tx.price * exchangeRate,
+          };
+        });
+      map.set(holdingInUserCurrency.symbol, holdingInUserCurrency);
     });
     return map;
-  }, [holdings]);
+  }, [currencyDataMap, currencyPending, holdings]);
 
   const data = usePortfolioTableData({
     portfolioId,
     holdings,
   });
-
-  // const { dataMap: currencyDataMap, isPending: currencyPending } = usePortfolioCurrencyQueries({
-  //   portfolioId,
-  //   holdings,
-  // });
 
   const columns = useMemo(() => {
     return [
@@ -116,7 +138,9 @@ export const PortfolioTable = (props: { holdings: PortfolioHolding[]; portfolioI
         cell: (cell) => (
           <div>
             <p className="font-semibold">{cell.getValue().name}</p>
-            <p className="text-sm text-muted-foreground">{cell.getValue().symbol}</p>
+            <p className="text-sm text-muted-foreground">
+              {cell.getValue().symbol}
+            </p>
           </div>
         ),
         enableSorting: false,
@@ -227,12 +251,19 @@ export const PortfolioTable = (props: { holdings: PortfolioHolding[]; portfolioI
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableHeaderGroup headerGroup={headerGroup} key={headerGroup.id} />
+              <TableHeaderGroup
+                headerGroup={headerGroup}
+                key={headerGroup.id}
+              />
             ))}
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <AccordionItem key={row.id} value={row.original.holding.symbol} asChild>
+              <AccordionItem
+                key={row.id}
+                value={row.original.holding.symbol}
+                asChild
+              >
                 <>
                   <TableRow
                     className="group h-[64px] cursor-pointer data-[state=open]:bg-muted border-0"
@@ -244,7 +275,9 @@ export const PortfolioTable = (props: { holdings: PortfolioHolding[]; portfolioI
                       )
                     }
                     data-state={
-                      expanded === row.original.holding.symbol ? "open" : "closed"
+                      expanded === row.original.holding.symbol
+                        ? "open"
+                        : "closed"
                     }
                   >
                     {row.getVisibleCells().map((cell) => (
@@ -257,13 +290,21 @@ export const PortfolioTable = (props: { holdings: PortfolioHolding[]; portfolioI
                             : "closed"
                         }
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
                       </TableCell>
                     ))}
                   </TableRow>
-                  <TableRow className="bg-muted/50 data-[state=open]:bg-muted" data-state={
-                    expanded === row.original.holding.symbol ? "open" : "closed"
-                  }>
+                  <TableRow
+                    className="bg-muted/50 data-[state=open]:bg-muted"
+                    data-state={
+                      expanded === row.original.holding.symbol
+                        ? "open"
+                        : "closed"
+                    }
+                  >
                     <TableCell colSpan={columns.length} className="!p-0">
                       <AccordionContent className="flex p-2 justify-center">
                         <Card className="w-full rounded-none">
@@ -284,19 +325,19 @@ export const PortfolioTable = (props: { holdings: PortfolioHolding[]; portfolioI
                               Add Transaction
                             </Button>
                           </CardHeader>
-                          {(holdingsMap.get(row.original.holding.symbol)?.transactions
-                            .length ?? 0) > 0 && (
-                              <CardContent>
-                                <TransactionsTable
-                                  transactions={
-                                    holdingsMap.get(row.original.holding.symbol)
-                                      ?.transactions ?? []
-                                  }
-                                  portfolioId={portfolioId}
-                                  symbol={row.original.holding.symbol}
-                                />
-                              </CardContent>
-                            )}
+                          {(holdingsMap.get(row.original.holding.symbol)
+                            ?.transactions.length ?? 0) > 0 && (
+                            <CardContent>
+                              <TransactionsTable
+                                transactions={
+                                  holdingsMap.get(row.original.holding.symbol)
+                                    ?.transactions ?? []
+                                }
+                                portfolioId={portfolioId}
+                                symbol={row.original.holding.symbol}
+                              />
+                            </CardContent>
+                          )}
                         </Card>
                       </AccordionContent>
                     </TableCell>
@@ -317,7 +358,9 @@ export const PortfolioTable = (props: { holdings: PortfolioHolding[]; portfolioI
           symbol={transaction.symbol}
           transaction={transaction.body}
           isOpen={!!transaction}
-          onOpenChange={(isOpen) => setTransaction((prev) => (isOpen ? prev : null))}
+          onOpenChange={(isOpen) =>
+            setTransaction((prev) => (isOpen ? prev : null))
+          }
           onSave={async (tx) => {
             await addTxMutation.mutateAsync({
               portfolioId,

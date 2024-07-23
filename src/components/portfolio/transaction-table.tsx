@@ -20,10 +20,10 @@ import {
   TableHeaderGroup,
   TableRow,
 } from "../ui/table";
+import { useUser } from "../user";
 import { DeleteDialog } from "./delete-dialog";
 import { TransactionDialog } from "./transaction-dialog";
 import { usePortfolioMutation } from "./usePortfolioMutation";
-import { useUser } from "../user";
 
 const transactionColumnHelper = createColumnHelper<PortfolioTransaction>();
 
@@ -34,9 +34,13 @@ export const TransactionsTable = (props: {
 }) => {
   const { transactions, symbol, portfolioId } = props;
   const { currency } = useUser();
-  const [sorting, setSorting] = useState<SortingState>([{ id: "time", desc: true }]);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "time", desc: true },
+  ]);
   const [txToEdit, setTxToEdit] = useState<PortfolioTransaction | null>(null);
-  const [txToDelete, setTxToDelete] = useState<PortfolioTransaction | null>(null);
+  const [txToDelete, setTxToDelete] = useState<PortfolioTransaction | null>(
+    null,
+  );
 
   const { editTxMutation, deleteTxMutation } = usePortfolioMutation();
 
@@ -63,7 +67,7 @@ export const TransactionsTable = (props: {
         enableSorting: false,
       }),
       transactionColumnHelper.accessor("price", {
-        header: "Marktet Price",
+        header: "Market Price",
         cell: (cell) => formatCurrency(cell.getValue(), currency),
         enableSorting: false,
       }),
@@ -75,7 +79,10 @@ export const TransactionsTable = (props: {
       transactionColumnHelper.display({
         header: "Total Cost",
         cell: (cell) =>
-          formatCurrency(cell.row.original.price * cell.row.original.quantity, currency),
+          formatCurrency(
+            cell.row.original.price * cell.row.original.quantity,
+            currency,
+          ),
         enableSorting: false,
       }),
       transactionColumnHelper.display({
@@ -149,7 +156,9 @@ export const TransactionsTable = (props: {
           symbol={symbol}
           transaction={txToEdit}
           isOpen={!!txToEdit}
-          onOpenChange={(isOpen) => setTxToEdit((prev) => (isOpen ? prev : null))}
+          onOpenChange={(isOpen) =>
+            setTxToEdit((prev) => (isOpen ? prev : null))
+          }
           onSave={async (tx) => {
             await editTxMutation.mutateAsync({
               portfolioId,
