@@ -1,18 +1,20 @@
 import { TransactionType, type PortfolioHolding } from "@/api/types";
+import { dayjs } from "@/lib/utils";
 
 export function getCostBasisAtTime(holding: PortfolioHolding, time: number) {
   let totalCostBasis = 0;
   let totalQuantity = 0;
+  const utcUnixTime = (time: number) => dayjs.unix(time).utc().unix();
   const buys =
     holding.transactions
       ?.filter((tx) => tx.type === TransactionType.BUY)
-      .filter((buy) => buy.time <= time)
-      .sort((a, b) => a.time - b.time) ?? [];
+      .filter((buy) => utcUnixTime(buy.time) <= utcUnixTime(time))
+      .sort((a, b) => utcUnixTime(a.time) - utcUnixTime(b.time)) ?? [];
   const sells =
     holding.transactions
       ?.filter((tx) => tx.type === TransactionType.SELL)
-      .filter((sale) => sale.time <= time)
-      .sort((a, b) => a.time - b.time) ?? [];
+      .filter((sale) => utcUnixTime(sale.time) <= utcUnixTime(time))
+      .sort((a, b) => utcUnixTime(a.time) - utcUnixTime(b.time)) ?? [];
   buys.forEach((buy) => {
     totalCostBasis += buy.price * buy.quantity;
     totalQuantity += buy.quantity;

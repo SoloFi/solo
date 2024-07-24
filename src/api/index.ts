@@ -242,14 +242,15 @@ app
     const YQ = new YahooQuote();
     const promises = queries.map(async (query) => {
       const { symbol, range, interval, from, to } = query;
-      const data = await YQ.getCandlestickData({
+      const payload = {
         symbol,
-        interval: interval ?? "1d",
+        interval,
         range: range as QuoteRange | undefined,
-        fromDate: from,
-        toDate: to,
-      });
-      return { symbol, data };
+        from,
+        to,
+      };
+      const data = await YQ.getCandlestickData(payload);
+      return { data, ...payload };
     });
     const candlestickData = await Promise.all(promises);
     return c.json(candlestickData);

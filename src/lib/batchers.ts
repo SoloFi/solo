@@ -7,10 +7,21 @@ export const charts = create({
     return getSymbolsCharts(chartQuery);
   },
   resolver: (items, query) => {
-    return items.filter((item) => item.symbol === query.symbol)[0];
+    const resolvedQuery = items.filter(
+      (item) =>
+        item.symbol === query.symbol &&
+        item.from === query.from &&
+        item.to === query.to &&
+        item.interval === query.interval &&
+        item.range === query.range,
+    )[0];
+    if (!resolvedQuery) {
+      console.log("resolvedQuery", resolvedQuery, items, query);
+    }
+    return resolvedQuery;
   },
   scheduler: windowedFiniteBatchScheduler({
     windowMs: 50,
-    maxBatchSize: 5,
+    maxBatchSize: 20,
   }),
 });

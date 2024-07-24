@@ -74,9 +74,7 @@ abstract class TimeSeries<T extends { time: UTCTimestamp }> {
     return undefined;
   }
 
-  static addMany<T extends TimeSeries<{ time: UTCTimestamp }>>(
-    series: T[],
-  ): T {
+  static addMany<T extends TimeSeries<{ time: UTCTimestamp }>>(series: T[]): T {
     if (series.length === 0) {
       throw new Error("Cannot add an empty array of time series");
     }
@@ -129,14 +127,16 @@ class LineTimeSeries extends TimeSeries<LineChartData> {
       const combinedValue = op(thisValue, otherValue);
 
       if (
-        combinedValue.value !== 0 ||
-        (thisValue.value !== 0 && otherValue.value !== 0)
+        !this.isZero(combinedValue) ||
+        (!this.isZero(thisValue) && !this.isZero(otherValue))
       ) {
         newData.push(combinedValue);
       }
 
-      lastThis = thisValue.value !== 0 ? { ...thisValue, time } : lastThis;
-      lastOther = otherValue.value !== 0 ? { ...otherValue, time } : lastOther;
+      lastThis = !this.isZero(thisValue) ? { ...thisValue, time } : lastThis;
+      lastOther = !this.isZero(otherValue)
+        ? { ...otherValue, time }
+        : lastOther;
     }
 
     return new LineTimeSeries(newData);
@@ -144,6 +144,10 @@ class LineTimeSeries extends TimeSeries<LineChartData> {
 
   protected createEmpty(time: UTCTimestamp): LineChartData {
     return { time, value: 0 };
+  }
+
+  private isZero(data: LineChartData): boolean {
+    return data.value === 0 || isNil(data.value);
   }
 
   add(other: LineTimeSeries): LineTimeSeries {
@@ -189,13 +193,18 @@ class CandlestickTimeSeries extends TimeSeries<CandlestickData> {
       const combinedValue = op(thisValue, otherValue);
 
       if (
-        !this.isDefaultCandle(combinedValue) ||
-        (!this.isDefaultCandle(thisValue) && !this.isDefaultCandle(otherValue))
+        !this.isNullishOrDefaultCandle(combinedValue) ||
+        (!this.isNullishOrDefaultCandle(thisValue) &&
+          !this.isNullishOrDefaultCandle(otherValue))
       ) {
         newData.push(combinedValue);
       }
-      lastThis = !this.isDefaultCandle(thisValue) ? thisValue : lastThis;
-      lastOther = !this.isDefaultCandle(otherValue) ? otherValue : lastOther;
+      lastThis = !this.isNullishOrDefaultCandle(thisValue)
+        ? thisValue
+        : lastThis;
+      lastOther = !this.isNullishOrDefaultCandle(otherValue)
+        ? otherValue
+        : lastOther;
     }
 
     return new CandlestickTimeSeries(newData);
@@ -205,6 +214,15 @@ class CandlestickTimeSeries extends TimeSeries<CandlestickData> {
     return { time, open: 0, high: 0, low: 0, close: 0, volume: 0 };
   }
 
+  private isNullishCandle(candle: CandlestickData): boolean {
+    return (
+      isNil(candle.open) ||
+      isNil(candle.high) ||
+      isNil(candle.low) ||
+      isNil(candle.close)
+    );
+  }
+
   private isDefaultCandle(candle: CandlestickData): boolean {
     return (
       candle.open === 0 &&
@@ -212,6 +230,10 @@ class CandlestickTimeSeries extends TimeSeries<CandlestickData> {
       candle.low === 0 &&
       candle.close === 0
     );
+  }
+
+  private isNullishOrDefaultCandle(candle: CandlestickData): boolean {
+    return this.isNullishCandle(candle) || this.isDefaultCandle(candle);
   }
 
   add(other: CandlestickTimeSeries): CandlestickTimeSeries {

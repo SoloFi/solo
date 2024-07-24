@@ -51,10 +51,10 @@ class YahooQuote {
     symbol: string;
     interval: string;
     range?: QuoteRange;
-    fromDate?: number;
-    toDate?: number;
+    from?: number;
+    to?: number;
   }) {
-    const { symbol, interval, range, fromDate, toDate } = params;
+    const { symbol, interval, range, from, to } = params;
     const url: URL = new URL(`${this.baseUrl}${symbol}`);
     url.searchParams.append("region", this.region);
     url.searchParams.append("lang", this.lang);
@@ -62,9 +62,9 @@ class YahooQuote {
     url.searchParams.append("interval", interval);
     if (range) {
       url.searchParams.append("range", range);
-    } else if (fromDate && toDate) {
-      url.searchParams.append("period1", `${fromDate}`);
-      url.searchParams.append("period2", `${toDate}`);
+    } else if (from && to) {
+      url.searchParams.append("period1", `${from}`);
+      url.searchParams.append("period2", `${to}`);
     }
     const response = await fetch(url.toString());
     if (!response.ok) {
