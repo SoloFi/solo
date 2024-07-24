@@ -1,6 +1,7 @@
 import { CandlestickData, PortfolioHolding } from "@/api/types";
+import { charts } from "@/lib/batchers";
 import { dayjs } from "@/lib/utils";
-import { getFxChart } from "@/query/currency";
+import { getFxSymbol } from "@/query/currency";
 import {
   keepPreviousData,
   useQueries,
@@ -34,13 +35,12 @@ export const usePortfolioCurrencyQueries = (params: {
         placeholderData: keepPreviousData,
         refetchOnWindowFocus: false,
         queryFn: async () => {
-          const chartData = await getFxChart({
-            fromCurrency: currency,
-            toCurrency: userCurrency,
+          return charts.fetch({
+            symbol: getFxSymbol(currency, userCurrency),
+            interval: "1d",
             from,
             to,
           });
-          return { chartData, fromCurrency: currency };
         },
       } satisfies UseQueryOptions;
     }),
@@ -48,11 +48,11 @@ export const usePortfolioCurrencyQueries = (params: {
       const dataMap = queries.reduce(
         (acc, curr) => {
           const data = curr.data as {
-            chartData: CandlestickData[];
-            fromCurrency: string;
+            data: CandlestickData[];
+            symbol: string;
           };
           if (data) {
-            acc[data.fromCurrency] = data.chartData;
+            acc[data.symbol] = data.data;
           }
           return acc;
         },

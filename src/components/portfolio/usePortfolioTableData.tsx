@@ -3,9 +3,10 @@ import {
   PortfolioHolding,
   TransactionType,
 } from "@/api/types";
+import { charts } from "@/lib/batchers";
 import { CandlestickTimeSeries } from "@/lib/TimeSeries";
 import { dayjs, percentChange } from "@/lib/utils";
-import { getSymbolChart } from "@/query/symbol";
+import { getFxSymbol } from "@/query/currency";
 import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useUser } from "../user";
@@ -25,11 +26,11 @@ export const usePortfolioTableData = (props: {
       return {
         queryKey: [symbol, "chart", "1mo"],
         queryFn: async () => {
-          const chartData = await getSymbolChart({
+          return charts.fetch({
             symbol,
+            interval: "1d",
             range: "1mo",
           });
-          return { chartData, symbol };
         },
         refetchOnWindowFocus: false,
       };
@@ -37,9 +38,12 @@ export const usePortfolioTableData = (props: {
     combine: (queries) => {
       const dataMap = queries.reduce(
         (acc, curr) => {
-          const data = curr.data;
+          const data = curr.data as {
+            data: CandlestickData[];
+            symbol: string;
+          };
           if (data) {
-            acc[data.symbol] = data.chartData;
+            acc[data.symbol] = data.data;
           }
           return acc;
         },
@@ -66,19 +70,15 @@ export const usePortfolioTableData = (props: {
       const symbolTimeSeries = new CandlestickTimeSeries(
         symbolsDataMap[entry.symbol],
       );
-      console.log("symbolTimeSeries", symbolTimeSeries.getValueAxis());
       if (entry.currency === userCurrency || !currencyDataMap[entry.currency]) {
         chartData = symbolTimeSeries.getValueAxis();
-        console.log("chartData", chartData);
       } else {
         const currencyTimeSeries = new CandlestickTimeSeries(
           currencyDataMap[entry.currency],
         );
-        console.log("currencyTimeSeries", currencyTimeSeries.getValueAxis());
         chartData = symbolTimeSeries
           .multiply(currencyTimeSeries)
           .getValueAxis();
-        console.log("chartData", chartData);
       }
       const price = chartData.slice(-1)[0].close;
       const last30Days = chartData?.slice(-30) ?? [];
@@ -102,7 +102,9 @@ export const usePortfolioTableData = (props: {
       const latestCurrencyRate =
         entry.currency === userCurrency
           ? 1
-          : currencyDataMap[entry.currency].slice(-1)[0].close;
+          : currencyDataMap[getFxSymbol(entry.currency, userCurrency)].slice(
+              -1,
+            )[0].close;
       const quantity = buys.reduce((acc, buy) => acc + buy.quantity, 0);
       const value = price * quantity;
       const costBasis =

@@ -3,9 +3,10 @@ import {
   type Portfolio,
   TransactionType,
 } from "@/api/types";
+import { charts } from "@/lib/batchers";
 import { CandlestickTimeSeries, LineTimeSeries } from "@/lib/TimeSeries";
 import { dayjs } from "@/lib/utils";
-import { getSymbolChart } from "@/query/symbol";
+import { getFxSymbol } from "@/query/currency";
 import {
   keepPreviousData,
   useQueries,
@@ -47,12 +48,12 @@ export const usePortfolioChartData = (props: {
         placeholderData: keepPreviousData,
         refetchOnWindowFocus: false,
         queryFn: async () => {
-          const chartData = await getSymbolChart({
+          return charts.fetch({
             symbol,
+            interval: "1d",
             from,
             to,
           });
-          return { chartData, symbol };
         },
       } satisfies UseQueryOptions;
     }),
@@ -60,11 +61,11 @@ export const usePortfolioChartData = (props: {
       const dataMap = queries.reduce(
         (acc, curr) => {
           const data = curr.data as {
-            chartData: CandlestickData[];
+            data: CandlestickData[];
             symbol: string;
           };
           if (data) {
-            acc[data.symbol] = data.chartData;
+            acc[data.symbol] = data.data;
           }
           return acc;
         },
@@ -119,7 +120,7 @@ export const usePortfolioChartData = (props: {
           return holdingTimeSeries;
         }
         const currencyTimeSeries = new CandlestickTimeSeries(
-          currencyDataMap[currency],
+          currencyDataMap[getFxSymbol(currency, userCurrency)],
         );
         return holdingTimeSeries.multiply(currencyTimeSeries);
       },
@@ -131,7 +132,9 @@ export const usePortfolioChartData = (props: {
       const latestCurrencyRate =
         holding.currency === userCurrency
           ? 1
-          : currencyDataMap[holding.currency].slice(-1)[0].close;
+          : currencyDataMap[getFxSymbol(holding.currency, userCurrency)].slice(
+              -1,
+            )[0].close;
       for (const time of mergedSymbolTimeSeries.getTimeAxis()) {
         costBasis.push({
           time,

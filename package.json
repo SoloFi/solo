@@ -34,6 +34,7 @@
     "@tanstack/react-router": "^1.36.3",
     "@tanstack/react-table": "^8.17.3",
     "@tanstack/router-vite-plugin": "^1.37.0",
+    "@yornaath/batshit": "^0.10.1",
     "axios": "^1.7.2",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
