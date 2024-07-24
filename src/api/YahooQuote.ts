@@ -51,8 +51,8 @@ class YahooQuote {
     symbol: string;
     interval: string;
     range?: QuoteRange;
-    fromDate?: string;
-    toDate?: string;
+    fromDate?: number;
+    toDate?: number;
   }) {
     const { symbol, interval, range, fromDate, toDate } = params;
     const url: URL = new URL(`${this.baseUrl}${symbol}`);
@@ -63,8 +63,8 @@ class YahooQuote {
     if (range) {
       url.searchParams.append("range", range);
     } else if (fromDate && toDate) {
-      url.searchParams.append("period1", fromDate);
-      url.searchParams.append("period2", toDate);
+      url.searchParams.append("period1", `${fromDate}`);
+      url.searchParams.append("period2", `${toDate}`);
     }
     const response = await fetch(url.toString());
     if (!response.ok) {
@@ -133,7 +133,17 @@ export interface Quote {
   close: number[];
 }
 
-export type QuoteRange = "1mo" | "3mo" | "6mo" | "1y" | "2y" | "5y" | "10y" | "ytd";
+export const QuoteRange = {
+  ONE_MONTH: "1mo",
+  THREE_MONTH: "3mo",
+  SIX_MONTH: "6mo",
+  ONE_YEAR: "1y",
+  TWO_YEAR: "2y",
+  FIVE_YEAR: "5y",
+  TEN_YEAR: "10y",
+  YTD: "ytd",
+} as const;
+export type QuoteRange = (typeof QuoteRange)[keyof typeof QuoteRange];
 
 export const RangeConstruction: Record<
   QuoteRange,

@@ -1,5 +1,6 @@
 import { UTCTimestamp } from "lightweight-charts";
 import z from "zod";
+import { QuoteRange } from "./YahooQuote";
 
 export enum TransactionType {
   BUY = "BUY",
@@ -31,6 +32,17 @@ export const portfolioSchema = z.object({
   holdings: z.array(portfolioHoldingSchema),
 });
 export type Portfolio = z.infer<typeof portfolioSchema>;
+
+export const chartQuerySchema = z.array(
+  z.object({
+    symbol: z.string(),
+    interval: z.string(),
+    from: z.optional(z.number()),
+    to: z.optional(z.number()),
+    range: z.optional(z.nativeEnum(QuoteRange)),
+  }),
+);
+export type ChartQuery = z.infer<typeof chartQuerySchema>;
 
 export interface User {
   email: string;

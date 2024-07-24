@@ -1,24 +1,27 @@
 import { Hono } from "hono";
 import { handle } from "hono/aws-lambda";
 import { bearerAuth } from "hono/bearer-auth";
-import { jwt, sign } from "hono/jwt";
-import type { JwtVariables } from "hono/jwt";
 import { HTTPException } from "hono/http-exception";
+import type { JwtVariables } from "hono/jwt";
+import { jwt, sign } from "hono/jwt";
 
+import type { QuoteRange } from "@/api/YahooQuote";
+import bcrypt from "bcryptjs";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import { Resource } from "sst";
+import { v4 as uuidv4 } from "uuid";
+import isEmail from "validator/lib/isEmail";
+import isStrongPassword from "validator/lib/isStrongPassword";
 import YahooQuote from "./YahooQuote";
 import YahooSearch from "./YahooSearch";
 import {
+  ChartQuery,
+  chartQuerySchema,
   portfolioHoldingSchema,
   portfolioSchema,
   portfolioTransactionSchema,
 } from "./types";
-import type { QuoteRange } from "@/api/YahooQuote";
-import bcrypt from "bcryptjs";
-import isEmail from "validator/lib/isEmail";
-import isStrongPassword from "validator/lib/isStrongPassword";
-import { Resource } from "sst";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
 import {
   addPortfolioHolding,
   addPortfolioTransaction,
@@ -33,7 +36,6 @@ import {
   updatePortfolioById,
   updatePortfolioTransaction,
 } from "./utils";
-import { v4 as uuidv4 } from "uuid";
 
 dayjs.extend(utc);
 
@@ -228,18 +230,28 @@ app
     const quote = await YQ.getLatestQuote(`${symbol.toUpperCase()}=X`);
     return c.json(quote.close);
   })
-  // Get historical quote
-  .post("/api/chart/:symbol", async (c) => {
-    const { symbol } = c.req.param();
-    const { from, to, range, interval } = await c.req.json();
+  // Get historical quotes
+  .post("/api/chart", async (c) => {
+    const queries: ChartQuery = await c.req.json();
+    try {
+      chartQuerySchema.parse(queries);
+    } catch (e) {
+      throw new HTTPException(400, { message: (e as Error).message });
+    }
+
     const YQ = new YahooQuote();
-    const candlestickData = await YQ.getCandlestickData({
-      symbol,
-      interval: interval ?? "1d",
-      range: range as QuoteRange | undefined,
-      fromDate: from,
-      toDate: to,
+    const promises = queries.map(async (query) => {
+      const { symbol, range, interval, from, to } = query;
+      const data = await YQ.getCandlestickData({
+        symbol,
+        interval: interval ?? "1d",
+        range: range as QuoteRange | undefined,
+        fromDate: from,
+        toDate: to,
+      });
+      return { symbol, data };
     });
+    const candlestickData = await Promise.all(promises);
     return c.json(candlestickData);
   })
   // Search symbols
