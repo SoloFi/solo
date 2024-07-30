@@ -4,7 +4,11 @@ import {
   TransactionType,
 } from "@/api/types";
 import { charts } from "@/lib/batchers";
-import { CandlestickTimeSeries, LineTimeSeries } from "@/lib/TimeSeries";
+import {
+  CandlestickTimeSeries,
+  LineChartData,
+  LineTimeSeries,
+} from "@/lib/TimeSeries";
 import { dayjs, utcUnixTime } from "@/lib/utils";
 import { getFxSymbol } from "@/query/currency";
 import {
@@ -116,7 +120,6 @@ export const usePortfolioChartData = (props: {
           });
         }
         const holdingTimeSeries = new CandlestickTimeSeries(holdingChartData);
-        console.log(symbol, holdingTimeSeries.getValueAxis()[0]);
         if (currency === userCurrency) {
           return holdingTimeSeries;
         }
@@ -129,7 +132,7 @@ export const usePortfolioChartData = (props: {
     const mergedSymbolTimeSeries =
       CandlestickTimeSeries.addMany(symbolTimeSeries);
     const costBasisTimeSeries = holdingsWithTransactions.map((holding) => {
-      const costBasis = [];
+      const costBasis: LineChartData[] = [];
       const latestCurrencyRate =
         holding.currency === userCurrency
           ? 1
@@ -138,7 +141,7 @@ export const usePortfolioChartData = (props: {
             )[0].close;
       for (const time of mergedSymbolTimeSeries.getTimeAxis()) {
         costBasis.push({
-          time,
+          time: utcUnixTime(time) as UTCTimestamp,
           value: getCostBasisAtTime(holding, time) * latestCurrencyRate,
         });
       }
@@ -146,7 +149,6 @@ export const usePortfolioChartData = (props: {
     });
     const mergedCostBasisTimeSeries =
       LineTimeSeries.addMany(costBasisTimeSeries);
-
     return {
       portfolioChartData:
         mergedSymbolTimeSeries.getValueAxis() as unknown as CandlestickData[], // TODO: fix typing

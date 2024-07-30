@@ -4,24 +4,21 @@ import { utcUnixTime } from "@/lib/utils";
 export function getCostBasisAtTime(holding: PortfolioHolding, time: number) {
   let totalCostBasis = 0;
   let totalQuantity = 0;
-  const buys =
-    holding.transactions
-      ?.filter((tx) => tx.type === TransactionType.BUY)
-      .filter((buy) => utcUnixTime(buy.time) <= utcUnixTime(time))
-      .sort((a, b) => utcUnixTime(a.time) - utcUnixTime(b.time)) ?? [];
-  const sells =
-    holding.transactions
-      ?.filter((tx) => tx.type === TransactionType.SELL)
-      .filter((sale) => utcUnixTime(sale.time) <= utcUnixTime(time))
-      .sort((a, b) => utcUnixTime(a.time) - utcUnixTime(b.time)) ?? [];
-  buys.forEach((buy) => {
-    totalCostBasis += buy.price * buy.quantity;
-    totalQuantity += buy.quantity;
-  });
-  sells.forEach((sell) => {
-    const costBasis = (totalCostBasis * sell.quantity) / totalQuantity;
-    totalCostBasis -= costBasis;
-    totalQuantity -= sell.quantity;
+  const transactions = (
+    holding.transactions?.filter(
+      (tx) => utcUnixTime(tx.time) <= utcUnixTime(time),
+    ) ?? []
+  ).sort((a, b) => a.time - b.time);
+
+  transactions.forEach(({ type, price, quantity }) => {
+    if (type === TransactionType.BUY) {
+      totalCostBasis += price * quantity;
+      totalQuantity += quantity;
+    } else {
+      const costBasis = (totalCostBasis * quantity) / totalQuantity;
+      totalCostBasis -= costBasis;
+      totalQuantity -= quantity;
+    }
   });
   return totalCostBasis;
 }

@@ -59,7 +59,7 @@ abstract class TimeSeries<T extends { time: UTCTimestamp }> {
   normalizeTicks(unit: OpUnitType): this {
     this.data = this.data.map((point) => ({
       ...point,
-      time: dayjs.unix(point.time).utc().startOf(unit).unix(),
+      time: dayjs.unix(point.time).utc().endOf(unit).unix(),
     }));
     return this;
   }
