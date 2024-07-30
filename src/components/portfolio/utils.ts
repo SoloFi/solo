@@ -1,10 +1,9 @@
 import { TransactionType, type PortfolioHolding } from "@/api/types";
-import { dayjs } from "@/lib/utils";
+import { utcUnixTime } from "@/lib/utils";
 
 export function getCostBasisAtTime(holding: PortfolioHolding, time: number) {
   let totalCostBasis = 0;
   let totalQuantity = 0;
-  const utcUnixTime = (time: number) => dayjs.unix(time).utc().unix();
   const buys =
     holding.transactions
       ?.filter((tx) => tx.type === TransactionType.BUY)
