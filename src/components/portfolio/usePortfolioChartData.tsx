@@ -5,7 +5,7 @@ import {
 } from "@/api/types";
 import { charts } from "@/lib/batchers";
 import { CandlestickTimeSeries, LineTimeSeries } from "@/lib/TimeSeries";
-import { dayjs } from "@/lib/utils";
+import { dayjs, utcUnixTime } from "@/lib/utils";
 import { getFxSymbol } from "@/query/currency";
 import {
   keepPreviousData,
@@ -101,14 +101,14 @@ export const usePortfolioChartData = (props: {
         const holdingChartData = [];
         for (const { time, open, high, low, close } of symbolsDataMap[symbol]) {
           const buyShares = buys
-            ?.filter((buy) => buy.time <= time)
+            ?.filter((buy) => utcUnixTime(buy.time) <= utcUnixTime(time))
             .reduce((acc, buy) => acc + buy.quantity, 0);
           const sellShares = sells
-            ?.filter((sell) => sell.time <= time)
+            ?.filter((sell) => utcUnixTime(sell.time) <= utcUnixTime(time))
             .reduce((acc, sell) => acc + sell.quantity, 0);
           const shares = (buyShares ?? 0) - (sellShares ?? 0);
           holdingChartData.push({
-            time,
+            time: utcUnixTime(time) as UTCTimestamp,
             open: open * shares,
             high: high * shares,
             low: low * shares,
@@ -116,6 +116,7 @@ export const usePortfolioChartData = (props: {
           });
         }
         const holdingTimeSeries = new CandlestickTimeSeries(holdingChartData);
+        console.log(symbol, holdingTimeSeries.getValueAxis()[0]);
         if (currency === userCurrency) {
           return holdingTimeSeries;
         }

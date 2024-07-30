@@ -12,15 +12,20 @@ abstract class TimeSeries<T extends { time: UTCTimestamp }> {
       data.filter((data) => Object.values(data).every((v) => !isNil(v))),
     );
     this.normalizeTicks(this.granularityUnit());
-  }
-
-  protected sortByTime(data: T[]): T[] {
-    return data.sort((a, b) => a.time - b.time);
+    this.fillNullishValues();
   }
 
   abstract combine(other: TimeSeries<T>, op: (a: T, b: T) => T): TimeSeries<T>;
 
-  protected abstract createEmpty(time: UTCTimestamp): T;
+  protected abstract isNullish(value: T): boolean;
+
+  abstract add(other: TimeSeries<T>): TimeSeries<T>;
+
+  abstract multiply(other: TimeSeries<T>): TimeSeries<T>;
+
+  protected sortByTime(data: T[]): T[] {
+    return data.sort((a, b) => a.time - b.time);
+  }
 
   getTimeAxis(): UTCTimestamp[] {
     return this.data.map((point) => point.time);
@@ -59,6 +64,21 @@ abstract class TimeSeries<T extends { time: UTCTimestamp }> {
     return this;
   }
 
+  fillNullishValues(): this {
+    const firstNonNullish = this.firstNonNullishValue();
+    if (!firstNonNullish)
+      throw new Error("No non-nullish values in time series");
+    let lastKnownValue = firstNonNullish;
+    for (let i = 0; i < this.data.length; i++) {
+      if (this.isNullish(this.data[i])) {
+        this.data[i] = { ...lastKnownValue, time: this.data[i].time };
+      } else {
+        lastKnownValue = this.data[i];
+      }
+    }
+    return this;
+  }
+
   protected getValueAtTime(time: UTCTimestamp): T | undefined {
     // Binary search since data is sorted
     let low = 0;
@@ -72,6 +92,10 @@ abstract class TimeSeries<T extends { time: UTCTimestamp }> {
     }
 
     return undefined;
+  }
+
+  protected firstNonNullishValue(): T | undefined {
+    return this.data.find((point) => !this.isNullish(point));
   }
 
   static addMany<T extends TimeSeries<{ time: UTCTimestamp }>>(series: T[]): T {
@@ -89,9 +113,6 @@ abstract class TimeSeries<T extends { time: UTCTimestamp }> {
     }
     return series.reduce((acc, curr) => acc.multiply(curr) as T);
   }
-
-  abstract add(other: TimeSeries<T>): TimeSeries<T>;
-  abstract multiply(other: TimeSeries<T>): TimeSeries<T>;
 }
 
 export interface LineChartData {
@@ -113,40 +134,24 @@ class LineTimeSeries extends TimeSeries<LineChartData> {
     ].sort((a, b) => a - b);
     const newData: LineChartData[] = [];
 
-    let lastThis: LineChartData | null = null;
-    let lastOther: LineChartData | null = null;
+    let lastThis: LineChartData = this.data[0];
+    let lastOther: LineChartData = other.data[0];
 
     for (const time of allTimes) {
-      const thisValue: LineChartData =
-        this.getValueAtTime(time) || lastThis || this.createEmpty(time);
+      const thisValue: LineChartData = this.getValueAtTime(time) || lastThis;
       thisValue.time = time;
-      const otherValue: LineChartData =
-        other.getValueAtTime(time) || lastOther || other.createEmpty(time);
+      const otherValue: LineChartData = other.getValueAtTime(time) || lastOther;
       otherValue.time = time;
-
       const combinedValue = op(thisValue, otherValue);
-
-      if (
-        !this.isZero(combinedValue) ||
-        (!this.isZero(thisValue) && !this.isZero(otherValue))
-      ) {
-        newData.push(combinedValue);
-      }
-
-      lastThis = !this.isZero(thisValue) ? { ...thisValue, time } : lastThis;
-      lastOther = !this.isZero(otherValue)
-        ? { ...otherValue, time }
-        : lastOther;
+      newData.push(combinedValue);
+      lastThis = thisValue;
+      lastOther = otherValue;
     }
 
     return new LineTimeSeries(newData);
   }
 
-  protected createEmpty(time: UTCTimestamp): LineChartData {
-    return { time, value: 0 };
-  }
-
-  private isZero(data: LineChartData): boolean {
+  isNullish(data: LineChartData): boolean {
     return data.value === 0 || isNil(data.value);
   }
 
@@ -179,61 +184,36 @@ class CandlestickTimeSeries extends TimeSeries<CandlestickData> {
     ].sort((a, b) => a - b);
     const newData: CandlestickData[] = [];
 
-    let lastThis: CandlestickData | null = null;
-    let lastOther: CandlestickData | null = null;
+    let lastThis: CandlestickData = this.data[0];
+    let lastOther: CandlestickData = other.data[0];
 
     for (const time of allTimes) {
-      const thisValue: CandlestickData =
-        this.getValueAtTime(time) || lastThis || this.createEmpty(time);
+      const thisValue: CandlestickData = this.getValueAtTime(time) || lastThis;
       thisValue.time = time;
       const otherValue: CandlestickData =
-        other.getValueAtTime(time) || lastOther || other.createEmpty(time);
+        other.getValueAtTime(time) || lastOther;
       otherValue.time = time;
-
       const combinedValue = op(thisValue, otherValue);
-
-      if (
-        !this.isNullishOrDefaultCandle(combinedValue) ||
-        (!this.isNullishOrDefaultCandle(thisValue) &&
-          !this.isNullishOrDefaultCandle(otherValue))
-      ) {
-        newData.push(combinedValue);
-      }
-      lastThis = !this.isNullishOrDefaultCandle(thisValue)
-        ? thisValue
-        : lastThis;
-      lastOther = !this.isNullishOrDefaultCandle(otherValue)
-        ? otherValue
-        : lastOther;
+      newData.push(combinedValue);
+      lastThis = thisValue;
+      lastOther = otherValue;
     }
 
     return new CandlestickTimeSeries(newData);
   }
 
-  protected createEmpty(time: UTCTimestamp): CandlestickData {
-    return { time, open: 0, high: 0, low: 0, close: 0, volume: 0 };
-  }
-
-  private isNullishCandle(candle: CandlestickData): boolean {
-    return (
+  isNullish(candle: CandlestickData): boolean {
+    const isNullishCandle =
       isNil(candle.open) ||
       isNil(candle.high) ||
       isNil(candle.low) ||
-      isNil(candle.close)
-    );
-  }
-
-  private isDefaultCandle(candle: CandlestickData): boolean {
-    return (
+      isNil(candle.close);
+    const isDefaultCandle =
       candle.open === 0 &&
       candle.high === 0 &&
       candle.low === 0 &&
-      candle.close === 0
-    );
-  }
-
-  private isNullishOrDefaultCandle(candle: CandlestickData): boolean {
-    return this.isNullishCandle(candle) || this.isDefaultCandle(candle);
+      candle.close === 0;
+    return isNullishCandle || isDefaultCandle;
   }
 
   add(other: CandlestickTimeSeries): CandlestickTimeSeries {
