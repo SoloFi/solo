@@ -25,13 +25,12 @@ export const usePortfolioTableData = (props: {
       const symbol = entry.symbol;
       return {
         queryKey: [symbol, "chart", "1mo"],
-        queryFn: async () => {
-          return charts.fetch({
+        queryFn: () =>
+          charts.fetch({
             symbol,
             interval: "1d",
             range: "1mo",
-          });
-        },
+          }),
         refetchOnWindowFocus: false,
       };
     }),
@@ -63,6 +62,7 @@ export const usePortfolioTableData = (props: {
     if (symbolsPending || currencyPending) return [];
     return holdings.map((entry) => {
       const symbol = entry.symbol;
+      const currencyKey = getFxSymbol(entry.currency, userCurrency);
       const buys = entry.transactions.filter(
         (t) => t.type === TransactionType.BUY,
       );
@@ -70,11 +70,11 @@ export const usePortfolioTableData = (props: {
       const symbolTimeSeries = new CandlestickTimeSeries(
         symbolsDataMap[entry.symbol],
       );
-      if (entry.currency === userCurrency || !currencyDataMap[entry.currency]) {
+      if (entry.currency === userCurrency || !currencyDataMap[currencyKey]) {
         chartData = symbolTimeSeries.getValueAxis();
       } else {
         const currencyTimeSeries = new CandlestickTimeSeries(
-          currencyDataMap[entry.currency],
+          currencyDataMap[currencyKey],
         );
         chartData = symbolTimeSeries
           .multiply(currencyTimeSeries)
@@ -102,9 +102,7 @@ export const usePortfolioTableData = (props: {
       const latestCurrencyRate =
         entry.currency === userCurrency
           ? 1
-          : currencyDataMap[getFxSymbol(entry.currency, userCurrency)].slice(
-              -1,
-            )[0].close;
+          : currencyDataMap[currencyKey].slice(-1)[0].close;
       const quantity = buys.reduce((acc, buy) => acc + buy.quantity, 0);
       const value = price * quantity;
       const costBasis =
