@@ -63,13 +63,19 @@ export const usePortfolioTableData = (props: {
     return holdings.map((entry) => {
       const symbol = entry.symbol;
       const currencyKey = getFxSymbol(entry.currency, userCurrency);
+      const latestCurrencyRate =
+        entry.currency === userCurrency
+          ? 1
+          : currencyDataMap[currencyKey].slice(-1)[0].close;
+
       const buys = entry.transactions.filter(
         (t) => t.type === TransactionType.BUY,
       );
-      let chartData: CandlestickData[] = [];
       const symbolTimeSeries = new CandlestickTimeSeries(
         symbolsDataMap[entry.symbol],
       );
+
+      let chartData: CandlestickData[] = [];
       if (entry.currency === userCurrency || !currencyDataMap[currencyKey]) {
         chartData = symbolTimeSeries.getValueAxis();
       } else {
@@ -80,6 +86,7 @@ export const usePortfolioTableData = (props: {
           .multiply(currencyTimeSeries)
           .getValueAxis();
       }
+
       const price = chartData.slice(-1)[0].close;
       const last30Days = chartData?.slice(-30) ?? [];
       if (buys.length === 0) {
@@ -99,10 +106,6 @@ export const usePortfolioTableData = (props: {
           last30Days,
         };
       }
-      const latestCurrencyRate =
-        entry.currency === userCurrency
-          ? 1
-          : currencyDataMap[currencyKey].slice(-1)[0].close;
       const quantity = buys.reduce((acc, buy) => acc + buy.quantity, 0);
       const value = price * quantity;
       const costBasis =
@@ -120,7 +123,7 @@ export const usePortfolioTableData = (props: {
           value: value - costBasis,
           percentChange: percentChange(costBasis, value),
         },
-        last30Days: new CandlestickTimeSeries(last30Days).getValueAxis(),
+        last30Days,
       };
     });
   }, [
